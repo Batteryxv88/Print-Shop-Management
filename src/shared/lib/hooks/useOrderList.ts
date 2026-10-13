@@ -1,64 +1,68 @@
 import { useMemo } from 'react';
 import { useAppSelector } from '../../../app/providers/StoreProvider/Store/hooks';
-import { useQuantityToOrder } from './useQuantityToOrder';
 
 export interface OrderListItem {
     id: string;
     partN: string;
     partName: string;
-    currentQty: number;     // текущее количество на складе
-    targetQty: number;      // целевое количество которое должно быть
-    needToOrder: number;    // сколько нужно заказать
+    currentQty: number;
+    /** Сколько пометили к заказу на складе */
+    needToOrder: number;
     section: string;
+    model?: string;
 }
 
 export const useOrderList = () => {
     const partsArray = useAppSelector((state) => state.parts.partsArray);
-    const { orders } = useQuantityToOrder();
+    const storageModel = useAppSelector(
+        (state) => state.machines.storageModel
+    );
 
     const orderList = useMemo(() => {
         const results: OrderListItem[] = [];
 
-        partsArray.forEach((partData: any) => {
-            const part = partData.part;
-            const partId = partData.id;
+        partsArray.forEach((partData: { id: string; part: any }) => {
+            const part = partData.part || {};
+            const needToOrder = Math.max(0, Number(part.orderQty) || 0);
+            if (needToOrder <= 0) return;
 
-            // Ищем соответствующую запись в quantityToOrder по partN
-            const orderData = orders.find(order => order.PartN === part.partN);
-
-            // Обрабатываем только те детали, у которых use = true
-            if (orderData && orderData.use) {
-                const currentQty = part.quantity || 0;
-                const targetQty = orderData.qty || 0;
-                const needToOrder = Math.max(0, targetQty - currentQty);
-
-                // Добавляем в список только если нужно заказать больше 0
-                if (needToOrder > 0) {
-                    results.push({
-                        id: partId,
-                        partN: part.partN,
-                        partName: part.partName,
-                        currentQty,
-                        targetQty,
-                        needToOrder,
-                        section: part.section || "Other"
-                    });
-                }
-            }
+            results.push({
+                id: partData.id,
+                partN: part.partN || '',
+                partName: part.partName || '',
+                currentQty: Number(part.quantity) || 0,
+                needToOrder,
+                section: part.section || 'Other',
+                model: part.model || '',
+            });
         });
 
-        // Сортируем по секциям и названиям
         return results.sort((a, b) => {
             if (a.section !== b.section) {
-                return a.section.localeCompare(b.section);
+                return a.section.localeCompare(b.section, 'ru');
             }
-            return a.partName.localeCompare(b.partName);
+            return a.partName.localeCompare(b.partName, 'ru');
         });
-    }, [partsArray, orders]);
+    }, [partsArray]);
+
+    /** Список для текущего фильтра модели склада (если выбран) */
+    const orderListForModel = useMemo(() => {
+        if (!storageModel) return orderList;
+        return orderList.filter(
+            (item) =>
+                !item.model ||
+                String(item.model).toLowerCase() ===
+                    String(storageModel).toLowerCase()
+        );
+    }, [orderList, storageModel]);
 
     return {
         orderList,
+        orderListForModel,
         totalItems: orderList.length,
-        totalQuantityToOrder: orderList.reduce((sum, item) => sum + item.needToOrder, 0)
+        totalQuantityToOrder: orderList.reduce(
+            (sum, item) => sum + item.needToOrder,
+            0
+        ),
     };
-}; 
+};

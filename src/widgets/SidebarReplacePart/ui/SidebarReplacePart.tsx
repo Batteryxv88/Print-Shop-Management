@@ -2,6 +2,7 @@ import cls from "./SidebarReplacePart.module.scss";
 import { useAppDispatch, useAppSelector } from "../../../app/providers/StoreProvider/Store/hooks";
 import { changeFilter } from "../../../app/providers/StoreProvider/Store/FilterPartSlice";
 import { changeMachine } from "../../../app/providers/StoreProvider/Store/ChangeMachineSlice";
+import PrinterSelectTabs from "../../../shared/ui/PrinterSelectTabs/PrinterSelectTabs";
 
 const SidebarReplacePart = () => {
     const dispatch = useAppDispatch();
@@ -9,11 +10,11 @@ const SidebarReplacePart = () => {
     const filterState = useAppSelector((state) => state.filteredParts.filter.section)
 
     return (
-        <div>
-            <div className={cls.machineWrapper}>
-                <button onClick={() => dispatch(changeMachine("C71cf"))} className={machineState === "C71cf"? cls.activeButton: cls.button}>C71cf</button>
-                <button onClick={() => dispatch(changeMachine("Label 190"))} className={machineState === "Label 190"? cls.activeButton: cls.button}>Label_190</button>
-            </div>
+        <div className={cls.panel}>
+            <PrinterSelectTabs
+                selected={machineState}
+                onSelect={(name) => dispatch(changeMachine(name))}
+            />
 
             <ul className={cls.ul}>
                 <li

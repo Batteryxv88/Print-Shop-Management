@@ -1,18 +1,24 @@
-import { useState, useEffect } from "react";
 import cls from "./GenerateAReport.module.scss";
 import {
     useAppDispatch,
     useAppSelector,
 } from "../../../app/providers/StoreProvider/Store/hooks";
-import { fetchToners } from "../../../app/providers/StoreProvider/Store/TonerSlice";
-import { fetchUsedParts } from "../../../app/providers/StoreProvider/Store/ReplacedPartSlice";
 import * as XLSX from "xlsx-js-style";
 import { changeReport } from "../../../app/providers/StoreProvider/Store/ReportSlice";
 import { useForm } from "react-hook-form";
 import { transformArray } from "../../lib/transformReport/transformReport";
 import { formatDatesInArray } from "../../lib/transformDateInReport/transformDate";
-// Импортируем хуки для получения данных складов
-import { useMaterials, useLaminations, useToners, useHoldersAndKnifes, useParts } from "../../../app/providers/StoreProvider/Store/hooks";
+import {
+    useMaterials,
+    useLaminations,
+    useToners,
+    useHoldersAndKnifes,
+    useParts,
+    usePrinters,
+    useUsedParts,
+    useTonerHistory,
+} from "../../../app/providers/StoreProvider/Store/hooks";
+import { excelSheetName } from "../../../shared/lib/printers/printerUtils";
 
 const GenerateAReport = () => {
 
@@ -34,21 +40,14 @@ const GenerateAReport = () => {
 
     const dispatch = useAppDispatch();
 
-    // Подключаем хуки для получения данных складов
     const { materials } = useMaterials();
     const { laminations } = useLaminations();
     const { tonersArr } = useToners();
     const { holdersAndKnifes } = useHoldersAndKnifes();
     const { partsArray } = useParts();
-
-    useEffect(() => {
-        dispatch(fetchToners());
-        dispatch(fetchUsedParts());
-    }, [dispatch]);
-
-    const toners = useAppSelector((state) => state.toners.tonersArray);
-
-    const parts = useAppSelector((state) => state.replacedParts.usedPartsArray);
+    const { printers } = usePrinters();
+    const { tonersArray: toners } = useTonerHistory();
+    const { usedPartsArray: parts } = useUsedParts();
 
     const report = useAppSelector((state) => state.report.report);
 
@@ -68,26 +67,22 @@ const GenerateAReport = () => {
       );
   
       const result = [];
-  
-      // Жестко задаем цвета тонеров
-      const tonerColors = ["Y", "M", "C", "K"];
-  
-      // Подсчет тонеров разных цветов
-      const tonerCounts: { [key: string]: number } = {
-          tonerY: 0,
-          tonerM: 0,
-          tonerC: 0,
-          tonerK: 0,
-      };
-  
+
+      const tonerCounts: { [key: string]: number } = {};
       filteredToners.forEach((toner) => {
-          const color = toner.toner.color.toUpperCase();
-          if (tonerColors.includes(color)) {
-              tonerCounts[`toner${color}`]++;
+          const color = String(toner.toner.color || '').toUpperCase();
+          if (!color) return;
+          const key = `toner${color}`;
+          tonerCounts[key] = (tonerCounts[key] || 0) + 1;
+      });
+
+      // Базовые CMYK всегда в сводке (даже 0), плюс любые доп. цвета
+      ;['C', 'M', 'Y', 'K'].forEach((c) => {
+          if (tonerCounts[`toner${c}`] === undefined) {
+              tonerCounts[`toner${c}`] = 0;
           }
       });
-  
-      // Добавление информации о тонерах в результат
+
       result.push({
           machine: e.machine,
           period: `${e.from} - ${e.to}`,
@@ -196,116 +191,80 @@ const GenerateAReport = () => {
         // Текущая дата для названия файла
         const currentDate = new Date().toLocaleDateString('ru-RU');
 
-        // 1. Лист "Потраченные тонеры C71cf" - только если данные есть
+        // Листы потраченных тонеров и деталей — по каждому принтеру
+        const printerNames =
+            printers.length > 0
+                ? printers.map((p) => p.name)
+                : ['C71cf', 'Label 190'];
+
         if (toners && toners.length > 0) {
-            const c71cfTonersData = toners.filter(t => t.toner.machine === 'C71cf').map(toner => ({
-                'Аппарат': toner.toner.machine,
-                'Цвет': toner.toner.color,
-                'Счетчик': toner.toner.counter,
-                'Ответственный': toner.toner.man,
-                'Дата': new Date(toner.toner.date).toLocaleDateString('ru-RU')
-            }));
-            
-            if (c71cfTonersData.length > 0) {
-                const c71cfTonersSheet = XLSX.utils.json_to_sheet(c71cfTonersData);
-                c71cfTonersSheet['!cols'] = [
-                    { wch: 15 }, // Аппарат
-                    { wch: 10 }, // Цвет
-                    { wch: 15 }, // Счетчик
-                    { wch: 20 }, // Ответственный
-                    { wch: 12 }  // Дата
-                ];
-                applySheetStyles(c71cfTonersSheet);
-                XLSX.utils.book_append_sheet(workbook, c71cfTonersSheet, "Потраченные тонеры C71cf");
-            }
+            printerNames.forEach((printerName) => {
+                const tonersData = toners
+                    .filter((t) => t.toner.machine === printerName)
+                    .map((toner) => ({
+                        'Аппарат': toner.toner.machine,
+                        'Цвет': toner.toner.color,
+                        'Счетчик': toner.toner.counter,
+                        'Ответственный': toner.toner.man,
+                        'Дата': new Date(toner.toner.date).toLocaleDateString('ru-RU'),
+                    }));
+
+                if (tonersData.length > 0) {
+                    const sheet = XLSX.utils.json_to_sheet(tonersData);
+                    sheet['!cols'] = [
+                        { wch: 15 },
+                        { wch: 10 },
+                        { wch: 15 },
+                        { wch: 20 },
+                        { wch: 12 },
+                    ];
+                    applySheetStyles(sheet);
+                    XLSX.utils.book_append_sheet(
+                        workbook,
+                        sheet,
+                        excelSheetName('Потраченные тонеры', printerName)
+                    );
+                }
+            });
         }
 
-        // 2. Лист "Потраченные тонеры Label 190" - только если данные есть
-        if (toners && toners.length > 0) {
-            const label190TonersData = toners.filter(t => t.toner.machine === 'Label 190').map(toner => ({
-                'Аппарат': toner.toner.machine,
-                'Цвет': toner.toner.color,
-                'Счетчик': toner.toner.counter,
-                'Ответственный': toner.toner.man,
-                'Дата': new Date(toner.toner.date).toLocaleDateString('ru-RU')
-            }));
-            
-            if (label190TonersData.length > 0) {
-                const label190TonersSheet = XLSX.utils.json_to_sheet(label190TonersData);
-                label190TonersSheet['!cols'] = [
-                    { wch: 15 }, // Аппарат
-                    { wch: 10 }, // Цвет
-                    { wch: 15 }, // Счетчик
-                    { wch: 20 }, // Ответственный
-                    { wch: 12 }  // Дата
-                ];
-                applySheetStyles(label190TonersSheet);
-                XLSX.utils.book_append_sheet(workbook, label190TonersSheet, "Потраченные тонеры Label 190");
-            }
-        }
-
-        // 3. Лист "Потраченные детали C71cf" - только если данные есть
         if (parts && parts.length > 0) {
-            const c71cfPartsData = parts.filter(p => p.part.machine === 'C71cf').map(part => ({
-                'Аппарат': part.part.machine,
-                'Наименование': part.part.partName,
-                'Артикул': part.part.partN,
-                'Количество': part.part.quantity,
-                'Ресурс': part.part.serviceLife || 0,
-                'Процент': part.part.percent,
-                'Ответственный': part.part.man,
-                'Дата': new Date(part.part.date).toLocaleDateString('ru-RU'),
-                'Секция': part.part.section
-            }));
-            
-            if (c71cfPartsData.length > 0) {
-                const c71cfPartsSheet = XLSX.utils.json_to_sheet(c71cfPartsData);
-                c71cfPartsSheet['!cols'] = [
-                    { wch: 15 }, // Аппарат
-                    { wch: 35 }, // Наименование
-                    { wch: 15 }, // Артикул
-                    { wch: 12 }, // Количество
-                    { wch: 10 }, // Ресурс
-                    { wch: 10 }, // Процент
-                    { wch: 20 }, // Ответственный
-                    { wch: 12 }, // Дата
-                    { wch: 25 }  // Секция
-                ];
-                applySheetStyles(c71cfPartsSheet);
-                XLSX.utils.book_append_sheet(workbook, c71cfPartsSheet, "Потраченные детали C71cf");
-            }
-        }
+            printerNames.forEach((printerName) => {
+                const partsData = parts
+                    .filter((p) => p.part.machine === printerName)
+                    .map((part) => ({
+                        'Аппарат': part.part.machine,
+                        'Наименование': part.part.partName,
+                        'Артикул': part.part.partN,
+                        'Количество': part.part.quantity,
+                        'Ресурс': part.part.serviceLife || 0,
+                        'Процент': part.part.percent,
+                        'Ответственный': part.part.man,
+                        'Дата': new Date(part.part.date).toLocaleDateString('ru-RU'),
+                        'Секция': part.part.section,
+                    }));
 
-        // 4. Лист "Потраченные детали Label 190" - только если данные есть
-        if (parts && parts.length > 0) {
-            const label190PartsData = parts.filter(p => p.part.machine === 'Label 190').map(part => ({
-                'Аппарат': part.part.machine,
-                'Наименование': part.part.partName,
-                'Артикул': part.part.partN,
-                'Количество': part.part.quantity,
-                'Ресурс': part.part.serviceLife || 0,
-                'Процент': part.part.percent,
-                'Ответственный': part.part.man,
-                'Дата': new Date(part.part.date).toLocaleDateString('ru-RU'),
-                'Секция': part.part.section
-            }));
-            
-            if (label190PartsData.length > 0) {
-                const label190PartsSheet = XLSX.utils.json_to_sheet(label190PartsData);
-                label190PartsSheet['!cols'] = [
-                    { wch: 15 }, // Аппарат
-                    { wch: 35 }, // Наименование
-                    { wch: 15 }, // Артикул
-                    { wch: 12 }, // Количество
-                    { wch: 10 }, // Ресурс
-                    { wch: 10 }, // Процент
-                    { wch: 20 }, // Ответственный
-                    { wch: 12 }, // Дата
-                    { wch: 25 }  // Секция
-                ];
-                applySheetStyles(label190PartsSheet);
-                XLSX.utils.book_append_sheet(workbook, label190PartsSheet, "Потраченные детали Label 190");
-            }
+                if (partsData.length > 0) {
+                    const sheet = XLSX.utils.json_to_sheet(partsData);
+                    sheet['!cols'] = [
+                        { wch: 15 },
+                        { wch: 35 },
+                        { wch: 15 },
+                        { wch: 12 },
+                        { wch: 10 },
+                        { wch: 10 },
+                        { wch: 20 },
+                        { wch: 12 },
+                        { wch: 25 },
+                    ];
+                    applySheetStyles(sheet);
+                    XLSX.utils.book_append_sheet(
+                        workbook,
+                        sheet,
+                        excelSheetName('Потраченные детали', printerName)
+                    );
+                }
+            });
         }
 
         // 5. Лист "Склад тонеров" - только если данные есть
@@ -487,27 +446,31 @@ const GenerateAReport = () => {
         summaryData.push({ 'Категория': '=== ПОТРАЧЕНО ===', 'Общее количество': '' });
 
         if (toners && toners.length > 0) {
-            const c71cfToners = toners.filter((t: any) => t.toner.machine === 'C71cf');
-            if (c71cfToners.length > 0) {
-                summaryData.push({ 'Категория': 'Потрачено тонеров C71cf', 'Общее количество': c71cfToners.length.toString() });
-            }
-            
-            const label190Toners = toners.filter((t: any) => t.toner.machine === 'Label 190');
-            if (label190Toners.length > 0) {
-                summaryData.push({ 'Категория': 'Потрачено тонеров Label 190', 'Общее количество': label190Toners.length.toString() });
-            }
+            printerNames.forEach((printerName) => {
+                const machineToners = toners.filter(
+                    (t: any) => t.toner.machine === printerName
+                );
+                if (machineToners.length > 0) {
+                    summaryData.push({
+                        'Категория': `Потрачено тонеров ${printerName}`,
+                        'Общее количество': machineToners.length.toString(),
+                    });
+                }
+            });
         }
         
         if (parts && parts.length > 0) {
-            const c71cfParts = parts.filter((p: any) => p.part.machine === 'C71cf');
-            if (c71cfParts.length > 0) {
-                summaryData.push({ 'Категория': 'Потрачено деталей C71cf', 'Общее количество': c71cfParts.length.toString() });
-            }
-            
-            const label190Parts = parts.filter((p: any) => p.part.machine === 'Label 190');
-            if (label190Parts.length > 0) {
-                summaryData.push({ 'Категория': 'Потрачено деталей Label 190', 'Общее количество': label190Parts.length.toString() });
-            }
+            printerNames.forEach((printerName) => {
+                const machineParts = parts.filter(
+                    (p: any) => p.part.machine === printerName
+                );
+                if (machineParts.length > 0) {
+                    summaryData.push({
+                        'Категория': `Потрачено деталей ${printerName}`,
+                        'Общее количество': machineParts.length.toString(),
+                    });
+                }
+            });
         }
 
         const summarySheet = XLSX.utils.json_to_sheet(summaryData);
@@ -562,8 +525,18 @@ const GenerateAReport = () => {
                           required: "Обязательное поле",
                       })}
                     >
-                        <option value={"C71cf"}>C71cf</option>
-                        <option value={"Label 190"}>Label 190</option>
+                        {printers.length > 0
+                            ? printers.map((printer) => (
+                                  <option key={printer.id} value={printer.name}>
+                                      {printer.name}
+                                  </option>
+                              ))
+                            : (
+                                <>
+                                    <option value={"C71cf"}>C71cf</option>
+                                    <option value={"Label 190"}>Label 190</option>
+                                </>
+                              )}
                     </select>
                 </div>
                 <button className={cls.submit} type="submit">

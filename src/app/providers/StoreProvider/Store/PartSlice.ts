@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import { addDoc, collection, getDocs, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../../../services/firebase';
-import { doc } from 'firebase/firestore';
 
 export const addPartToFirestore = createAsyncThunk(
     'parts/addPartToFirestore',
@@ -12,60 +11,19 @@ export const addPartToFirestore = createAsyncThunk(
     }
 )
 
-
-export const fetchParts = createAsyncThunk(
-    'parts/fetchParts',
-    async () => {
-        const querySnapshot = await getDocs(collection(db, 'Parts'))
-        const parts = querySnapshot.docs.map((doc)=> ({
-            id: doc.id,
-            part: doc.data()
-        }))
-        return parts;
-    }
-)
-
-// export const updateStock = createAsyncThunk(
-//     'parts/updateStock',
-//     async (editedPart: any) => {
-//         const parts = await getDocs(collection(db, 'Parts'))
-//         for(var snap of parts.docs){
-//             if(snap.id === editedPart.id){
-//                 const partRef = doc(db, 'Parts', snap.id);
-//                 await updateDoc(partRef, editedPart.part)
-//             }
-//         }
-//         return editedPart
-//     }
-// )
-
 export const updateStock = createAsyncThunk(
     'parts/updateStock',
     async (editedPart: any) => {
-        try {
-            //console.log('Before updating stock:', editedPart);
-            
-            const parts = await getDocs(collection(db, 'Parts'))
-            for (var snap of parts.docs) {
-                if (snap.id === editedPart.id) {
-                    const partRef = doc(db, 'Parts', snap.id);
-                    await updateDoc(partRef, editedPart.part);
-                }
-            }
-
-            //console.log('Stock updated successfully:', editedPart);
-            return editedPart;
-        } catch (error) {
-            console.error('Error updating stock:', error);
-            throw error;
-        }
+        const partRef = doc(db, 'Parts', editedPart.id);
+        await updateDoc(partRef, editedPart.part);
+        return editedPart;
     }
 )
 
 const partSlice = createSlice({
     name: 'parts',
     initialState: {
-        partsArray: [],
+        partsArray: [] as Array<{ id: string; part: any }>,
     },
     reducers: {
         setParts: (state, action) => {
@@ -75,24 +33,23 @@ const partSlice = createSlice({
     extraReducers: (builder) => {
         builder
         .addCase(addPartToFirestore.fulfilled, (state, action)=> {
-            state.partsArray.push(action.payload);
-        })
-        .addCase(fetchParts.fulfilled, (state, action)=> {
-            state.partsArray = action.payload
+            const exists = state.partsArray.some((item) => item.id === action.payload.id);
+            if (!exists) {
+                state.partsArray.push(action.payload);
+            }
         })
         .addCase(updateStock.fulfilled, (state, action)=> {
             const { id, part } = action.payload;
-            const partIndex = state.partsArray.findIndex((part: any) => part.id === id);
+            const partIndex = state.partsArray.findIndex((item: any) => item.id === id);
             if (partIndex !== -1) {
-            // Используем оператор расширения для создания нового объекта
-            state.partsArray[partIndex] = {
-            ...state.partsArray[partIndex],
-            part: {
-                ...state.partsArray[partIndex].part,
-                quantity: part.quantity
+                state.partsArray[partIndex] = {
+                    ...state.partsArray[partIndex],
+                    part: {
+                        ...state.partsArray[partIndex].part,
+                        ...part,
+                    }
+                };
             }
-        };
-    }
         })
     }
 })

@@ -1,187 +1,196 @@
-import { useState, useEffect, useRef } from "react";
-import cls from "./AddToner.module.scss";
-import { useDispatch } from "react-redux";
-import { addToner } from "../../../app/providers/StoreProvider/Store/TonerSlice";
-import { useForm } from "react-hook-form";
-import { useAppSelector } from "../../../app/providers/StoreProvider/Store/hooks";
-import { fetchTonersStorage, updateToner } from "../../../app/providers/StoreProvider/Store/TonersStorageSlice";
+import { useEffect, useMemo, useState } from 'react';
+import classNames from 'classnames';
+import cls from './AddToner.module.scss';
+import { useDispatch } from 'react-redux';
+import { addToner } from '../../../app/providers/StoreProvider/Store/TonerSlice';
+import {
+    useAppSelector,
+    usePrinters,
+    useToners,
+} from '../../../app/providers/StoreProvider/Store/hooks';
 import { useAuth } from '../../../contexts/AuthContext';
+import {
+    findTonerStock,
+    getModelByPrinterName,
+} from '../../../shared/lib/printers/printerUtils';
+import {
+    getColorsForPrinterName,
+    getTonerSwatchColor,
+} from '../../../shared/lib/printers/tonerColors';
+import { writeOffFifo } from '../../../services/stockAccounting';
+import NotificationModal from '../../../shared/ui/NotificationModal/NotificationModal';
 
-const Modal = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => void; children: React.ReactNode }) => {
-    const modalRef = useRef<HTMLDivElement>(null);
+const formatDate = (date: Date) => {
+    const pad = (num: number) => String(num).padStart(2, '0');
+    const year = date.getFullYear();
+    const month = pad(date.getMonth() + 1);
+    const day = pad(date.getDate());
+    const hours = pad(date.getHours());
+    const minutes = pad(date.getMinutes());
+    const seconds = pad(date.getSeconds());
+    const milliseconds = String(date.getMilliseconds()).padStart(3, '0');
 
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-                onClose();
-            }
-        };
+    const timezoneOffset = -date.getTimezoneOffset();
+    const timezoneHours = pad(Math.floor(Math.abs(timezoneOffset) / 60));
+    const timezoneMinutes = pad(Math.abs(timezoneOffset % 60));
+    const timezoneSign = timezoneOffset >= 0 ? '+' : '-';
 
-        if (isOpen) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [isOpen, onClose]);
-
-    if (!isOpen) return null;
-
-    return (
-        <div className={cls.modalOverlay}>
-            <div className={cls.modalContent} ref={modalRef}>
-                <h2 className={cls.modalTitle}>Замена тонера</h2>
-                <button className={cls.closeButton} onClick={onClose}>×</button>
-                {children}
-            </div>
-        </div>
-    );
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}${timezoneSign}${timezoneHours}:${timezoneMinutes}`;
 };
 
 const AddToner = () => {
     const { userData } = useAuth();
-    const [isModalOpen, setIsModalOpen] = useState(false);
     const dispatch = useDispatch<any>();
-    const tonersArr = useAppSelector(
-        (state) => state.tonersStorage.tonersStorageArr
+    const { tonersArr } = useToners();
+    const { printers } = usePrinters();
+    const machineTonerState = useAppSelector(
+        (state) => state.machines.tonerMachine
     );
-    
-    const machineTonerState = useAppSelector((state) => state.machines.tonerMachine);
+
+    const printerModel = getModelByPrinterName(printers, machineTonerState);
+    const availableColors = useMemo(
+        () => getColorsForPrinterName(printers, machineTonerState),
+        [printers, machineTonerState]
+    );
+
+    const isSingleColor = availableColors.length <= 1;
+    const [selectedColor, setSelectedColor] = useState(
+        availableColors[0] || 'K'
+    );
+    const [busy, setBusy] = useState(false);
+    const [errorModal, setErrorModal] = useState<{
+        open: boolean;
+        message: string;
+    }>({ open: false, message: '' });
 
     useEffect(() => {
-        dispatch(fetchTonersStorage());
-    }, []);
+        setSelectedColor(availableColors[0] || 'K');
+    }, [availableColors, machineTonerState]);
 
-    type FormValues = {
-        color: string;
-        counter: string | number;
-    };
+    const colorToReplace = isSingleColor
+        ? availableColors[0] || 'K'
+        : selectedColor;
 
-    const {
-        register,
-        formState: { errors },
-        handleSubmit,
-        reset,
-    } = useForm<FormValues>({
-        mode: "onChange",
-        defaultValues: {
-            color: "C",
-            counter: ""
-        }
-    });
+    const handleReplace = async () => {
+        if (!colorToReplace || busy) return;
 
-    const handleCloseModal = () => {
-        reset();
-        setIsModalOpen(false);
-    };
-
-    function formatDate(date: Date) {
-        const pad = (num: number) => String(num).padStart(2, '0');
-        const year = date.getFullYear();
-        const month = pad(date.getMonth() + 1);
-        const day = pad(date.getDate());
-        const hours = pad(date.getHours());
-        const minutes = pad(date.getMinutes());
-        const seconds = pad(date.getSeconds());
-        const milliseconds = String(date.getMilliseconds()).padStart(3, '0');
-    
-        const timezoneOffset = -date.getTimezoneOffset();
-        const timezoneHours = pad(Math.floor(timezoneOffset / 60));
-        const timezoneMinutes = pad(Math.abs(timezoneOffset % 60));
-        const timezoneSign = timezoneOffset >= 0 ? "+" : "-";
-        
-        return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}${timezoneSign}${timezoneHours}:${timezoneMinutes}`;
-    }
-
-    //учитываем замену нового тонера
-    const handleAddToner = (e: any) => {
-        const currentDate = new Date();
-        const formattedDate = formatDate(currentDate);
         const manName = userData?.displayName || '';
-        const newToner = {
-            color: e.color,
-            man: manName,
-            counter: Number(e.counter),
-            date: formattedDate,
-            machine: machineTonerState
-        };
+        const stockToner = findTonerStock(
+            tonersArr,
+            colorToReplace,
+            printerModel
+        );
 
-        const tonerId = tonersArr.filter((item) => {
-            return item.toner.color === e.color
-        })[0].id
+        if (!stockToner) {
+            setErrorModal({
+                open: true,
+                message: `Тонер «${colorToReplace}» не найден на складе для модели «${printerModel || '—'}». Сначала оформите приход.`,
+            });
+            return;
+        }
 
-        const tonerQty = tonersArr.filter((item) => {
-            return item.toner.color === e.color
-        })[0].toner.qty
+        setBusy(true);
+        try {
+            const formattedDate = formatDate(new Date());
+            const writeOff = await writeOffFifo({
+                type: 'toner',
+                stockId: stockToner.id,
+                color: colorToReplace,
+                model: stockToner.toner.model || printerModel || '',
+                costCategory: 'toner',
+                qty: 1,
+                date: formattedDate,
+                machine: machineTonerState,
+                man: manName,
+                currentStockQty: Number(stockToner.toner.qty) || 0,
+            });
 
-        const updatedTonerQty = {
-            id: tonerId,
-            toner: {
-                qty: tonerQty - 1,
-            },
-        };
-
-        dispatch(updateToner(updatedTonerQty));
-        dispatch(addToner(newToner));
-
-        reset();
-        setIsModalOpen(false);
+            await dispatch(
+                addToner({
+                    color: colorToReplace,
+                    man: manName,
+                    counter: '',
+                    date: formattedDate,
+                    machine: machineTonerState,
+                    totalCost: writeOff.totalCost,
+                    unitPriceAvg: writeOff.unitPriceAvg,
+                    movementId: writeOff.movementId,
+                })
+            ).unwrap();
+        } catch (err: unknown) {
+            const msg =
+                err instanceof Error
+                    ? err.message
+                    : String(err || 'Ошибка списания тонера');
+            setErrorModal({ open: true, message: msg });
+        } finally {
+            setBusy(false);
+        }
     };
 
     return (
         <>
-            <button 
-                className={cls.openModalButton} 
-                onClick={() => setIsModalOpen(true)}
-            >
-                Заменить тонер
-            </button>
+            <div className={cls.bar}>
+                {!isSingleColor && (
+                    <div
+                        className={cls.colors}
+                        role="radiogroup"
+                        aria-label="Цвет тонера"
+                    >
+                        {availableColors.map((color) => {
+                            const active = selectedColor === color;
+                            return (
+                                <button
+                                    key={color}
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={active}
+                                    className={classNames(cls.colorBtn, {
+                                        [cls.colorBtnActive]: active,
+                                        [cls.colorBtnDim]:
+                                            Boolean(selectedColor) && !active,
+                                    })}
+                                    onClick={() => setSelectedColor(color)}
+                                    title={`Тонер ${color}`}
+                                    disabled={busy}
+                                >
+                                    <span
+                                        className={cls.swatch}
+                                        style={{
+                                            backgroundColor:
+                                                getTonerSwatchColor(color),
+                                        }}
+                                    />
+                                    <span className={cls.colorLabel}>
+                                        {color}
+                                    </span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
 
-            <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
-                <form
-                    className={cls.addToner}
-                    onSubmit={handleSubmit(handleAddToner)}
+                <button
+                    type="button"
+                    className={cls.replaceBtn}
+                    onClick={handleReplace}
+                    disabled={busy || !colorToReplace}
                 >
-                    <div className={cls.box}>
-                        <label>Цвет</label>
-                        <select
-                            {...register("color", {
-                                required: "Обязательное поле",
-                            })}
-                            className={cls.input}
-                        >
-                            <option value={"C"}>C</option>
-                            <option value={"M"}>M</option>
-                            <option value={"Y"}>Y</option>
-                            <option value={"K"}>K</option>
-                        </select>
-                    </div>
-                    <div className={cls.box}>
-                        <label className={cls.label}>Счетчик</label>
-                        <input
-                            {...register("counter", {
-                                required: "Обязательное поле",
-                                minLength: {
-                                    value: 5,
-                                    message: "Минимум 5 символов",
-                                },
-                            })}
-                            className={cls.input}
-                            type="number"
-                        ></input>
-                    </div>
-                    <button className={cls.button} type="submit">
-                        Добавить
-                    </button>
-                </form>
-                <div className={cls.errorContainer}>
-                    <div className={`${cls.errMessage} ${Object.keys(errors).length > 0 ? cls.visible : ''}`}>
-                        {(errors?.counter && <p>{errors?.counter.message}</p>) ||
-                            (errors?.color && <p>{errors?.color.message}</p>)}
-                    </div>
-                </div>
-            </Modal>
+                    {busy
+                        ? 'Списание…'
+                        : isSingleColor
+                          ? 'Заменить'
+                          : `Заменить ${colorToReplace}`}
+                </button>
+            </div>
+
+            <NotificationModal
+                isOpen={errorModal.open}
+                onClose={() => setErrorModal({ open: false, message: '' })}
+                title="Не удалось заменить тонер"
+                message={errorModal.message}
+                type="error"
+            />
         </>
     );
 };

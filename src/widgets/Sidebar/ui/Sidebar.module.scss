@@ -1,36 +1,51 @@
+/* Токены узкого сайдбара — наследуются всеми вложенными виджетами */
 .sidebar {
-    min-height: 100%;
-    height: auto;
-    background: #1E1E1E;
+    --sb-pad-x: 12px;
+    --sb-pad-y: 16px;
+    --sb-gap: 12px;
+    --sb-gap-sm: 8px;
+    --sb-font-xs: 10px;
+    --sb-font-sm: 11px;
+    --sb-font-md: 12px;
+    --sb-font-lg: 13px;
+    --sb-font-title: 15px;
+    --sb-btn-h: 32px;
+    --sb-row-h: 34px;
+    --sb-section-h: 42px;
+    --sb-radius: 7px;
+    --sb-radius-lg: 9px;
+    --sb-control: #2a2a2a;
+
+    height: 100%;
+    max-height: 100%;
+    width: 100%;
+    background: #1e1e1e;
     border-right: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.2);
-    //position: fixed;
-    left: 0;
-    top: 0;
     z-index: 100;
     display: flex;
     flex-direction: column;
-    padding: 38px 34px 0px 34px;
-    position: sticky;
+    padding: var(--sb-pad-y) var(--sb-pad-x) 0;
+    align-self: stretch;
+    overflow: hidden;
+    position: relative;
 }
 
 .nav {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 0 16px;
+    gap: 6px;
 }
 
 .link {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
+    gap: 8px;
+    padding: 8px 10px;
     color: rgba(255, 255, 255, 0.6);
     text-decoration: none;
-    border-radius: 8px;
+    border-radius: var(--sb-radius);
     transition: all 0.2s ease;
-    font-size: 14px;
+    font-size: var(--sb-font-md);
     font-weight: 500;
 
     &:hover {
@@ -40,12 +55,12 @@
 
     &.active {
         background: rgba(187, 134, 252, 0.12);
-        color: #BB86FC;
+        color: #bb86fc;
     }
 }
 
 .icon {
-    width: 24px;
-    height: 24px;
+    width: 18px;
+    height: 18px;
     color: currentColor;
 }

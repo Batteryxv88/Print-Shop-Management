@@ -1,20 +1,49 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import classNames from 'classnames';
 import cls from "./Navbar.module.scss";
 import Button from "../../../shared/ui/Button/Button";
 import { useAuth } from "../../../contexts/AuthContext";
 import { logout } from "../../../services/auth";
-import { useAppSelector } from '../../../app/providers/StoreProvider/Store/hooks';
-import InventoryReminder from '../../../shared/ui/InventoryReminder/InventoryReminder';
-import InventoryModal from '../../../shared/ui/InventoryModal/InventoryModal';
-import { useInventoryCheck } from '../../../shared/lib/hooks/useInventoryCheck';
+import CounterReadingReminder from '../../../shared/ui/CounterReadingReminder/CounterReadingReminder';
+import { useCounterReadingReminder } from '../../../shared/lib/hooks/useCounterReadingReminder';
+
+const SCROLL_SOLID_AT = 12;
 
 const Navbar: React.FC = () => {
-    const pageState = useAppSelector((state) => state.pages.page);
     const location = useLocation();
     const navigate = useNavigate();
     const { user, userData } = useAuth();
-    useInventoryCheck();
+    const [scrolled, setScrolled] = useState(false);
+    useCounterReadingReminder();
+
+    useEffect(() => {
+        const readScrollTop = (target: EventTarget | null) => {
+            if (target instanceof Document) {
+                return (
+                    window.scrollY ||
+                    document.documentElement.scrollTop ||
+                    document.body.scrollTop ||
+                    0
+                );
+            }
+            if (target instanceof Element) {
+                return target.scrollTop;
+            }
+            return 0;
+        };
+
+        const onScroll = (event: Event) => {
+            const top = Math.max(
+                readScrollTop(event.target),
+                window.scrollY || 0
+            );
+            setScrolled(top > SCROLL_SOLID_AT);
+        };
+
+        window.addEventListener('scroll', onScroll, true);
+        return () => window.removeEventListener('scroll', onScroll, true);
+    }, []);
 
     const handleLogout = async () => {
         try {
@@ -25,15 +54,13 @@ const Navbar: React.FC = () => {
         }
     };
 
-    // Проверяем, является ли текущий пользователь администратором
     const isAdmin = userData?.role === 'администратор';
     const isDirector = userData?.role === 'руководитель';
     const isPrinter = userData?.role === 'печатник';
 
     return (
-        <div className={cls.navbar}>
+        <div className={classNames(cls.navbar, scrolled && cls.scrolled)}>
             <div className={cls.navLinks}>
-                {/* <StorageIcon /> */}
                 <Link
                     className={`${cls.button} ${location.pathname === "/" ? cls.active : ""}`}
                     to={"/"}
@@ -41,25 +68,25 @@ const Navbar: React.FC = () => {
                     <Button name={'СКЛАД'} />
                 </Link>
                 {(isDirector || isAdmin || isPrinter) && (
-                <Link
-                    className={`${cls.button} ${location.pathname === "/schedule" ? cls.active : ""}`}
-                    to={"/schedule"}
-                >
-                    <Button name={'ЗАМЕНА ДЕТАЛЕЙ'} />
-                </Link>
+                    <Link
+                        className={`${cls.button} ${
+                            location.pathname === '/journal' ||
+                            location.pathname === '/toner' ||
+                            location.pathname === '/schedule'
+                                ? cls.active
+                                : ''
+                        }`}
+                        to={'/journal'}
+                    >
+                        <Button name={'ЖУРНАЛ УЧЁТА'} />
+                    </Link>
                 )}
-                {(isDirector || isAdmin || isPrinter) && (<Link
-                    className={`${cls.button} ${location.pathname === "/toner" ? cls.active : ""}`}
-                    to={"/toner"}
-                >
-                    <Button name={'ЗАМЕНА ТОНЕРА'} />
-                </Link>)}
                 {(isDirector || isAdmin) && (
                     <Link
-                        className={`${cls.button} ${location.pathname === "/report" ? cls.active : ""}`}
-                        to={"/report"}
+                        className={`${cls.button} ${location.pathname === "/analytics" ? cls.active : ""}`}
+                        to={"/analytics"}
                     >
-                        <Button name={'ОТЧЕТ'} />
+                        <Button name={'АНАЛИТИКА'} />
                     </Link>
                 )}
                 <Link
@@ -89,7 +116,7 @@ const Navbar: React.FC = () => {
                         <Button name={'АДМИНИСТРИРОВАНИЕ'} />
                     </Link>
                 )}
-                {(isAdmin || isPrinter) && <InventoryReminder />}
+                {(isAdmin || isDirector || isPrinter) && <CounterReadingReminder />}
             </div>
             <div className={cls.rightSection}>
                 {user && (
@@ -104,7 +131,6 @@ const Navbar: React.FC = () => {
                     </div>
                 )}
             </div>
-            {(isAdmin || isPrinter) && <InventoryModal />}
         </div>
     );
 };

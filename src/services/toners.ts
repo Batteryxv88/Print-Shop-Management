@@ -6,6 +6,7 @@ export interface Toner {
     toner: {
         color: string;
         qty: number;
+        model?: string;
     }
 }
 

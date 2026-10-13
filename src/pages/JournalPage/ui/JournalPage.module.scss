@@ -1,0 +1,148 @@
+.page {
+    height: 100%;
+    min-height: 0;
+    padding: 16px 18px 18px;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.browser {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: #1a1a1a;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.browserTop {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: #1e1e1e;
+}
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px 16px;
+    min-height: 40px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.crumbHome {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 13px;
+}
+
+.crumbSep {
+    color: rgba(255, 255, 255, 0.22);
+    font-size: 12px;
+    user-select: none;
+}
+
+.crumb {
+    color: rgba(255, 255, 255, 0.55);
+    font-weight: 500;
+}
+
+.crumbCurrent {
+    color: rgba(255, 255, 255, 0.92);
+    font-weight: 600;
+}
+
+.printersRow {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    padding: 0 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    overflow-x: auto;
+
+    &::-webkit-scrollbar {
+        height: 3px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.14);
+        border-radius: 3px;
+    }
+}
+
+.printersLabel {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 8px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.32);
+    white-space: nowrap;
+}
+
+.content {
+    flex: 1;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 22px 0;
+}
+
+.sectionFilter {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+
+    span {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.38);
+        white-space: nowrap;
+    }
+
+    select {
+        height: 30px;
+        min-width: 180px;
+        max-width: 260px;
+        padding: 0 28px 0 10px;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: #2A2A2A
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.45)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")
+            no-repeat right 8px center;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 12.5px;
+        appearance: none;
+        cursor: pointer;
+
+        &:focus {
+            outline: none;
+            border-color: #BB86FC;
+        }
+    }
+}

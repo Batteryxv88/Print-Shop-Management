@@ -1,35 +1,33 @@
 .SidebarLamination {
-    
     color: rgba(255, 255, 255, 0.87);
-    height: 100vh;
+    height: 100%;
     overflow-y: auto;
+    width: 100%;
 
     .wrapper {
-        padding-right: 16px;
-        background: #1E1E1E;
+        padding-right: 2px;
+        background: transparent;
         display: flex;
         flex-direction: column;
-        gap: 16px;
-        margin-bottom: 40px;
+        gap: var(--sb-gap-sm, 8px);
+        margin-bottom: 16px;
     }
 }
 
 .title {
-    font-size: 16px;
-    font-weight: 400;
-    margin-bottom: 10px;
-    //line-height: 1.4;
-    color: rgba(255, 255, 255, 0.87);
-    //letter-spacing: 0.15px;
-    //border: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: var(--sb-font-title, 15px);
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: rgba(255, 255, 255, 0.92);
+    line-height: 1.3;
 }
 
 .text {
-    font-size: 14px;
-    line-height: 1.6;
-    margin-bottom: 16px;
-    color: rgba(255, 255, 255, 0.6);
-    transition: color 0.2s ease;
+    font-size: var(--sb-font-md, 12px);
+    line-height: 1.4;
+    margin-bottom: 8px;
+    color: rgba(255, 255, 255, 0.55);
+    transition: color 0.15s ease;
 
     &:hover {
         color: rgba(255, 255, 255, 0.87);

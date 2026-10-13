@@ -14,5 +14,8 @@ export function buildPlugins ({paths}: BuildOptions): webpack.WebpackPluginInsta
             filename: 'css/[name].[contenthash:8].css',
             chunkFilename: 'css/[name].[contenthash:8].css',
         }),
+        new webpack.ProvidePlugin({
+            Buffer: ['buffer', 'Buffer'],
+        }),
     ]
 }

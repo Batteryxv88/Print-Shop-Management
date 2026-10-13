@@ -2,3 +2,10 @@
 node_modules
 .idea
 /storybook-static
+.env
+.env.*
+!.env.example
+snmp-agent/config.json
+snmp-agent/serviceAccountKey.json
+snmp-agent/logs/
+snmp-agent/node_modules/

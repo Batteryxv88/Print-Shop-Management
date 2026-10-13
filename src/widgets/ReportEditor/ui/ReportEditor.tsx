@@ -1,67 +1,72 @@
 import { useEffect, useMemo, useRef } from "react";
 import cls from "./ReportEditor.module.scss";
 import EditReportPart from "../../../shared/ui/EditReportPart/EditReportPart";
-import { useAppDispatch, useAppSelector } from "../../../app/providers/StoreProvider/Store/hooks";
-import { fetchParts } from "../../../app/providers/StoreProvider/Store/PartSlice";
+import { useAppDispatch, useAppSelector, usePrinters, useParts } from "../../../app/providers/StoreProvider/Store/hooks";
 import { useQuantityToOrder } from "../../../shared/lib/hooks/useQuantityToOrder";
 import { subscribeToQuantityToOrder } from "../../../services/quantityToOrder";
+import { changeReportEditorMachine } from "../../../app/providers/StoreProvider/Store/ChangeMachineSlice";
+import {
+    getModelByPrinterName,
+    matchesModel,
+} from "../../../shared/lib/printers/printerUtils";
+import { sortSections } from "../../../shared/lib/printers/sectionOrder";
 
 const ReportEditor = () => {
     const dispatch = useAppDispatch();
     const { setOrders, orders } = useQuantityToOrder();
+    const { printers } = usePrinters();
+    const { partsArray } = useParts();
     const subscriptionRef = useRef<(() => void) | null>(null);
     
-    // Получаем данные из Parts
-    const partsArray = useAppSelector((state) => state.parts.partsArray);
+    const reportEditorMachine = useAppSelector(
+        (state) => state.machines.reportEditorMachine
+    );
+    const selectedModel = getModelByPrinterName(printers, reportEditorMachine);
 
     useEffect(() => {
-        // Загружаем данные Parts только один раз
-        dispatch(fetchParts());
-    }, [dispatch]);
-
-    useEffect(() => {
-        // Проверяем, что подписка еще не создана
         if (!subscriptionRef.current) {
-            console.log('Creating single quantityToOrder subscription');
             subscriptionRef.current = subscribeToQuantityToOrder((ordersData) => {
-                console.log('Orders updated:', ordersData.length, 'items');
                 setOrders(ordersData);
             });
         }
 
-        // Cleanup только при размонтировании
         return () => {
             if (subscriptionRef.current) {
-                console.log('Cleaning up quantityToOrder subscription');
                 subscriptionRef.current();
                 subscriptionRef.current = null;
             }
         };
-    }, []); // Пустой массив - выполняется только один раз!
+    }, [setOrders]);
 
-    // Мемоизируем объединенные данные
     const reportData = useMemo(() => {
-        return partsArray.map((partData: any) => {
-            const part = partData.part;
-            const partId = partData.id;
-            
-            // Ищем соответствующую запись в quantityToOrder по partN
-            const orderData = orders.find(order => order.PartN === part.partN);
-            
-            return {
-                id: partId,
-                name: part.partName,
-                number: part.partN,
-                qtyStock: part.quantity,
-                qtyOrder: orderData?.qty || 0,
-                use: orderData?.use || false,
-                orderDataId: orderData?.id || null,
-                section: part.section || "Other",
-            };
-        });
-    }, [partsArray, orders]);
+        return partsArray
+            .filter((partData: any) =>
+                matchesModel(partData.part?.model, selectedModel)
+            )
+            .map((partData: any) => {
+                const part = partData.part;
+                const partId = partData.id;
+                
+                const orderData = orders.find(order => order.PartN === part.partN);
+                
+                return {
+                    id: partId,
+                    name: part.partName,
+                    number: part.partN,
+                    qtyStock: part.quantity,
+                    qtyOrder: orderData?.qty || 0,
+                    use: orderData?.use || false,
+                    orderDataId: orderData?.id || null,
+                    section: part.section || "Other",
+                };
+            });
+    }, [partsArray, orders, selectedModel]);
 
-    // Функция для рендера секции - аналогично Stock
+    const sections = useMemo(
+        () => sortSections(reportData.map((item) => item.section)),
+        [reportData]
+    );
+
     const renderSection = (section: string) => {
         const filteredData = reportData.filter(
             (item) => item.section === section
@@ -72,7 +77,7 @@ const ReportEditor = () => {
         }
 
         return (
-            <>
+            <div key={section}>
                 <h3 className={cls.title}>{section}</h3>
                 {filteredData.map((item) => (
                     <EditReportPart
@@ -80,13 +85,37 @@ const ReportEditor = () => {
                         {...item}
                     />
                 ))}
-            </>
+            </div>
         );
     };
 
     return (
         <div className={cls.reportEditor}>
             <h2 className={cls.h2}>Редактор отчета для заказа деталей</h2>
+
+            <div className={cls.printerTabs}>
+                {printers.map((printer) => (
+                    <button
+                        key={printer.id}
+                        type="button"
+                        className={
+                            reportEditorMachine === printer.name
+                                ? cls.printerActive
+                                : cls.printerTab
+                        }
+                        onClick={() =>
+                            dispatch(changeReportEditorMachine(printer.name))
+                        }
+                    >
+                        {printer.name}
+                    </button>
+                ))}
+            </div>
+
+            {selectedModel && (
+                <p className={cls.modelHint}>Модель склада: {selectedModel}</p>
+            )}
+
             <div className={cls.titleBox}>
                 <p className={cls.name}>Наименование</p>
                 <p className={cls.number}>Парт номер</p>
@@ -97,17 +126,7 @@ const ReportEditor = () => {
                     <p className={cls.editMain}>Редактировать</p>
                 </div>
             </div>
-            {renderSection("External section")}
-            {renderSection("Photo conductor section")}
-            {renderSection("Charging section")}
-            {renderSection("Developing section")}
-            {renderSection("Intermediate transfer section")}
-            {renderSection("Fusing section")}
-            {renderSection("Toner collection section")}
-            {renderSection("Paper feed section")}
-            {renderSection("Paper exit section")}
-            {renderSection("RW-101")}
-            {renderSection("Other")}
+            {sections.map((section) => renderSection(section))}
         </div>
     );
 };

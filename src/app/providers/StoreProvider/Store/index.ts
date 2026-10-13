@@ -13,10 +13,13 @@ import SelectedFormSlice from "./SelectedFormSlice";
 import materialsReducer from './MaterialsSlice';
 import laminationsReducer from './LaminationsSlice';
 import holdersAndKnifesReducer from './HoldersAndKnifesSlice';
-import inventoryCheckReducer from './InventoryCheckSlice';
 import ChangeManualSlice from "./ChangeManual";
 import ChangeAdminComponentSlice from "./ChangeAdminComponent";
 import quantityToOrderReducer from './QuantityToOrderSlice';
+import printersReducer from './PrintersSlice';
+import counterReadingReducer from './CounterReadingSlice';
+import analyticsFilterReducer from './AnalyticsFilterSlice';
+import appSettingsReducer from './AppSettingsSlice';
 
 const store = configureStore({
     reducer: {
@@ -33,11 +36,14 @@ const store = configureStore({
         selectedForm: SelectedFormSlice,
         materials: materialsReducer,
         laminations: laminationsReducer,
-        inventoryCheck: inventoryCheckReducer,
         holdersAndKnifes: holdersAndKnifesReducer,
         manuals: ChangeManualSlice,
         adminComponent: ChangeAdminComponentSlice,
         quantityToOrder: quantityToOrderReducer,
+        printers: printersReducer,
+        counterReading: counterReadingReducer,
+        analyticsFilter: analyticsFilterReducer,
+        appSettings: appSettingsReducer,
     }
 })
 

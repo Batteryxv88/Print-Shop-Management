@@ -25,13 +25,13 @@ import { getAuth } from 'firebase/auth';
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyCsH8eqA5Lrvec44ed2hzd9_eJH5GLdAAM",
-  authDomain: "todoapp-71646.firebaseapp.com",
-  projectId: "todoapp-71646",
-  storageBucket: "todoapp-71646.appspot.com",
-  messagingSenderId: "67239753139",
-  appId: "1:67239753139:web:6e3415df16ceabd323c7c6",
-  measurementId: "G-TQDRVC2JD3"
+  apiKey: "AIzaSyDgB_0xgpgZLep7a5KvryldUQkNC5BSeuI",
+  authDomain: "sl-sandbox-b84b3.firebaseapp.com",
+  projectId: "sl-sandbox-b84b3",
+  storageBucket: "sl-sandbox-b84b3.firebasestorage.app",
+  messagingSenderId: "632533523044",
+  appId: "1:632533523044:web:ffb760b7000c85900fdd71",
+  measurementId: "G-QXCDJM9NT3"
 };
 
 // Проверяем, не инициализирован ли уже Firebase

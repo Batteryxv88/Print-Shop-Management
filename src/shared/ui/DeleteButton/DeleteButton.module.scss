@@ -1,0 +1,47 @@
+.button {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    border-radius: 3px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+
+    &:hover {
+        background: rgba(207, 102, 121, 0.12);
+        color: #CF6679;
+    }
+
+    &:active {
+        background: rgba(207, 102, 121, 0.24);
+    }
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        background: transparent;
+    }
+}
+
+.icon {
+    width: 14px;
+    height: 14px;
+    display: block;
+    stroke: currentColor;
+}
+
+.sm {
+    width: 18px;
+    height: 18px;
+
+    .icon {
+        width: 12px;
+        height: 12px;
+    }
+}

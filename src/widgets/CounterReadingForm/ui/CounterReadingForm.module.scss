@@ -1,0 +1,362 @@
+.wrap {
+    width: 100%;
+    padding: 14px 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-sizing: border-box;
+}
+
+.bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+    padding: 0 4px;
+}
+
+.periodField {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.4);
+
+    input {
+        height: 34px;
+        padding: 0 10px;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: #2A2A2A;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 13px;
+        color-scheme: dark;
+
+        &:focus {
+            outline: none;
+            border-color: #BB86FC;
+        }
+    }
+}
+
+.status {
+    display: inline-flex;
+    align-items: center;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 3px;
+}
+
+.statusDone {
+    background: rgba(20, 167, 108, 0.12);
+    color: #4CC38A;
+}
+
+.statusPending {
+    background: rgba(255, 183, 77, 0.12);
+    color: #FFB74D;
+}
+
+.statusOverdue {
+    background: rgba(207, 102, 121, 0.14);
+    color: #FF8A80;
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.editBtn,
+.cancelBtn {
+    height: 34px;
+    padding: 0 14px;
+    border-radius: 6px;
+    background: transparent;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+.editBtn {
+    border: 1px solid rgba(187, 134, 252, 0.55);
+    color: #BB86FC;
+
+    &:hover:not(:disabled) {
+        background: rgba(187, 134, 252, 0.12);
+        border-color: #BB86FC;
+    }
+}
+
+.cancelBtn {
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: rgba(255, 255, 255, 0.7);
+
+    &:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+}
+
+.saveBtn {
+    height: 34px;
+    padding: 0 16px;
+    border: none;
+    border-radius: 6px;
+    background: #BB86FC;
+    color: rgba(0, 0, 0, 0.87);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+
+    &:hover {
+        background: #C397FC;
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+.hint {
+    margin: 0;
+    padding: 0 4px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+
+    b {
+        color: rgba(255, 255, 255, 0.85);
+        font-weight: 600;
+    }
+}
+
+.error {
+    margin: 0;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: rgba(207, 102, 121, 0.12);
+    border: 1px solid rgba(207, 102, 121, 0.28);
+    color: #FF8A80;
+    font-size: 12px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 10px;
+}
+
+.card {
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: #1E1E1E;
+}
+
+.cardLocked {
+    border-color: rgba(76, 195, 138, 0.18);
+    background: #1B1F1D;
+
+    .fieldInput {
+        background: transparent;
+        border-color: transparent;
+        border-bottom-color: rgba(255, 255, 255, 0.1);
+        border-radius: 0;
+        padding-left: 0;
+        color: rgba(255, 255, 255, 0.78);
+        cursor: default;
+    }
+}
+
+.cardHead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.printerName {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.printerMeta {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 120px;
+}
+
+.fieldLabel {
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.fieldInput {
+    width: 100%;
+    height: 32px;
+    padding: 0 10px;
+    box-sizing: border-box;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: #121212;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+
+    &:focus {
+        outline: none;
+        border-color: #BB86FC;
+    }
+}
+
+.prev {
+    min-height: 14px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.35);
+    white-space: nowrap;
+
+    b {
+        color: #4CC38A;
+        font-weight: 600;
+    }
+}
+
+/* История — в стиле строк журнала тонеров */
+
+.history {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 6px;
+}
+
+.historyHead,
+.historyRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 2px 28px;
+}
+
+.historyHead {
+    padding: 5px 28px;
+    margin-bottom: 6px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.4);
+
+    p {
+        margin: 0;
+    }
+}
+
+.historyRow {
+    width: 100%;
+    min-height: 28px;
+    background: #1E1E1E;
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.82);
+    font: inherit;
+    font-size: 12.5px;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+
+    &:nth-child(even) {
+        background: #252525;
+    }
+
+    &:hover {
+        background: #2e2e2e;
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+}
+
+.historyRowActive,
+.historyRowActive:nth-child(even) {
+    background: rgba(187, 134, 252, 0.1);
+    border-color: rgba(187, 134, 252, 0.4);
+}
+
+.colPeriod {
+    flex: 1;
+    min-width: 140px;
+    text-transform: capitalize;
+}
+
+.historyHead .colPeriod {
+    text-transform: uppercase;
+}
+
+.editedMark {
+    margin-left: 8px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    text-transform: lowercase;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.colMan {
+    width: 180px;
+    text-align: center;
+}
+
+.colDate {
+    width: 120px;
+    text-align: end;
+}
+
+.empty {
+    margin: 12px 0;
+    padding: 12px;
+    text-align: center;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+}

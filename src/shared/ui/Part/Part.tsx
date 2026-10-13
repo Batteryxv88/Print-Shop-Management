@@ -1,141 +1,109 @@
-import cls from "./Part.module.scss";
-import CheckIcon from "../../assets/icons/check-circle.svg";
-import EditPenIcon from "../../assets/icons/edit-pen.svg";
-import { useState, useEffect, useRef, useCallback } from "react";
-import { updateStock } from "../../../app/providers/StoreProvider/Store/PartSlice";
-import { useAppDispatch } from "../../../app/providers/StoreProvider/Store/hooks";
-import classNames from "classnames";
+import { useState, useEffect, useCallback } from 'react';
+import classNames from 'classnames';
+import cls from './Part.module.scss';
+import { updateStock } from '../../../app/providers/StoreProvider/Store/PartSlice';
+import { useAppDispatch } from '../../../app/providers/StoreProvider/Store/hooks';
+import CopyablePartNumber from '../CopyablePartNumber/CopyablePartNumber';
 
 export type PartProps = {
     name: string;
     number: string;
     qty: number;
     id: string;
+    partLife?: string | number;
+    installedQty?: number;
+    optionModel?: string;
+    orderQty?: number;
 };
 
 const Part = (props: PartProps) => {
-    const [onEdit, setOnEdit] = useState<boolean>(false);
-    const [newQuantity, setNewQuantity] = useState<string>("");
-    const partRef = useRef<HTMLDivElement>(null);
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
-
+    const {
+        name,
+        number,
+        qty,
+        id,
+        partLife,
+        installedQty,
+        optionModel,
+        orderQty = 0,
+    } = props;
     const dispatch = useAppDispatch();
-    const { name, number, qty, id } = props;
+    const [orderValue, setOrderValue] = useState(String(orderQty || 0));
 
-    // Обработчик клика вне блока - оптимизированный
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            const target = event.target as HTMLElement;
-            
-            // Проверяем, что клик НЕ по инпуту и НЕ по области редактирования
-            const isInput = target.tagName === 'INPUT';
-            const isQtyBox = target.closest(`.${cls.qtyBox}`);
-            
-            if (!isInput && !isQtyBox) {
-                setOnEdit(false);
-                setNewQuantity("");
-            }
-        };
+        setOrderValue(String(orderQty || 0));
+    }, [orderQty]);
 
-        if (onEdit) {
-            document.addEventListener('mousedown', handleClickOutside);
+    const saveOrderQty = useCallback(() => {
+        const n = Math.max(0, parseInt(orderValue, 10) || 0);
+        setOrderValue(String(n));
+        if (n === (Number(orderQty) || 0)) return;
+        dispatch(
+            updateStock({
+                id,
+                part: { orderQty: n },
+            })
+        );
+    }, [orderValue, orderQty, id, dispatch]);
+
+    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+        if ((parseInt(orderValue, 10) || 0) === 0) {
+            setOrderValue('');
         }
+        e.currentTarget.select();
+    };
 
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [onEdit]);
-
-    // Таймер для автоматического закрытия
-    useEffect(() => {
-        if (onEdit) {
-            if (timerRef.current) {
-                clearTimeout(timerRef.current);
-            }
-            
-            timerRef.current = setTimeout(() => {
-                setOnEdit(false);
-                setNewQuantity("");
-            }, 15000); // 15 секунд
-        }
-
-        return () => {
-            if (timerRef.current) {
-                clearTimeout(timerRef.current);
-            }
-        };
-    }, [onEdit]);
-
-    const handleEditClick = useCallback(() => {
-        setOnEdit(true);
-        setNewQuantity(qty.toString()); // Показываем текущее количество
-    }, [qty]);
-
-    const handleSave = useCallback(() => {
-        if (timerRef.current) {
-            clearTimeout(timerRef.current);
-        }
-
-        if (newQuantity !== "") {
-            const qtyNum = parseInt(newQuantity);
-            
-            if (!isNaN(qtyNum) && qtyNum >= 0) {
-                const updatedPart = {
-                    id: id,
-                    part: {
-                        quantity: newQuantity,
-                    },
-                };
-
-                dispatch(updateStock(updatedPart));
-                setNewQuantity("");
-                setOnEdit(false);
-            }
-        }
-    }, [newQuantity, id, dispatch]);
-
-    const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') {
-            e.preventDefault();
-            handleSave();
+            e.currentTarget.blur();
         }
-    }, [handleSave]);
+    };
 
     return (
-        <div className={classNames(cls.part, { [cls.zeroQuantity]: qty <= 0 })} ref={partRef}>
-            <p className={cls.name}>{name}</p>
-            <p className={cls.number}>{number}</p>
-            {onEdit ? (
-                <div className={cls.qtyBox}>
-                    <input
-                        type="number"
-                        value={newQuantity}
-                        onChange={(e) => setNewQuantity(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        autoFocus
-                        className={cls.input}
-                    />
-                    <button 
-                        type="button" 
-                        className={cls.buttonDone}
-                        onMouseDown={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleSave();
-                        }}
-                    >
-                        <CheckIcon className={cls.checkIcon} />
-                    </button>
-                </div>
-            ) : (
-                <div className={cls.qtyBox}>
-                    <p className={cls.qty}>{qty}</p>
-                    <EditPenIcon 
-                        className={cls.editIcon} 
-                        onClick={handleEditClick}
-                    />
-                </div>
-            )}
+        <div
+            className={classNames(cls.part, {
+                [cls.zeroQuantity]: qty <= 0,
+            })}
+        >
+            <div className={cls.nameBlock}>
+                <CopyablePartNumber
+                    value={name}
+                    className={cls.name}
+                    label="наименование"
+                />
+                {optionModel && (
+                    <span className={cls.optionBadge}>{optionModel}</span>
+                )}
+            </div>
+            <CopyablePartNumber
+                value={number}
+                className={cls.number}
+                label="артикул"
+            />
+            <p className={cls.life}>{partLife || '—'}</p>
+            <p className={cls.installed}>
+                {installedQty !== undefined && installedQty !== null
+                    ? installedQty
+                    : '—'}
+            </p>
+            <p className={cls.qty}>{qty}</p>
+            <div className={cls.orderBox}>
+                <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={orderValue}
+                    onChange={(e) => setOrderValue(e.target.value)}
+                    onFocus={handleFocus}
+                    onBlur={saveOrderQty}
+                    onKeyDown={handleKeyDown}
+                    className={classNames(cls.orderInput, {
+                        [cls.orderInputActive]:
+                            (parseInt(orderValue, 10) || 0) > 0,
+                    })}
+                    aria-label={`Кол-во к заказу: ${name}`}
+                />
+            </div>
         </div>
     );
 };

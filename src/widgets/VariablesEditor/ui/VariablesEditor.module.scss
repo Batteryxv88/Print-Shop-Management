@@ -1,0 +1,476 @@
+.editor {
+    width: 100%;
+    padding: 38px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    opacity: 0;
+    animation: fadeIn 0.15s ease-in forwards;
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+    }
+}
+
+.h2 {
+    background: linear-gradient(
+        to right,
+        rgba(98, 218, 251, 0.9),
+        rgba(98, 218, 251, 0.7)
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-size: 20px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-align: end;
+    font-family: monospace;
+    border-bottom: 1px solid rgba(98, 218, 251, 0.15);
+    padding-bottom: 5px;
+}
+
+.sections {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.sectionButton,
+.sectionActive {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sectionButton {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: #2a2a2a;
+    color: rgba(255, 255, 255, 0.87);
+
+    &:hover {
+        background: #333;
+        border-color: rgba(255, 255, 255, 0.24);
+    }
+}
+
+.sectionActive {
+    border: 1px solid #bb86fc;
+    background: rgba(187, 134, 252, 0.12);
+    color: #bb86fc;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.hint {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+    line-height: 1.5;
+    max-width: 720px;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    background: rgba(98, 218, 251, 0.04);
+    border: 1px solid rgba(98, 218, 251, 0.15);
+    border-radius: 8px;
+}
+
+.formRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 13px;
+    flex: 1;
+    min-width: 180px;
+}
+
+.input {
+    padding: 10px 12px;
+    background: #1e1e1e;
+    color: rgba(255, 255, 255, 0.87);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    font-size: 14px;
+
+    &:focus {
+        outline: none;
+        border-color: #bb86fc;
+    }
+}
+
+.formActions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.submit,
+.cancel,
+.editBtn,
+.deleteBtn {
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: background 0.2s ease;
+}
+
+.submit {
+    background: #bb86fc;
+    color: #121212;
+
+    &:hover {
+        background: #c397fc;
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+.cancel {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.editBtn {
+    background: rgba(98, 218, 251, 0.15);
+    color: rgba(98, 218, 251, 0.95);
+    padding: 6px 10px;
+    font-size: 13px;
+}
+
+.deleteBtn {
+    background: rgba(207, 102, 121, 0.15);
+    color: #cf6679;
+    padding: 6px 10px;
+    font-size: 13px;
+}
+
+.error {
+    color: #cf6679;
+    font-size: 14px;
+}
+
+.success {
+    color: rgba(98, 218, 251, 0.95);
+    font-size: 14px;
+}
+
+.fieldHint {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 12px;
+    line-height: 1.45;
+    max-width: 520px;
+}
+
+.scheduleForm {
+    max-width: 420px;
+    width: fit-content;
+}
+
+.scheduleRow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.scheduleLabel {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.dayInput {
+    width: 64px;
+    flex: 0 0 64px;
+    text-align: center;
+    padding-left: 8px;
+    padding-right: 4px;
+
+    /* убрать стрелки number на webkit */
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    appearance: textfield;
+}
+
+.seedBox {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    max-width: 520px;
+}
+
+.tableWrapper {
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+
+    th,
+    td {
+        padding: 12px 14px;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    th {
+        color: rgba(255, 255, 255, 0.6);
+        font-weight: 500;
+        background: rgba(98, 218, 251, 0.06);
+    }
+
+    td {
+        color: rgba(255, 255, 255, 0.87);
+    }
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.empty {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
+}
+
+.printerList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.printerCard {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    background: #1a1a1a;
+    overflow: hidden;
+}
+
+.printerHeader {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    background: rgba(98, 218, 251, 0.04);
+}
+
+.printerInfo {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    align-items: center;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.7);
+
+    strong {
+        color: rgba(255, 255, 255, 0.92);
+        font-size: 15px;
+    }
+}
+
+.printerBody {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.subBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.subTitle {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(98, 218, 251, 0.9);
+    letter-spacing: 0.3px;
+}
+
+.optionForm {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+
+    .input {
+        flex: 1;
+        min-width: 160px;
+    }
+}
+
+.optionCard {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: #222;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.optionRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: flex-end;
+}
+
+.uploadBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+}
+
+.fileInput {
+    display: none;
+}
+
+.uploadBtn {
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: 1px solid rgba(98, 218, 251, 0.35);
+    background: rgba(98, 218, 251, 0.1);
+    color: rgba(98, 218, 251, 0.95);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease;
+
+    &:hover {
+        background: rgba(98, 218, 251, 0.18);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+.uploadOk {
+    color: #81c784;
+    font-size: 13px;
+}
+
+.colorConfig {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    padding-top: 4px;
+}
+
+.colorModeRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.colorModeLabel {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 13px;
+    min-width: 90px;
+}
+
+.colorModeButtons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.modeButton,
+.modeActive {
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.modeButton {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: #2a2a2a;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.modeActive {
+    border: 1px solid #bb86fc;
+    background: rgba(187, 134, 252, 0.12);
+    color: #bb86fc;
+}
+
+.colorChips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.colorChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(98, 218, 251, 0.12);
+    border: 1px solid rgba(98, 218, 251, 0.25);
+    color: rgba(98, 218, 251, 0.95);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: monospace;
+}
+
+.extraColorRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+
+    .input {
+        max-width: 200px;
+    }
+}

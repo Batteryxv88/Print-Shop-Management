@@ -1,0 +1,41 @@
+.root {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    text-align: inherit;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: color 0.15s ease, background 0.15s ease;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &:hover {
+        color: #BB86FC;
+        background: rgba(187, 134, 252, 0.1);
+    }
+
+    &:focus-visible {
+        outline: 1px solid #BB86FC;
+        outline-offset: 1px;
+    }
+}
+
+.copied {
+    color: #14A76C;
+    background: rgba(20, 167, 108, 0.12);
+
+    &:hover {
+        color: #14A76C;
+        background: rgba(20, 167, 108, 0.16);
+    }
+}

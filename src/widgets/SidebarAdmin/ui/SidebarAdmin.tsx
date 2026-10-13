@@ -12,6 +12,8 @@ const SidebarAdmin = () => {
         <div className={cls.sidebar}>
             <ChoiseButton name="Главная" onClick={() => dispatch(changeAdminComponent("Главная"))} state={adminComponent} />
             <ChoiseButton name="Радактор отчета" onClick={() => dispatch(changeAdminComponent("Радактор отчета"))} state={adminComponent} />
+            <ChoiseButton name="Редактор переменных" onClick={() => dispatch(changeAdminComponent("Редактор переменных"))} state={adminComponent} />
+            <ChoiseButton name="Склады материалов" onClick={() => dispatch(changeAdminComponent("Склады материалов"))} state={adminComponent} />
         </div>
     );
 };

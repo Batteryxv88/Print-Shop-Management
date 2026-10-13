@@ -33,6 +33,46 @@
      padding-bottom: 5px;
 }
 
+.printerTabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.printerTab,
+.printerActive {
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.printerTab {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: #2a2a2a;
+    color: rgba(255, 255, 255, 0.75);
+
+    &:hover {
+        background: #333;
+        border-color: rgba(255, 255, 255, 0.24);
+    }
+}
+
+.printerActive {
+    border: 1px solid #bb86fc;
+    background: rgba(187, 134, 252, 0.12);
+    color: #bb86fc;
+}
+
+.modelHint {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+
 .title {
     font-size: 14px;
     font-weight: 500;

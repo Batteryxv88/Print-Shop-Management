@@ -2,24 +2,26 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 4px 50px 4px 50px;
+    min-height: 28px;
+    padding: 2px 28px;
     background: #1E1E1E;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    transition: all 0.2s ease;
-    
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: background 0.15s ease, border-color 0.15s ease;
+    font-size: 12.5px;
+    line-height: 1.25;
 
     &:nth-child(odd) {
         background: #1E1E1E;
     }
 
     &:nth-child(even) {
-        background: #2A2A2A;
+        background: #252525;
     }
 
     &:hover {
-        background: #333333;
-        border-color: rgba(255, 255, 255, 0.12);
+        background: #2e2e2e;
+        border-color: rgba(255, 255, 255, 0.1);
     }
 }
 
@@ -28,113 +30,78 @@
     align-items: center;
     justify-content: flex-end;
     width: 80px;
-    color: rgba(255, 255, 255, 0.87);
-    font-size: 14px;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 12.5px;
+    margin: 0;
+    gap: 0;
+
+    p {
+        margin: 0;
+    }
 }
 
 .name {
     width: 200px;
     color: rgba(255, 255, 255, 0.87);
-    font-size: 14px;
+    font-size: 12.5px;
     font-weight: 500;
+    margin: 0;
+    padding: 1px 4px;
+    justify-content: flex-start;
+    text-align: left;
+    box-sizing: border-box;
 }
 
 .number {
     width: 120px;
-    color: rgba(255, 255, 255, 0.87);
-    font-size: 14px;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 12.5px;
     text-align: center;
+    margin: 0;
+    padding: 1px 4px;
+    box-sizing: border-box;
 }
 
 .man {
     width: 120px;
-    color: rgba(255, 255, 255, 0.87);
-    font-size: 14px;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 12.5px;
     text-align: center;
+    margin: 0;
 }
 
 .qty {
     width: 80px;
     color: rgba(255, 255, 255, 0.87);
-    font-size: 14px;
+    font-size: 12.5px;
     text-align: center;
+    margin: 0;
 }
 
 .percentRed {
-    width: 60px;
-    padding: 3px 8px;
+    width: auto;
+    min-width: 44px;
+    padding: 1px 6px;
     background: rgba(207, 102, 121, 0.12);
     color: #CF6679;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 500;
     text-align: center;
-    border-radius: 4px;
+    border-radius: 3px;
+    margin: 0;
 }
 
 .percentGreen {
-    width: 60px;
-    padding: 4px 8px;
+    width: auto;
+    min-width: 44px;
+    padding: 1px 6px;
     background: rgba(20, 167, 108, 0.12);
     color: #14A76C;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 500;
     text-align: center;
-    border-radius: 4px;
-}
-
-.actions {
-    display: flex;
-    gap: 8px;
-    margin-left: auto;
-}
-
-.button {
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: none;
-    border-radius: 4px;
-    background: transparent;
-    color: rgba(255, 255, 255, 0.6);
-    cursor: pointer;
-    transition: all 0.2s ease;
-
-    &:hover {
-        background: rgba(255, 255, 255, 0.08);
-        color: rgba(255, 255, 255, 0.87);
-    }
-
-    &:active {
-        background: rgba(255, 255, 255, 0.12);
-    }
-}
-
-.buttonDelete {
-    color: #CF6679;
-
-    &:hover {
-        background: rgba(207, 102, 121, 0.12);
-        color: #CF6679;
-    }
-
-    &:active {
-        background: rgba(207, 102, 121, 0.24);
-    }
-}
-
-.buttonEdit {
-    color: #BB86FC;
-
-    &:hover {
-        background: rgba(187, 134, 252, 0.12);
-        color: #BB86FC;
-    }
-
-    &:active {
-        background: rgba(187, 134, 252, 0.24);
-    }
+    border-radius: 3px;
+    margin: 0;
 }
 
 .percent {

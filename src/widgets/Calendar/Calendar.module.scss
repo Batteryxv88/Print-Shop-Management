@@ -1,6 +1,6 @@
 .calendar {
     width: 100%;
-    padding: 0px 38px 38px 38px;
+    padding: 12px 18px 20px;
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -19,86 +19,97 @@
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 50px 10px 50px;
-    background: linear-gradient(to right, rgba(98, 218, 251, 0.08), rgba(98, 218, 251, 0.02));
-    border-radius: 8px;
-    border: 1px solid rgba(98, 218, 251, 0.15);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2),
-                inset 0 0 0 1px rgba(98, 218, 251, 0.05);
-    margin-bottom: 14px;
+    padding: 5px 28px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    margin-bottom: 6px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.4);
 }
 
 .h2 {
-    background: linear-gradient(to right,
-       rgba(98, 218, 251, 0.9),
+    background: linear-gradient(
+        to right,
+        rgba(98, 218, 251, 0.9),
         rgba(98, 218, 251, 0.7)
     );
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-     font-size: 20px;
-     font-weight: 500;
-     margin-bottom: 24px;
-     letter-spacing: 1px;
-     text-transform: uppercase;
-     text-align: end;
-     font-family: monospace;
-     border-bottom: 1px solid rgba(98, 218, 251, 0.15);
-     padding-bottom: 5px;
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-align: end;
+    font-family: monospace;
+    border-bottom: 1px solid rgba(98, 218, 251, 0.15);
+    padding-bottom: 4px;
 }
 
-
 .name {
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 14px;
-    font-weight: 500;
     min-width: 200px;
+    font-size: inherit;
+    font-weight: inherit;
+    color: inherit;
 }
 
 .number {
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 14px;
-    font-weight: 500;
     min-width: 120px;
     text-align: center;
+    font-size: inherit;
+    font-weight: inherit;
+    color: inherit;
 }
 
 .man {
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 14px;
-    font-weight: 500;
     min-width: 120px;
     text-align: center;
+    font-size: inherit;
+    font-weight: inherit;
+    color: inherit;
 }
 
 .qty {
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 14px;
-    font-weight: 500;
     min-width: 80px;
     text-align: center;
+    font-size: inherit;
+    font-weight: inherit;
+    color: inherit;
 }
 
 .res {
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 14px;
-    font-weight: 500;
     min-width: 100px;
     text-align: center;
+    font-size: inherit;
+    font-weight: inherit;
+    color: inherit;
 }
 
 .date {
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 14px;
-    font-weight: 500;
     min-width: 80px;
     text-align: center;
+    font-size: inherit;
+    font-weight: inherit;
+    color: inherit;
 }
 
 .delete {
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 14px;
-    font-weight: 500;
     min-width: 80px;
     text-align: end;
+    font-size: inherit;
+    font-weight: inherit;
+    color: inherit;
+}
+
+.emptyHint {
+    margin: 16px 0 8px;
+    padding: 0 4px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+    text-align: center;
 }

@@ -1,0 +1,57 @@
+.bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.select,
+.qty,
+.note {
+    height: 30px;
+    padding: 0 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: #2A2A2A;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 12.5px;
+
+    &:focus {
+        outline: none;
+        border-color: #BB86FC;
+    }
+}
+
+.select {
+    min-width: 180px;
+    max-width: 260px;
+}
+
+.qty {
+    width: 72px;
+    text-align: center;
+}
+
+.note {
+    min-width: 140px;
+    flex: 1;
+    max-width: 220px;
+}
+
+.btn {
+    height: 30px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 6px;
+    background: #BB86FC;
+    color: rgba(0, 0, 0, 0.87);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    cursor: pointer;
+
+    &:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+}

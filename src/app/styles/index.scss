@@ -27,10 +27,16 @@
     }
 }
 
+html,
+body,
+#root {
+    height: 100%;
+    overflow: hidden;
+}
+
 body {
     font: var(--font-m);
     color: var(--primary-color);
-    height: 100%;
 }
 
 .app {

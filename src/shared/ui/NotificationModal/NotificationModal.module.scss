@@ -87,7 +87,30 @@
 .footer {
     display: flex;
     justify-content: flex-end;
+    gap: 10px;
     padding: 0 24px 20px 30px;
+}
+
+.cancelButton {
+    padding: 8px 18px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+
+    &:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
 }
 
 .okButton {
@@ -103,14 +126,38 @@
     letter-spacing: 0.1px;
     transition: all 0.2s ease;
 
-    &:hover {
+    &:hover:not(:disabled) {
         background: #C397FC;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
-    &:active {
+    &:active:not(:disabled) {
         background: #B77EFC;
     }
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+}
+
+.dangerButton {
+    background: #CF6679;
+    color: rgba(0, 0, 0, 0.9);
+
+    &:hover:not(:disabled) {
+        background: #d97a8a;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    &:active:not(:disabled) {
+        background: #c45568;
+    }
+}
+
+.closeButton:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 
 @keyframes fadeIn {

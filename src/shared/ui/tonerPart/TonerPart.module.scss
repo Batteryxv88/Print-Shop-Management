@@ -2,36 +2,41 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 4px 50px 4px 50px;
+    min-height: 28px;
+    padding: 2px 28px;
     background: #1E1E1E;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    transition: all 0.2s ease;
-    font-size: 14px;
-    
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: background 0.15s ease, border-color 0.15s ease;
+    font-size: 12.5px;
+    line-height: 1.25;
 
     &:nth-child(odd) {
         background: #1E1E1E;
     }
 
     &:nth-child(even) {
-        background: #2A2A2A;
+        background: #252525;
     }
 
     &:hover {
-        background: #333333;
-        border-color: rgba(255, 255, 255, 0.12);
+        background: #2e2e2e;
+        border-color: rgba(255, 255, 255, 0.1);
     }
 }
 
 .dateBox {
     display: flex;
     flex-direction: row;
-    gap: 4px;
-    color: rgba(255, 255, 255, 0.87);
-    //font-size: 14px;
+    gap: 0;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 12.5px;
     min-width: 120px;
     justify-content: center;
+
+    p {
+        margin: 0;
+    }
 }
 
 .colorBox {
@@ -40,99 +45,33 @@
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+    gap: 8px;
 }
 
 .colorName {
     color: rgba(255, 255, 255, 0.87);
-    //font-size: 14px;
+    font-size: 12.5px;
     font-weight: 500;
-    padding: 3px 0 3px 0;
+    padding: 0;
+    margin: 0;
 }
 
-.colorM {
+.swatch {
     border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    background-color: #E91E63;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.colorC {
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    background-color: #00BCD4;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.colorY {
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    background-color: #FFC107;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.colorK {
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    background-color: #212121;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.counter {
-    width: 120px;
-    text-align: center;
-    color: rgba(255, 255, 255, 0.87);
-    //font-size: 14px;
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .man {
-    width: 130px;
+    flex: 1;
+    min-width: 130px;
     text-align: center;
-    color: rgba(255, 255, 255, 0.87);
-    //font-size: 14px;
-}
-
-.buttonDelete {
-    width: 32px;
-    height: 32px;
-    background-color: transparent;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    color: rgba(255, 255, 255, 0.6);
-    padding: 0;
-
-    &:hover {
-        background: rgba(255, 255, 255, 0.08);
-        color: rgba(255, 255, 255, 0.87);
-    }
-
-    &:active {
-        background: rgba(255, 255, 255, 0.12);
-    }
-}
-
-.deleteIcon {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-    stroke: currentColor;
-    transition: all 0.2s ease;
-    display: block;
-    flex-shrink: 0;
-    
-    &:hover {
-        stroke: #CF6679;
-        transform: scale(1.1);
-    }
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 12.5px;
+    margin: 0;
 }
 
 .deleteBox {

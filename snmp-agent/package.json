@@ -1,0 +1,20 @@
+{
+  "name": "sl-snmp-counter-agent",
+  "version": "1.0.0",
+  "description": "Windows-агент: снятие счётчиков принтеров по SNMP и запись в Firestore",
+  "private": true,
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "once": "node src/index.js --force",
+    "dry-run": "node src/index.js --force --dry-run",
+    "test-snmp": "node src/index.js --force --dry-run"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "net-snmp": "^3.20.0"
+  }
+}

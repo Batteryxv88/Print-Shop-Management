@@ -1,3 +1,104 @@
 .MainPage {
-    font-size: 30px;
+    height: 100%;
+    min-height: 0;
+    padding: 16px 18px 18px;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.browser {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: #1a1a1a;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.browserTop {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: #1e1e1e;
+}
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px 16px;
+    min-height: 40px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.crumbHome {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 13px;
+}
+
+.crumbSep {
+    color: rgba(255, 255, 255, 0.22);
+    font-size: 12px;
+    user-select: none;
+}
+
+.crumb {
+    color: rgba(255, 255, 255, 0.55);
+    font-weight: 500;
+}
+
+.crumbCurrent {
+    color: rgba(255, 255, 255, 0.92);
+    font-weight: 600;
+}
+
+.modelsRow {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    padding: 0 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    overflow-x: auto;
+
+    &::-webkit-scrollbar {
+        height: 3px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.14);
+        border-radius: 3px;
+    }
+}
+
+.modelsLabel {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 8px 0 8px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.32);
+    white-space: nowrap;
+}
+
+.content {
+    flex: 1;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
 }

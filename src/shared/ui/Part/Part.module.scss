@@ -2,30 +2,26 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 4px 50px 4px 50px;
+    min-height: 28px;
+    padding: 2px 28px;
     background: #1E1E1E;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    transition: all 0.2s ease;
-    font-size: 14px;
-    
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: background 0.15s ease, border-color 0.15s ease;
+    font-size: 12.5px;
+    line-height: 1.25;
 
     &:nth-child(odd) {
         background: #1E1E1E;
     }
 
     &:nth-child(even) {
-        background: #2A2A2A;
+        background: #252525;
     }
 
     &:hover {
-        background: #333333;
-        border-color: rgba(255, 255, 255, 0.12);
-    }
-
-    &:hover {
-        background: #333333;
-        border-color: rgba(255, 255, 255, 0.12);
+        background: #2e2e2e;
+        border-color: rgba(255, 255, 255, 0.1);
     }
 
     &.zeroQuantity {
@@ -68,25 +64,109 @@
     }
 }
 
+.nameBlock {
+    width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
 .name {
-    width: 325px;
     color: rgba(255, 255, 255, 0.87);
-    font-size: 14px;
+    font-size: 12.5px;
     font-weight: 500;
+    margin: 0;
+    padding: 1px 4px;
+    justify-content: flex-start;
+    text-align: left;
+    box-sizing: border-box;
+}
+
+.optionBadge {
+    font-size: 10px;
+    color: rgba(187, 134, 252, 0.85);
+    letter-spacing: 0.15px;
+    line-height: 1.2;
 }
 
 .number {
-    width: 120px;
-    color: rgba(255, 255, 255, 0.87);
-    font-size: 14px;
-    padding: 3px 0 3px 0;
+    width: 110px;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 12.5px;
+    padding: 1px 4px;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+.life {
+    width: 70px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12px;
+    text-align: center;
+    font-family: monospace;
+    margin: 0;
+}
+
+.installed {
+    width: 60px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+    text-align: center;
+    margin: 0;
 }
 
 .qty {
-    width: 80px;
+    width: 60px;
     color: rgba(255, 255, 255, 0.87);
-    font-size: 14px;
+    font-size: 12.5px;
     text-align: center;
+    margin: 0;
+}
+
+.orderBox {
+    width: 88px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.orderInput {
+    width: 56px;
+    height: 22px;
+    padding: 0 6px;
+    font-size: 12.5px;
+    line-height: 1;
+    background: #2A2A2A;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 3px;
+    color: rgba(255, 255, 255, 0.87);
+    text-align: center;
+    transition: border-color 0.15s ease;
+
+    &:focus {
+        outline: none;
+        border-color: #BB86FC;
+    }
+
+    &:hover {
+        border-color: rgba(255, 255, 255, 0.24);
+    }
+
+    &[type="number"] {
+        -moz-appearance: textfield;
+
+        &::-webkit-inner-spin-button,
+        &::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    }
+}
+
+.orderInputActive {
+    border-color: rgba(98, 218, 251, 0.55);
+    color: #62DAFB;
+    font-weight: 600;
 }
 
 .qtyRed {
@@ -228,7 +308,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    width: 240px;
+    width: 160px;
     gap: 8px;
-    min-width: 240px;
+    min-width: 160px;
 }
