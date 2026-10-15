@@ -17,5 +17,19 @@ export function buildPlugins ({paths}: BuildOptions): webpack.WebpackPluginInsta
         new webpack.ProvidePlugin({
             Buffer: ['buffer', 'Buffer'],
         }),
+        new webpack.DefinePlugin({
+            'process.env.DATA_BACKEND': JSON.stringify(
+                process.env.DATA_BACKEND || 'firebase'
+            ),
+            'process.env.APPWRITE_ENDPOINT': JSON.stringify(
+                process.env.APPWRITE_ENDPOINT || ''
+            ),
+            'process.env.APPWRITE_PROJECT_ID': JSON.stringify(
+                process.env.APPWRITE_PROJECT_ID || ''
+            ),
+            'process.env.APPWRITE_DATABASE_ID': JSON.stringify(
+                process.env.APPWRITE_DATABASE_ID || 'print_shop'
+            ),
+        }),
     ]
 }

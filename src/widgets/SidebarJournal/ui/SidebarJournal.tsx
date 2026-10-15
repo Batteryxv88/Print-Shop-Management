@@ -46,6 +46,11 @@ const SidebarJournal = () => {
                 name: 'Инженер',
                 hint: 'Расходы на сервисного инженера',
             },
+            {
+                kind: 'scrap',
+                name: 'Брак',
+                hint: 'Списание бракованного товара',
+            },
         ];
         if (paperStockEnabled) {
             list.push({

@@ -94,13 +94,14 @@ export const usePrinters = () => {
     return { printers, isLoading, error };
 };
 
-export const useMaterials = () => {
+export const useMaterials = (enabled = true) => {
     const dispatch = useAppDispatch();
     const materials = useAppSelector(state => state.materials.materials);
     const isLoading = useAppSelector(state => state.materials.isLoading);
     const error = useAppSelector(state => state.materials.error);
 
     useEffect(() => {
+        if (!enabled) return;
         if (!materialsSub.unsubscribe) dispatch(setLoading(true));
         return retainSharedSubscription(materialsSub, () =>
             subscribeToMaterials((materialsData) => {
@@ -108,18 +109,19 @@ export const useMaterials = () => {
                 dispatch(setLoading(false));
             })
         );
-    }, [dispatch]);
+    }, [dispatch, enabled]);
 
     return { materials, isLoading, error };
 };
 
-export const useLaminations = () => {
+export const useLaminations = (enabled = true) => {
     const dispatch = useAppDispatch();
     const laminations = useAppSelector(state => state.laminations.laminations);
     const isLoading = useAppSelector(state => state.laminations.isLoading);
     const error = useAppSelector(state => state.laminations.error);
 
     useEffect(() => {
+        if (!enabled) return;
         if (!laminationsSub.unsubscribe) dispatch(setLaminationsLoading(true));
         return retainSharedSubscription(laminationsSub, () =>
             subscribeLaminations((laminationsData) => {
@@ -127,18 +129,19 @@ export const useLaminations = () => {
                 dispatch(setLaminationsLoading(false));
             })
         );
-    }, [dispatch]);
+    }, [dispatch, enabled]);
 
     return { laminations, isLoading, error };
 };
 
-export const useHoldersAndKnifes = () => {
+export const useHoldersAndKnifes = (enabled = true) => {
     const dispatch = useAppDispatch();
     const holdersAndKnifes = useAppSelector(state => state.holdersAndKnifes.holdersAndKnifes);
     const isLoading = useAppSelector(state => state.holdersAndKnifes.isLoading);
     const error = useAppSelector(state => state.holdersAndKnifes.error);
 
     useEffect(() => {
+        if (!enabled) return;
         if (!holdersSub.unsubscribe) dispatch(setHoldersAndKnifesLoading(true));
         return retainSharedSubscription(holdersSub, () =>
             HolderAndKnifeService((holdersAndKnifesData) => {
@@ -146,68 +149,72 @@ export const useHoldersAndKnifes = () => {
                 dispatch(setHoldersAndKnifesLoading(false));
             })
         );
-    }, [dispatch]);
+    }, [dispatch, enabled]);
 
     return { holdersAndKnifes, isLoading, error };
 };
 
-export const useToners = () => {
+export const useToners = (enabled = true) => {
     const dispatch = useAppDispatch();
     const tonersArr = useAppSelector(state => state.tonersStorage.tonersStorageArr);
 
     useEffect(() => {
+        if (!enabled) return;
         return retainSharedSubscription(tonersStorageSub, () =>
             TonerService((tonersData) => {
                 dispatch(setTonersStorage(tonersData));
             })
         );
-    }, [dispatch]);
+    }, [dispatch, enabled]);
 
     return { tonersArr };
 };
 
-export const useParts = () => {
+export const useParts = (enabled = true) => {
     const dispatch = useAppDispatch();
     const partsArray = useAppSelector(state => state.parts.partsArray);
 
     useEffect(() => {
+        if (!enabled) return;
         return retainSharedSubscription(partsSub, () =>
             PartService((partsData) => {
                 dispatch(setParts(partsData));
             })
         );
-    }, [dispatch]);
+    }, [dispatch, enabled]);
 
     return { partsArray };
 };
 
-export const useUsedParts = () => {
+export const useUsedParts = (enabled = true) => {
     const dispatch = useAppDispatch();
     const usedPartsArray = useAppSelector(state => state.replacedParts.usedPartsArray);
 
     useEffect(() => {
+        if (!enabled) return;
         return retainSharedSubscription(usedPartsSub, () =>
             UsedPartService((partsData) => {
                 dispatch(setUsedParts(partsData));
             })
         );
-    }, [dispatch]);
+    }, [dispatch, enabled]);
 
     return { usedPartsArray };
 };
 
 /** История замен тонеров (коллекция Toners) */
-export const useTonerHistory = () => {
+export const useTonerHistory = (enabled = true) => {
     const dispatch = useAppDispatch();
     const tonersArray = useAppSelector((state) => state.toners.tonersArray);
 
     useEffect(() => {
+        if (!enabled) return;
         return retainSharedSubscription(tonerHistorySub, () =>
             TonerHistoryService((tonersData) => {
                 dispatch(setTonersHistory(tonersData));
             })
         );
-    }, [dispatch]);
+    }, [dispatch, enabled]);
 
     return { tonersArray };
 };

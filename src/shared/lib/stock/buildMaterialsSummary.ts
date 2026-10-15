@@ -1,5 +1,6 @@
 import {
     isActiveCostMovement,
+    isProductionWriteoff,
     StockLot,
     StockMovement,
 } from '../../../services/stockAccounting';
@@ -13,6 +14,8 @@ export type MaterialTotals = {
     purchasedCost: number;
     usedQty: number;
     usedCost: number;
+    scrapQty: number;
+    scrapCost: number;
     stockQty: number;
     stockValue: number;
 };
@@ -36,6 +39,8 @@ const emptyTotals = (): MaterialTotals => ({
     purchasedCost: 0,
     usedQty: 0,
     usedCost: 0,
+    scrapQty: 0,
+    scrapCost: 0,
     stockQty: 0,
     stockValue: 0,
 });
@@ -74,8 +79,13 @@ export const buildMaterialsSummary = (
             byKind[kind].purchasedQty += qty;
             byKind[kind].purchasedCost += cost;
         } else if (m.kind === 'writeoff') {
-            byKind[kind].usedQty += qty;
-            byKind[kind].usedCost += cost;
+            if (isProductionWriteoff(m)) {
+                byKind[kind].usedQty += qty;
+                byKind[kind].usedCost += cost;
+            } else {
+                byKind[kind].scrapQty += qty;
+                byKind[kind].scrapCost += cost;
+            }
         }
     });
 
@@ -97,7 +107,7 @@ export const buildMaterialsSummary = (
         if (!(cost > 0)) return;
         const cell = monthMap.get(pk) || { purchased: 0, used: 0 };
         if (m.kind === 'purchase') cell.purchased += cost;
-        else if (m.kind === 'writeoff') cell.used += cost;
+        else if (isProductionWriteoff(m)) cell.used += cost;
         monthMap.set(pk, cell);
     });
 

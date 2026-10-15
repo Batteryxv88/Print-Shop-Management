@@ -6,6 +6,7 @@ import {
 } from './costCategory';
 import {
     isActiveCostMovement,
+    isProductionWriteoff,
     StockMovement,
 } from '../../../services/stockAccounting';
 import { formatPeriodLabel, pad2 } from '../utils/counterReading';
@@ -188,7 +189,7 @@ export const buildPrinterMonthlyCosts = (
         }
 
         if (
-            kind === 'writeoff' ||
+            isProductionWriteoff(m) ||
             kind === 'write-off' ||
             kind === 'usage'
         ) {

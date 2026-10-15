@@ -3,9 +3,11 @@ import {
     doc,
     getDoc,
     getDocs,
+    limit,
     orderBy,
     query,
     runTransaction,
+    where,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { PrinterCounterValues } from '../shared/lib/counterReading/fields';
@@ -52,10 +54,15 @@ const mapDoc = (
 
 export const fetchLastCounterReading =
     async (): Promise<CounterReadingRecord | null> => {
-        // Берём максимальный periodKey — надёжнее, чем completedAt
-        const all = await fetchAllCounterReadings();
-        if (all.length === 0) return null;
-        return all[all.length - 1];
+        const q = query(
+            collection(db, COL),
+            orderBy('periodKey', 'desc'),
+            limit(1)
+        );
+        const snap = await getDocs(q);
+        if (snap.empty) return null;
+        const d = snap.docs[0];
+        return mapDoc(d.id, d.data());
     };
 
 export const fetchAllCounterReadings = async (): Promise<
@@ -85,10 +92,53 @@ export const fetchCounterReadingByPeriod = async (
 export const fetchPreviousCounterReading = async (
     periodKey: string
 ): Promise<CounterReadingRecord | null> => {
-    const all = await fetchAllCounterReadings();
-    const prev = all.filter((r) => r.periodKey < periodKey);
-    if (prev.length === 0) return null;
-    return prev[prev.length - 1];
+    const q = query(
+        collection(db, COL),
+        where('periodKey', '<', periodKey),
+        orderBy('periodKey', 'desc'),
+        limit(1)
+    );
+    const snap = await getDocs(q);
+    if (snap.empty) return null;
+    const d = snap.docs[0];
+    return mapDoc(d.id, d.data());
+};
+
+/** Показания для графика объёма: последние N месяцев + одно «до» для дельты */
+export const fetchCounterReadingsForVolumeChart = async (
+    monthsBack = 14
+): Promise<CounterReadingRecord[]> => {
+    const recentQ = query(
+        collection(db, COL),
+        orderBy('periodKey', 'desc'),
+        limit(Math.max(2, monthsBack + 1))
+    );
+    const recentSnap = await getDocs(recentQ);
+    const recent = recentSnap.docs
+        .map((d) => mapDoc(d.id, d.data()))
+        .sort((a, b) => a.periodKey.localeCompare(b.periodKey));
+
+    if (recent.length >= 2) return recent;
+
+    const anchor = recent[0]?.periodKey;
+    if (!anchor) return recent;
+
+    const beforeQ = query(
+        collection(db, COL),
+        where('periodKey', '<', anchor),
+        orderBy('periodKey', 'desc'),
+        limit(1)
+    );
+    const beforeSnap = await getDocs(beforeQ);
+    if (beforeSnap.empty) return recent;
+
+    const before = mapDoc(
+        beforeSnap.docs[0].id,
+        beforeSnap.docs[0].data()
+    );
+    return [before, ...recent].sort((a, b) =>
+        a.periodKey.localeCompare(b.periodKey)
+    );
 };
 
 export type CounterReadingSaveMode = 'create' | 'update';

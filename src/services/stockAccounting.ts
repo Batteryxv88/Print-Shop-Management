@@ -32,6 +32,9 @@ export type MovementKind =
     | 'engineer'
     | 'storno';
 
+/** production — обычная замена/расход; scrap — брак, не в «Потрачено» принтера */
+export type WriteoffReason = 'production' | 'scrap';
+
 export type { CostCategory };
 
 export interface StockLot {
@@ -87,6 +90,7 @@ export interface StockMovement {
     economyAmount?: number;
     factoryLife?: number;
     actualLife?: number;
+    writeoffReason?: WriteoffReason;
     /** Списание/инженер отменены сторно */
     reversed?: boolean;
     reversedAt?: string;
@@ -102,6 +106,16 @@ export const isActiveCostMovement = (
     if (m.kind === 'storno') return false;
     return true;
 };
+
+export const isScrapMovement = (
+    m: Pick<StockMovement, 'kind' | 'writeoffReason'>
+): boolean =>
+    m.kind === 'writeoff' && m.writeoffReason === 'scrap';
+
+/** Списание, которое идёт в себестоимость / «Потрачено» принтера */
+export const isProductionWriteoff = (
+    m: Pick<StockMovement, 'kind' | 'writeoffReason'>
+): boolean => m.kind === 'writeoff' && !isScrapMovement(m);
 
 export interface PurchaseInput {
     type: 'part' | 'toner' | 'paper' | 'lamination';
@@ -138,6 +152,8 @@ export interface WriteOffInput {
     factoryLife?: number;
     actualLife?: number;
     economyAmount?: number;
+    writeoffReason?: WriteoffReason;
+    comment?: string;
 }
 
 const stockCollectionFor = (
@@ -165,6 +181,9 @@ export interface EngineerServiceInput {
 
 const LOTS = 'StockLots';
 const MOVEMENTS = 'StockMovements';
+
+let knownSuppliersCache: { at: number; list: string[] } | null = null;
+const SUPPLIERS_CACHE_MS = 10 * 60 * 1000;
 
 const nowIso = () => new Date().toISOString();
 
@@ -252,6 +271,7 @@ export const purchaseStock = async (
     }
 
     await batch.commit();
+    knownSuppliersCache = null;
     return { lotId: lotRef.id, movementId: movementRef.id };
 };
 
@@ -355,14 +375,18 @@ export const writeOffFifo = async (
             costCategory = ranked[0][0] as CostCategory;
         }
 
-        const factoryLife = Number(input.factoryLife) || 0;
-        const actualLife = Number(input.actualLife) || 0;
-        const economyAmount =
-            input.economyAmount !== undefined
-                ? Number(input.economyAmount) || 0
-                : costCategory === 'consumable'
-                  ? calcLifeEconomy(totalCost, factoryLife, actualLife)
-                  : 0;
+        const writeoffReason: WriteoffReason =
+            input.writeoffReason === 'scrap' ? 'scrap' : 'production';
+        const isScrap = writeoffReason === 'scrap';
+        const factoryLife = isScrap ? 0 : Number(input.factoryLife) || 0;
+        const actualLife = isScrap ? 0 : Number(input.actualLife) || 0;
+        const economyAmount = isScrap
+            ? 0
+            : input.economyAmount !== undefined
+              ? Number(input.economyAmount) || 0
+              : costCategory === 'consumable'
+                ? calcLifeEconomy(totalCost, factoryLife, actualLife)
+                : 0;
 
         tx.set(movementRef, {
             kind: 'writeoff',
@@ -383,6 +407,8 @@ export const writeOffFifo = async (
             economyAmount,
             factoryLife,
             actualLife,
+            writeoffReason,
+            comment: input.comment?.trim() || '',
         });
 
         if (stockSnap.exists()) {
@@ -434,7 +460,10 @@ export const reverseStockMovement = async (
         if (data.reversed) {
             throw new Error('Движение уже сторнировано');
         }
-        if (data.kind !== 'writeoff' && data.kind !== 'engineer') {
+        if (
+            data.kind !== 'writeoff' &&
+            data.kind !== 'engineer'
+        ) {
             throw new Error(
                 'Сторно доступно только для списаний и вызовов инженера'
             );
@@ -570,6 +599,23 @@ export const subscribeEngineerMovements = (
     });
 };
 
+/** Живой список списаний брака */
+export const subscribeScrapMovements = (
+    cb: (items: StockMovement[]) => void
+) => {
+    const q = query(
+        collection(db, MOVEMENTS),
+        where('writeoffReason', '==', 'scrap')
+    );
+    return onSnapshot(q, (snap) => {
+        const items = snap.docs
+            .map((d) => mapMovementDoc(d.id, d.data() as Record<string, unknown>))
+            .filter((m) => m.kind === 'writeoff' && !m.reversed)
+            .sort((a, b) => String(b.date).localeCompare(String(a.date)));
+        cb(items);
+    });
+};
+
 const mapMovementDoc = (
     id: string,
     data: Record<string, unknown>
@@ -609,6 +655,20 @@ export const fetchMovementsInRange = async (
     return snapshot.docs.map((d) =>
         mapMovementDoc(d.id, d.data() as Record<string, unknown>)
     );
+};
+
+/** Начало периода для помесячных графиков затрат (~13 мес. + запас) */
+export const costChartFromIso = (toDateStr: string): string => {
+    const end = new Date(`${toDateStr}T12:00:00`);
+    if (Number.isNaN(end.getTime())) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - 14);
+        return d.toISOString();
+    }
+    const start = new Date(end);
+    start.setMonth(start.getMonth() - 14);
+    start.setHours(0, 0, 0, 0);
+    return start.toISOString();
 };
 
 /** Последние движения — для графика затрат (без зависимости от фильтра дат) */
@@ -730,13 +790,28 @@ export const fetchLastPartPurchasePrices = async (
 };
 
 export const fetchKnownSuppliers = async (): Promise<string[]> => {
-    const [lotsSnap, movesSnap] = await Promise.all([
-        getDocs(collection(db, LOTS)),
-        getDocs(collection(db, MOVEMENTS)),
+    const now = Date.now();
+    if (
+        knownSuppliersCache &&
+        now - knownSuppliersCache.at < SUPPLIERS_CACHE_MS
+    ) {
+        return knownSuppliersCache.list;
+    }
+
+    const [openLots, movesSnap] = await Promise.all([
+        fetchOpenLots(),
+        getDocs(
+            query(
+                collection(db, MOVEMENTS),
+                where('kind', '==', 'purchase'),
+                orderBy('date', 'desc'),
+                limit(400)
+            )
+        ),
     ]);
     const set = new Set<string>();
-    lotsSnap.docs.forEach((d) => {
-        const name = String((d.data() as StockLot).supplier || '').trim();
+    openLots.forEach((lot) => {
+        const name = String(lot.supplier || '').trim();
         if (name) set.add(name);
     });
     movesSnap.docs.forEach((d) => {
@@ -745,9 +820,11 @@ export const fetchKnownSuppliers = async (): Promise<string[]> => {
         ).trim();
         if (name) set.add(name);
     });
-    return Array.from(set).sort((a, b) =>
+    const list = Array.from(set).sort((a, b) =>
         a.localeCompare(b, 'ru', { sensitivity: 'base' })
     );
+    knownSuppliersCache = { at: now, list };
+    return list;
 };
 
 /** Сохранить категорию на карточке детали (для следующих приходов) */

@@ -5,7 +5,10 @@ import { addCharts, type ChartSpec } from 'chartsheet';
 if (!(globalThis as { Buffer?: typeof Buffer }).Buffer) {
     (globalThis as { Buffer: typeof Buffer }).Buffer = Buffer;
 }
-import type { StockMovement } from '../../../services/stockAccounting';
+import {
+    type StockMovement,
+    isScrapMovement,
+} from '../../../services/stockAccounting';
 import type { CounterReadingRecord } from '../../../services/counterReadings';
 import {
     COST_CATEGORIES,
@@ -104,9 +107,12 @@ const addSheet = (
 
 const money = (n: number) => Math.round(n * 100) / 100;
 
-const kindRu = (kind: string) => {
+const kindRu = (m: Pick<StockMovement, 'kind' | 'writeoffReason'>) => {
+    const { kind } = m;
     if (kind === 'purchase') return 'Приход';
-    if (kind === 'writeoff') return 'Списание';
+    if (kind === 'writeoff') {
+        return isScrapMovement(m) ? 'Брак' : 'Списание';
+    }
     if (kind === 'engineer') return 'Инженер';
     if (kind === 'storno') return 'Сторно';
     return kind;
@@ -586,8 +592,8 @@ export const exportAnalyticsExcel = async (input: AnalyticsExportInput) => {
         input.movements.map((m) => ({
             'Дата': new Date(m.date).toLocaleString('ru-RU'),
             'Тип': m.reversed
-                ? `${kindRu(m.kind)} (отменено)`
-                : kindRu(m.kind),
+                ? `${kindRu(m)} (отменено)`
+                : kindRu(m),
             'Категория':
                 COST_CATEGORY_LABELS[m.costCategory] || m.costCategory || '',
             'Позиция':

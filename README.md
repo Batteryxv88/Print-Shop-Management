@@ -2,7 +2,7 @@
 
 Внутренняя система учёта для типографии (этикетка / цифровая печать): склад расходников, журнал обслуживания принтеров, счётчики, аналитика затрат и цеховые инструменты.
 
-Стек: **React + TypeScript + Redux Toolkit + Firebase (Firestore/Auth)** + опциональный **Windows SNMP-агент**.
+Стек: **React + TypeScript + Redux Toolkit + Firebase (Firestore/Auth)** + опциональный **Appwrite (self-hosted, в подготовке)** + **Windows SNMP-агент**.
 
 ---
 
@@ -58,6 +58,12 @@ npm install
 
 Укажите конфиг Firebase в `src/services/firebase.ts` (apiKey, projectId и т.д.).
 
+Скопируйте `.env.example` → `.env` в корне. По умолчанию `DATA_BACKEND=firebase` — менять не нужно.
+
+### Appwrite (локально, без отказа от Firebase)
+
+Схема БД и скрипт установки: [`appwrite/README.md`](./appwrite/README.md). Приложение **пока** ходит только в Firebase; Appwrite — для домашней/VPS-песочницы.
+
 ### Запуск
 
 ```bash
@@ -97,8 +103,11 @@ src/
   pages/         # страницы (склад, журнал, аналитика, …)
   widgets/       # крупные блоки UI
   features/      # формы действий (приход, замена, …)
-  services/      # Firebase / бизнес-логика
+  services/      # Firebase / бизнес-логика (активный бэкенд)
+  data/          # будущие адаптеры Appwrite
+  config/        # DATA_BACKEND и т.п.
   shared/        # UI-киты, утилиты, стили
+appwrite/        # Docker + npm run setup (коллекции под Firestore)
 snmp-agent/      # Windows-агент снятия счётчиков по SNMP
 ```
 

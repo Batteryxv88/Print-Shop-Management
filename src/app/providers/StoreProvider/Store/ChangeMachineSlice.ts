@@ -4,6 +4,7 @@ export type JournalKind =
     | 'toner'
     | 'part'
     | 'engineer'
+    | 'scrap'
     | 'paper'
     | 'lamination'
     | 'counters';

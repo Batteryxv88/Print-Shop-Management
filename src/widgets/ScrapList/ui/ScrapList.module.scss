@@ -1,0 +1,126 @@
+.list {
+    width: 100%;
+    padding: 12px 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.head,
+.row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 2px 28px;
+}
+
+.head {
+    padding: 5px 28px;
+    margin-bottom: 6px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.4);
+
+    p {
+        margin: 0;
+    }
+}
+
+.row {
+    min-height: 28px;
+    background: #1E1E1E;
+    border-radius: 5px;
+    border: 1px solid rgba(207, 102, 121, 0.12);
+    transition: background 0.15s ease, border-color 0.15s ease;
+    font-size: 12.5px;
+    line-height: 1.25;
+    color: rgba(255, 255, 255, 0.82);
+
+    p {
+        margin: 0;
+    }
+
+    &:nth-child(even) {
+        background: #252525;
+    }
+
+    &:hover {
+        background: #2e2e2e;
+        border-color: rgba(207, 102, 121, 0.22);
+    }
+}
+
+.colName {
+    flex: 1;
+    min-width: 140px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: hidden;
+}
+
+.name {
+    color: rgba(255, 255, 255, 0.87);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sub {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.42);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.colType {
+    width: 100px;
+    text-align: center;
+}
+
+.colQty {
+    width: 56px;
+    text-align: center;
+}
+
+.colAmount {
+    width: 100px;
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+}
+
+.colMachine {
+    width: 120px;
+    text-align: center;
+}
+
+.colMan {
+    width: 130px;
+    text-align: center;
+}
+
+.colDate {
+    width: 100px;
+    text-align: center;
+}
+
+.colDel {
+    width: 80px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.empty {
+    margin: 16px 0;
+    text-align: center;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+}

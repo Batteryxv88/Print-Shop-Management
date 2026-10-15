@@ -29,16 +29,18 @@ import {
 } from '../../../app/providers/StoreProvider/Store/hooks';
 import { usageEventsToMovements } from '../../../shared/lib/stock/usageEventsToMovements';
 import {
+    costChartFromIso,
     fetchMovementsInRange,
-    fetchRecentMovements,
     fetchOpenLots,
     isActiveCostMovement,
+    isProductionWriteoff,
+    isScrapMovement,
     stockValueFromLots,
     StockLot,
     StockMovement,
 } from '../../../services/stockAccounting';
 import {
-    fetchAllCounterReadings,
+    fetchCounterReadingsForVolumeChart,
     type CounterReadingRecord,
 } from '../../../services/counterReadings';
 import {
@@ -493,14 +495,22 @@ const AnalyticsPage = () => {
         setLoading(true);
         setError('');
         try {
-            const [moves, costMoves, lots, readings] = await Promise.all([
-                fetchMovementsInRange(startOfDayIso(from), endOfDayIso(to)),
-                fetchRecentMovements(800),
+            const chartFrom = costChartFromIso(to);
+            const rangeFrom = startOfDayIso(from);
+            const rangeTo = endOfDayIso(to);
+            const loadFrom =
+                chartFrom < rangeFrom ? chartFrom : rangeFrom;
+
+            const [allMoves, lots, readings] = await Promise.all([
+                fetchMovementsInRange(loadFrom, rangeTo),
                 fetchOpenLots(),
-                fetchAllCounterReadings(),
+                fetchCounterReadingsForVolumeChart(14),
             ]);
+            const moves = allMoves.filter(
+                (m) => m.date >= rangeFrom && m.date <= rangeTo
+            );
             setMovements(moves);
-            setCostMovements(costMoves.length > 0 ? costMoves : moves);
+            setCostMovements(allMoves);
             setStockValue(stockValueFromLots(lots));
             setLots(lots);
             setCounterReadings(readings);
@@ -529,7 +539,14 @@ const AnalyticsPage = () => {
     const writeoffs = useMemo(
         () =>
             movements.filter(
-                (m) => m.kind === 'writeoff' && isActiveCostMovement(m)
+                (m) => isProductionWriteoff(m) && isActiveCostMovement(m)
+            ),
+        [movements]
+    );
+    const scrapMoves = useMemo(
+        () =>
+            movements.filter(
+                (m) => isScrapMovement(m) && isActiveCostMovement(m)
             ),
         [movements]
     );
@@ -552,6 +569,10 @@ const AnalyticsPage = () => {
     const usedCost =
         writeoffs.reduce((s, m) => s + Number(m.totalCost || 0), 0) +
         engineerMoves.reduce((s, m) => s + Number(m.totalCost || 0), 0);
+    const scrapCost = scrapMoves.reduce(
+        (s, m) => s + Number(m.totalCost || 0),
+        0
+    );
     // Закуплено = только приходы
     const purchaseCost = purchases.reduce(
         (s, m) => s + Number(m.totalCost || 0),
@@ -856,11 +877,20 @@ const AnalyticsPage = () => {
         visibleCount: recentVisibleCount,
     } = useInfiniteList(recentAll);
 
-    const kindLabel = (kind: string, reversed?: boolean) => {
+    const kindLabel = (
+        kind: string,
+        reversed?: boolean,
+        writeoffReason?: StockMovement['writeoffReason']
+    ) => {
         if (kind === 'storno') return 'Сторно';
         if (kind === 'purchase') return 'Приход';
         if (kind === 'writeoff') {
-            return reversed ? 'Списание (отменено)' : 'Списание';
+            if (reversed) {
+                return writeoffReason === 'scrap'
+                    ? 'Брак (отменено)'
+                    : 'Списание (отменено)';
+            }
+            return writeoffReason === 'scrap' ? 'Брак' : 'Списание';
         }
         if (kind === 'engineer') {
             return reversed ? 'Инженер (отменено)' : 'Инженер';
@@ -899,6 +929,15 @@ const AnalyticsPage = () => {
                     </div>
                     <div className={cls.kpiSub}>
                         замены, расходка, тонер, инженер
+                    </div>
+                </div>
+                <div className={cls.kpi}>
+                    <div className={cls.kpiLabel}>Брак и потери</div>
+                    <div className={cls.kpiValue}>
+                        {formatMoney(scrapCost)} ₽
+                    </div>
+                    <div className={cls.kpiSub}>
+                        списано как брак, не в «Потрачено»
                     </div>
                 </div>
                 <div className={cls.kpi}>
@@ -1551,7 +1590,11 @@ const AnalyticsPage = () => {
                                                     {formatDateShort(m.date)}
                                                 </span>
                                                 <span>
-                                                    {kindLabel(m.kind)}
+                                                    {kindLabel(
+                                                        m.kind,
+                                                        m.reversed,
+                                                        m.writeoffReason
+                                                    )}
                                                 </span>
                                                 <span
                                                     className={
@@ -1655,6 +1698,23 @@ const AnalyticsPage = () => {
                                                             )}
                                                         </dd>
                                                     </div>
+                                                    {t.scrapQty > 0 ? (
+                                                        <div>
+                                                            <dt>Брак</dt>
+                                                            <dd>
+                                                                {formatCount(
+                                                                    t.scrapQty
+                                                                )}{' '}
+                                                                шт.
+                                                                <small>
+                                                                    {formatMoney(
+                                                                        t.scrapCost
+                                                                    )}{' '}
+                                                                    ₽
+                                                                </small>
+                                                            </dd>
+                                                        </div>
+                                                    ) : null}
                                                     <div>
                                                         <dt>Остаток</dt>
                                                         <dd>
@@ -1867,7 +1927,8 @@ const AnalyticsPage = () => {
                                             >
                                                 {kindLabel(
                                                     m.kind,
-                                                    m.reversed
+                                                    m.reversed,
+                                                    m.writeoffReason
                                                 )}
                                             </td>
                                             <td>

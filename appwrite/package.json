@@ -1,0 +1,13 @@
+{
+  "name": "print-shop-appwrite-setup",
+  "private": true,
+  "type": "module",
+  "description": "Создание базы и коллекций Appwrite под Print Shop Management",
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "setup:check": "node scripts/setup.mjs --check-only"
+  },
+  "dependencies": {
+    "node-appwrite": "^14.1.0"
+  }
+}

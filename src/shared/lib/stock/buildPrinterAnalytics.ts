@@ -6,6 +6,7 @@ import {
 } from './costCategory';
 import {
     isActiveCostMovement,
+    isProductionWriteoff,
     StockMovement,
 } from '../../../services/stockAccounting';
 
@@ -117,7 +118,7 @@ export const buildPrinterAnalytics = (
             return;
         }
 
-        if (m.kind === 'writeoff' && machine) {
+        if (isProductionWriteoff(m) && machine) {
             const row = ensureRow(machine, m.model);
             if (amount > 0) addTo(row.used, category, amount);
             if (m.type === 'part') {

@@ -1,9 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { getAuth } from 'firebase/auth';
-import {
-    fetchAppSettings,
-    saveAppSettings,
-} from '../../../../services/appSettings';
+import { saveAppSettings } from '../../../../services/appSettings';
+import { loadAppSettings } from './AppSettingsSlice';
 import {
     CounterReadingPrinterEntry,
     CounterReadingSaveMode,
@@ -40,11 +38,6 @@ const recomputeShow = (state: CounterReadingState) => {
     const done = isCounterReadingDoneForPeriod(state.lastPeriodKey, active);
     state.showReminder = Boolean(active && !done);
 };
-
-export const loadCounterReadingSettings = createAsyncThunk(
-    'counterReading/loadSettings',
-    async () => fetchAppSettings()
-);
 
 export const saveCounterReadingDay = createAsyncThunk(
     'counterReading/saveDay',
@@ -87,13 +80,13 @@ const counterReadingSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            .addCase(loadCounterReadingSettings.fulfilled, (state, action) => {
+            .addCase(loadAppSettings.fulfilled, (state, action) => {
                 state.counterReadingDay = action.payload.counterReadingDay;
                 state.settingsLoaded = true;
                 state.error = null;
                 recomputeShow(state);
             })
-            .addCase(loadCounterReadingSettings.rejected, (state, action) => {
+            .addCase(loadAppSettings.rejected, (state, action) => {
                 state.settingsLoaded = true;
                 state.error = action.error.message || 'Ошибка настроек';
             })

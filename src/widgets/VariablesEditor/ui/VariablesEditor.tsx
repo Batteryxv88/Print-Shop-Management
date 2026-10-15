@@ -2,8 +2,8 @@ import { useEffect, useState, FormEvent } from 'react';
 import cls from './VariablesEditor.module.scss';
 import { usePrinters } from '../../../app/providers/StoreProvider/Store/hooks';
 import { useAppDispatch, useAppSelector } from '../../../app/providers/StoreProvider/Store/hooks';
+import { loadAppSettings } from '../../../app/providers/StoreProvider/Store/AppSettingsSlice';
 import {
-    loadCounterReadingSettings,
     loadLastCounterReading,
     saveCounterReadingDay,
 } from '../../../app/providers/StoreProvider/Store/CounterReadingSlice';
@@ -58,7 +58,7 @@ const VariablesEditor = () => {
     const [optionDraft, setOptionDraft] = useState({ model: '', serialNumber: '' });
 
     useEffect(() => {
-        dispatch(loadCounterReadingSettings());
+        dispatch(loadAppSettings());
     }, [dispatch]);
 
     useEffect(() => {

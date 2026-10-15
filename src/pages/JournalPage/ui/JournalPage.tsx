@@ -20,6 +20,8 @@ import { TonerReplace } from '../../../widgets/TonerReplace';
 import Calendar from '../../../widgets/Calendar/Calendar';
 import MaterialUsageList from '../../../widgets/MaterialUsageList/ui/MaterialUsageList';
 import EngineerServiceList from '../../../widgets/EngineerServiceList/ui/EngineerServiceList';
+import AddScrap from '../../../features/ui/AddScrap/AddScrap';
+import ScrapList from '../../../widgets/ScrapList/ui/ScrapList';
 import CounterReadingForm from '../../../widgets/CounterReadingForm/ui/CounterReadingForm';
 import {
     getModelByPrinterName,
@@ -35,7 +37,9 @@ const JournalPage = () => {
     const machine = useAppSelector((state) => state.machines.machine);
     const tonerMachine = useAppSelector((state) => state.machines.tonerMachine);
     const { printers } = usePrinters();
-    const { partsArray } = useParts();
+    const needsPartsCatalog =
+        journalKind === 'part' || journalKind === 'scrap';
+    const { partsArray } = useParts(needsPartsCatalog);
     const filterSection = useAppSelector(
         (state) => state.filteredParts.filter.section
     );
@@ -45,7 +49,8 @@ const JournalPage = () => {
     const needsPrinter =
         journalKind === 'toner' ||
         journalKind === 'part' ||
-        journalKind === 'engineer';
+        journalKind === 'engineer' ||
+        journalKind === 'scrap';
     const selected =
         journalKind === 'toner' ? tonerMachine : machine;
 
@@ -92,7 +97,9 @@ const JournalPage = () => {
               ? 'Заменить деталь'
               : journalKind === 'engineer'
                 ? 'Инженер'
-                : journalKind === 'paper'
+                : journalKind === 'scrap'
+                  ? 'Брак'
+                  : journalKind === 'paper'
                   ? 'Списать бумагу'
                   : journalKind === 'lamination'
                     ? 'Списать ламинацию'
@@ -122,7 +129,11 @@ const JournalPage = () => {
 
                     {needsPrinter ? (
                         <div className={cls.printersRow}>
-                            <span className={cls.printersLabel}>Принтер</span>
+                            <span className={cls.printersLabel}>
+                                {journalKind === 'scrap'
+                                    ? 'Где обнаружено'
+                                    : 'Принтер'}
+                            </span>
                             <PrinterSelectTabs
                                 variant="row"
                                 selected={selected}
@@ -169,6 +180,7 @@ const JournalPage = () => {
                             {journalKind === 'engineer' && (
                                 <AddEngineerService />
                             )}
+                            {journalKind === 'scrap' && <AddScrap />}
                             {journalKind === 'paper' && (
                                 <AddMaterialUsage kind="paper" />
                             )}
@@ -181,6 +193,7 @@ const JournalPage = () => {
                     {journalKind === 'toner' && <TonerReplace />}
                     {journalKind === 'part' && <Calendar />}
                     {journalKind === 'engineer' && <EngineerServiceList />}
+                    {journalKind === 'scrap' && <ScrapList />}
                     {journalKind === 'paper' && (
                         <MaterialUsageList kind="paper" />
                     )}
