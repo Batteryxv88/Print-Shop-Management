@@ -100,6 +100,11 @@
     }
 }
 
+.expandCol {
+    width: 32px;
+    flex-shrink: 0;
+}
+
 .titleBox {
     display: flex;
     flex-direction: row;

@@ -11,6 +11,8 @@ import {
     addMaterialUsage,
 } from '../../../services/materialUsage';
 import NotificationModal from '../../../shared/ui/NotificationModal/NotificationModal';
+import FifoBreakdownModal from '../../../shared/ui/FifoBreakdownModal/FifoBreakdownModal';
+import { useFifoBreakdown } from '../../../shared/lib/hooks/useFifoBreakdown';
 
 type Props = {
     kind: MaterialUsageKind;
@@ -25,6 +27,7 @@ const AddMaterialUsage = ({ kind }: Props) => {
     const [note, setNote] = useState('');
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
+    const { breakdown, openBreakdown, closeBreakdown } = useFifoBreakdown();
 
     const options = useMemo(() => {
         if (kind === 'paper') {
@@ -92,6 +95,18 @@ const AddMaterialUsage = ({ kind }: Props) => {
                 unitPriceAvg: writeOff.unitPriceAvg,
             });
 
+            openBreakdown({
+                title:
+                    kind === 'paper'
+                        ? 'Списание бумаги (FIFO)'
+                        : 'Списание ламинации (FIFO)',
+                subtitle: item.name,
+                qty: q,
+                totalCost: writeOff.totalCost,
+                unitPriceAvg: writeOff.unitPriceAvg,
+                slices: writeOff.lots,
+            });
+
             setStockId('');
             setQty('1');
             setNote('');
@@ -151,6 +166,17 @@ const AddMaterialUsage = ({ kind }: Props) => {
                 title="Не удалось списать"
                 message={error}
                 type="error"
+            />
+
+            <FifoBreakdownModal
+                isOpen={Boolean(breakdown)}
+                onClose={closeBreakdown}
+                title={breakdown?.title || ''}
+                subtitle={breakdown?.subtitle}
+                qty={breakdown?.qty || 0}
+                totalCost={breakdown?.totalCost || 0}
+                unitPriceAvg={breakdown?.unitPriceAvg || 0}
+                slices={breakdown?.slices || []}
             />
         </div>
     );

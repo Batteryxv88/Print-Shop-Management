@@ -1,0 +1,102 @@
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.72);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+    padding: 16px;
+}
+
+.modal {
+    background: #1e1e1e;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    max-width: 720px;
+    width: 100%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 22px 18px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+
+.title {
+    margin: 0 0 4px;
+    font-size: 18px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.subtitle {
+    margin: 0 0 6px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.hint {
+    margin: 0 0 14px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.status {
+    margin: 12px 0 16px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.error {
+    margin: 12px 0 16px;
+    font-size: 13px;
+    color: #cf6679;
+}
+
+.chartWrap {
+    flex: 1;
+    min-height: 0;
+    margin-bottom: 16px;
+}
+
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.secondaryBtn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid rgba(187, 134, 252, 0.45);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 13px;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+        background: rgba(187, 134, 252, 0.12);
+    }
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+}
+
+.okBtn {
+    padding: 8px 18px;
+    border-radius: 6px;
+    border: none;
+    background: #bb86fc;
+    color: #121212;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 13px;
+
+    &:hover {
+        filter: brightness(1.05);
+    }
+}

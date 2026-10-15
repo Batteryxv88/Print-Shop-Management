@@ -1,6 +1,7 @@
 import {
     collection,
     doc,
+    getDoc,
     getDocs,
     query,
     where,
@@ -692,19 +693,135 @@ const inferLegacyCategory = (m: Partial<StockMovement>): CostCategory => {
     return 'consumable';
 };
 
+const mapLotDoc = (id: string, data: Omit<StockLot, 'id'>): StockLot => ({
+    id,
+    ...data,
+    costCategory:
+        data.costCategory ||
+        (data.type === 'toner' ? 'toner' : 'consumable'),
+});
+
 export const fetchOpenLots = async (): Promise<StockLot[]> => {
     const q = query(collection(db, LOTS), where('qtyLeft', '>', 0));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map((d) => {
-        const data = d.data() as Omit<StockLot, 'id'>;
-        return {
-            id: d.id,
-            ...data,
-            costCategory:
-                data.costCategory ||
-                (data.type === 'toner' ? 'toner' : 'consumable'),
-        };
-    });
+    return snapshot.docs.map((d) =>
+        mapLotDoc(d.id, d.data() as Omit<StockLot, 'id'>)
+    );
+};
+
+/** Партии одной позиции склада (FIFO: старые первые) */
+export const fetchLotsByStockId = async (
+    stockId: string,
+    openOnly = false
+): Promise<StockLot[]> => {
+    const q = query(collection(db, LOTS), where('stockId', '==', stockId));
+    const snapshot = await getDocs(q);
+    let lots = snapshot.docs.map((d) =>
+        mapLotDoc(d.id, d.data() as Omit<StockLot, 'id'>)
+    );
+    if (openOnly) {
+        lots = lots.filter((l) => Number(l.qtyLeft) > 0);
+    }
+    lots.sort(
+        (a, b) =>
+            new Date(a.purchasedAt).getTime() -
+            new Date(b.purchasedAt).getTime()
+    );
+    return lots;
+};
+
+export type PriceDriftPoint = {
+    lotId: string;
+    purchasedAt: string;
+    unitPrice: number;
+    qtyInitial: number;
+    qtyLeft: number;
+    supplier?: string;
+};
+
+const mapLotToPriceDriftPoint = (
+    lot: StockLot
+): PriceDriftPoint => ({
+    lotId: lot.id,
+    purchasedAt: lot.purchasedAt,
+    unitPrice: Number(lot.unitPrice) || 0,
+    qtyInitial: Number(lot.qtyInitial) || 0,
+    qtyLeft: Number(lot.qtyLeft) || 0,
+    supplier: lot.supplier,
+});
+
+const driftAllCache = new Map<string, Promise<PriceDriftPoint[]>>();
+
+/** Все приходы позиции (тот же запрос, что и вкладка «Партии» — без составного индекса) */
+export const fetchPriceDriftAllForStock = async (
+    stockId: string
+): Promise<PriceDriftPoint[]> => {
+    let pending = driftAllCache.get(stockId);
+    if (!pending) {
+        pending = fetchLotsByStockId(stockId, false).then((lots) =>
+            lots.map((lot) => mapLotToPriceDriftPoint(lot))
+        );
+        driftAllCache.set(stockId, pending);
+    }
+    return pending;
+};
+
+/** Последние N приходов (хронологически: старые → новые) */
+export const fetchPriceDriftRecent = async (
+    stockId: string,
+    count = 10
+): Promise<PriceDriftPoint[]> => {
+    const all = await fetchPriceDriftAllForStock(stockId);
+    return all.slice(-count);
+};
+
+export type PriceDriftPageResult = {
+    points: PriceDriftPoint[];
+    hasMore: boolean;
+    nextOffset: number;
+};
+
+/** Страница истории (FIFO): один запрос к Firestore, дальше — срезы в памяти */
+export const fetchPriceDriftPage = async (
+    stockId: string,
+    pageSize: number,
+    offset = 0
+): Promise<PriceDriftPageResult> => {
+    const all = await fetchPriceDriftAllForStock(stockId);
+    const points = all.slice(offset, offset + pageSize);
+    const nextOffset = offset + points.length;
+    return {
+        points,
+        hasMore: nextOffset < all.length,
+        nextOffset,
+    };
+};
+
+export type EnrichedFifoSlice = FifoLotSlice & {
+    purchasedAt?: string;
+    supplier?: string;
+};
+
+export const enrichFifoSlices = async (
+    slices: FifoLotSlice[]
+): Promise<EnrichedFifoSlice[]> => {
+    const uniqueIds = Array.from(new Set(slices.map((s) => s.lotId)));
+    const meta = new Map<string, { purchasedAt?: string; supplier?: string }>();
+    await Promise.all(
+        uniqueIds.map(async (lotId) => {
+            const snap = await getDoc(doc(db, LOTS, lotId));
+            if (!snap.exists()) return;
+            const data = snap.data() as StockLot;
+            meta.set(lotId, {
+                purchasedAt: data.purchasedAt,
+                supplier: data.supplier,
+            });
+        })
+    );
+    return slices.map((s) => ({
+        ...s,
+        ...meta.get(s.lotId),
+    }));
 };
 
 export const stockValueFromLots = (lots: StockLot[]): number =>

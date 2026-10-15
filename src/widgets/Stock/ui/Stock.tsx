@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import cls from './Stock.module.scss';
-import Part from '../../../shared/ui/Part/Part';
+import StockPartRow from './StockPartRow';
 import {
     useAppSelector,
     useParts,
@@ -105,6 +105,7 @@ const Stock = () => {
 
             {orderedParts.length > 0 && (
                 <div className={cls.titleBox} aria-hidden>
+                    <p className={cls.expandCol} title="Партии FIFO" />
                     <p className={cls.name}>Наименование</p>
                     <p className={cls.number}>Парт номер</p>
                     <p className={cls.life}>Ресурс</p>
@@ -149,7 +150,7 @@ const Stock = () => {
                                         </span>
                                     </div>
                                 ) : null}
-                                <Part
+                                <StockPartRow
                                     name={item.part.partName}
                                     number={item.part.partN}
                                     qty={item.part.quantity}

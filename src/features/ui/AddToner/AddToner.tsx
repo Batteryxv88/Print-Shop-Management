@@ -19,6 +19,8 @@ import {
 } from '../../../shared/lib/printers/tonerColors';
 import { writeOffFifo } from '../../../services/stockAccounting';
 import NotificationModal from '../../../shared/ui/NotificationModal/NotificationModal';
+import FifoBreakdownModal from '../../../shared/ui/FifoBreakdownModal/FifoBreakdownModal';
+import { useFifoBreakdown } from '../../../shared/lib/hooks/useFifoBreakdown';
 
 const formatDate = (date: Date) => {
     const pad = (num: number) => String(num).padStart(2, '0');
@@ -62,6 +64,7 @@ const AddToner = () => {
         open: boolean;
         message: string;
     }>({ open: false, message: '' });
+    const { breakdown, openBreakdown, closeBreakdown } = useFifoBreakdown();
 
     useEffect(() => {
         setSelectedColor(availableColors[0] || 'K');
@@ -117,6 +120,15 @@ const AddToner = () => {
                     movementId: writeOff.movementId,
                 })
             ).unwrap();
+
+            openBreakdown({
+                title: 'Списание тонера (FIFO)',
+                subtitle: `${colorToReplace} · ${machineTonerState}`,
+                qty: 1,
+                totalCost: writeOff.totalCost,
+                unitPriceAvg: writeOff.unitPriceAvg,
+                slices: writeOff.lots,
+            });
         } catch (err: unknown) {
             const msg =
                 err instanceof Error
@@ -190,6 +202,17 @@ const AddToner = () => {
                 title="Не удалось заменить тонер"
                 message={errorModal.message}
                 type="error"
+            />
+
+            <FifoBreakdownModal
+                isOpen={Boolean(breakdown)}
+                onClose={closeBreakdown}
+                title={breakdown?.title || ''}
+                subtitle={breakdown?.subtitle}
+                qty={breakdown?.qty || 0}
+                totalCost={breakdown?.totalCost || 0}
+                unitPriceAvg={breakdown?.unitPriceAvg || 0}
+                slices={breakdown?.slices || []}
             />
         </>
     );

@@ -1,0 +1,37 @@
+.row {
+    display: flex;
+    flex-direction: column;
+}
+
+.main {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+}
+
+.expandBtn {
+    flex: 0 0 28px;
+    margin-left: 4px;
+    align-self: center;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.45);
+    cursor: pointer;
+    font-size: 10px;
+    transition: transform 0.15s ease, color 0.15s ease;
+    padding: 4px;
+
+    &:hover {
+        color: #bb86fc;
+    }
+}
+
+.expandOpen {
+    transform: rotate(90deg);
+    color: #bb86fc;
+}
+
+.partWrap {
+    flex: 1;
+    min-width: 0;
+}

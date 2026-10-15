@@ -23,6 +23,8 @@ import PartPicker, {
     type PartPickerOption,
 } from '../PurchaseStock/PartPicker';
 import NotificationModal from '../../../shared/ui/NotificationModal/NotificationModal';
+import FifoBreakdownModal from '../../../shared/ui/FifoBreakdownModal/FifoBreakdownModal';
+import { useFifoBreakdown } from '../../../shared/lib/hooks/useFifoBreakdown';
 
 const AddScrap = () => {
     const { userData } = useAuth();
@@ -53,6 +55,7 @@ const AddScrap = () => {
     const [qty, setQty] = useState('1');
     const [note, setNote] = useState('');
     const [busy, setBusy] = useState(false);
+    const { breakdown, openBreakdown, closeBreakdown } = useFifoBreakdown();
     const [error, setError] = useState('');
 
     const effectiveType = allowedTypes.includes(itemType)
@@ -134,6 +137,10 @@ const AddScrap = () => {
 
         setBusy(true);
         try {
+            let writeOffResult: Awaited<ReturnType<typeof writeOffFifo>> | null =
+                null;
+            let breakdownSubtitle = '';
+
             if (effectiveType === 'part') {
                 const part =
                     partOptions.find((p) => p.id === selectedPartId) ||
@@ -151,7 +158,7 @@ const AddScrap = () => {
                     setError('Позиция не найдена');
                     return;
                 }
-                await writeOffFifo({
+                writeOffResult = await writeOffFifo({
                     type: 'part',
                     stockId: part.id,
                     partN: part.partN,
@@ -166,6 +173,7 @@ const AddScrap = () => {
                     writeoffReason: 'scrap',
                     comment,
                 });
+                breakdownSubtitle = `${part.partName} · ${part.partN}`;
             } else if (effectiveType === 'toner') {
                 const color = tonerColor || tonerColors[0] || 'K';
                 const stockToner = findTonerStock(
@@ -183,7 +191,7 @@ const AddScrap = () => {
                     setError('Тонер списывается по 1 шт.');
                     return;
                 }
-                await writeOffFifo({
+                writeOffResult = await writeOffFifo({
                     type: 'toner',
                     stockId: stockToner.id,
                     color,
@@ -197,6 +205,7 @@ const AddScrap = () => {
                     writeoffReason: 'scrap',
                     comment,
                 });
+                breakdownSubtitle = `Тонер ${color}`;
             } else if (
                 effectiveType === 'paper' ||
                 effectiveType === 'lamination'
@@ -210,7 +219,7 @@ const AddScrap = () => {
                     setError(`Недостаточно на складе (доступно ${item.qty})`);
                     return;
                 }
-                await writeOffFifo({
+                writeOffResult = await writeOffFifo({
                     type: effectiveType,
                     stockId: item.id,
                     partName: item.name,
@@ -222,6 +231,18 @@ const AddScrap = () => {
                     currentStockQty: item.qty,
                     writeoffReason: 'scrap',
                     comment,
+                });
+                breakdownSubtitle = item.name;
+            }
+
+            if (writeOffResult) {
+                openBreakdown({
+                    title: 'Списание брака (FIFO)',
+                    subtitle: breakdownSubtitle,
+                    qty: q,
+                    totalCost: writeOffResult.totalCost,
+                    unitPriceAvg: writeOffResult.unitPriceAvg,
+                    slices: writeOffResult.lots,
                 });
             }
 
@@ -344,6 +365,17 @@ const AddScrap = () => {
                 title="Не удалось списать"
                 message={error}
                 type="error"
+            />
+
+            <FifoBreakdownModal
+                isOpen={Boolean(breakdown)}
+                onClose={closeBreakdown}
+                title={breakdown?.title || ''}
+                subtitle={breakdown?.subtitle}
+                qty={breakdown?.qty || 0}
+                totalCost={breakdown?.totalCost || 0}
+                unitPriceAvg={breakdown?.unitPriceAvg || 0}
+                slices={breakdown?.slices || []}
             />
         </>
     );

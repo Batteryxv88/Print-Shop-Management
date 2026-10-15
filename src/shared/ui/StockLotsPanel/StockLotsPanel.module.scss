@@ -1,0 +1,270 @@
+.panel {
+    margin: 0 28px 8px;
+    padding: 12px 14px 14px;
+    background: #181818;
+    border: 1px solid rgba(187, 134, 252, 0.22);
+    border-radius: 6px;
+    font-size: 12.5px;
+}
+
+.panelHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.panelTitle {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.driftOpenBtn {
+    padding: 5px 12px;
+    border-radius: 4px;
+    border: 1px solid rgba(187, 134, 252, 0.45);
+    background: rgba(187, 134, 252, 0.1);
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+
+    &:hover {
+        background: rgba(187, 134, 252, 0.2);
+    }
+}
+
+.warn {
+    margin: 0 0 10px;
+    padding: 8px 10px;
+    border-radius: 4px;
+    background: rgba(255, 193, 7, 0.12);
+    border: 1px solid rgba(255, 193, 7, 0.35);
+    color: #ffe082;
+    font-size: 12px;
+}
+
+.fifoNote {
+    margin: 0 0 10px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 11.5px;
+    line-height: 1.4;
+}
+
+.loading,
+.empty {
+    color: rgba(255, 255, 255, 0.45);
+    margin: 8px 0;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th,
+    td {
+        padding: 6px 8px;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    th {
+        color: rgba(255, 255, 255, 0.5);
+        font-weight: 500;
+    }
+
+    td {
+        color: rgba(255, 255, 255, 0.85);
+    }
+
+    .nextRow {
+        background: rgba(187, 134, 252, 0.08);
+    }
+}
+
+.badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    background: rgba(187, 134, 252, 0.25);
+    color: #e1bee7;
+}
+
+.up {
+    color: #cf6679;
+}
+
+.down {
+    color: #81c784;
+}
+
+.chartBlock {
+    padding: 6px 8px 5px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.chartBlockModal {
+    padding: 14px 16px 12px;
+    border-color: rgba(255, 255, 255, 0.1);
+
+    .chartSvg {
+        height: 128px;
+        max-height: none;
+    }
+
+    .chartYAxis {
+        min-width: 52px;
+        font-size: 11px;
+        padding: 8px 0 20px;
+    }
+
+    .chartXSpan {
+        font-size: 10px;
+        margin-top: 4px;
+    }
+
+    .chartLine {
+        stroke-width: 2;
+    }
+
+    .chartInsight {
+        font-size: 13px;
+        margin-top: 8px;
+
+        strong {
+            font-size: 16px;
+        }
+    }
+
+    .chartInsightMuted {
+        font-size: 12px;
+    }
+}
+
+.chartLayout {
+    display: flex;
+    gap: 4px;
+    align-items: stretch;
+}
+
+.chartYAxis {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-shrink: 0;
+    min-width: 36px;
+    padding: 2px 0 12px;
+    font-size: 8px;
+    line-height: 1.1;
+    color: rgba(255, 255, 255, 0.38);
+    text-align: right;
+}
+
+.chartYTick {
+    white-space: nowrap;
+}
+
+.chartPlotWrap {
+    flex: 1;
+    min-width: 0;
+}
+
+.chartSvg {
+    display: block;
+    width: 100%;
+    height: 44px;
+}
+
+.chartGrid {
+    stroke: rgba(255, 255, 255, 0.07);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+}
+
+.chartArea {
+    fill: url(#priceDriftArea);
+}
+
+.chartLine {
+    stroke: rgba(187, 134, 252, 0.95);
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+}
+
+.chartHit {
+    fill: transparent;
+    cursor: pointer;
+    outline: none;
+}
+
+.chartDot {
+    fill: #181818;
+    stroke: rgba(98, 218, 251, 0.9);
+    stroke-width: 1.5;
+    pointer-events: none;
+}
+
+.chartDotActive {
+    stroke: #bb86fc;
+    stroke-width: 2;
+}
+
+.chartXSpan {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1px;
+    font-size: 8px;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.chartInsight {
+    margin: 4px 0 0;
+    padding: 0;
+    font-size: 11px;
+    line-height: 1.35;
+    color: rgba(255, 255, 255, 0.75);
+
+    strong {
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.92);
+        margin-right: 4px;
+    }
+}
+
+.chartInsightMuted {
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 10.5px;
+}
+
+.chartHint {
+    margin: 0;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.55);
+
+    strong {
+        color: rgba(255, 255, 255, 0.9);
+    }
+}
+
+
+.summary {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 11.5px;
+
+    strong {
+        color: rgba(255, 255, 255, 0.85);
+    }
+}

@@ -26,6 +26,8 @@ import {
 import PartPicker, {
     PartPickerOption,
 } from '../PurchaseStock/PartPicker';
+import FifoBreakdownModal from '../../../shared/ui/FifoBreakdownModal/FifoBreakdownModal';
+import { useFifoBreakdown } from '../../../shared/lib/hooks/useFifoBreakdown';
 
 const sameColorParts = [
     'A5WH0Y0C',
@@ -111,6 +113,7 @@ const AddReplacedPart = () => {
     const [error, setError] = useState(false);
     const [submitError, setSubmitError] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const { breakdown, openBreakdown, closeBreakdown } = useFifoBreakdown();
 
     const [partQuery, setPartQuery] = useState('');
     const [selectedPartId, setSelectedPartId] = useState<string | null>(null);
@@ -305,6 +308,14 @@ const AddReplacedPart = () => {
             );
 
             handleCloseModal();
+            openBreakdown({
+                title: 'Списание со склада (FIFO)',
+                subtitle: `${newName} · ${cleanedPartN}`,
+                qty,
+                totalCost: writeOff.totalCost,
+                unitPriceAvg: writeOff.unitPriceAvg,
+                slices: writeOff.lots,
+            });
         } catch (err: any) {
             setSubmitError(err?.message || 'Ошибка FIFO-списания');
         } finally {
@@ -419,6 +430,17 @@ const AddReplacedPart = () => {
                     </div>
                 </div>
             </Modal>
+
+            <FifoBreakdownModal
+                isOpen={Boolean(breakdown)}
+                onClose={closeBreakdown}
+                title={breakdown?.title || ''}
+                subtitle={breakdown?.subtitle}
+                qty={breakdown?.qty || 0}
+                totalCost={breakdown?.totalCost || 0}
+                unitPriceAvg={breakdown?.unitPriceAvg || 0}
+                slices={breakdown?.slices || []}
+            />
         </>
     );
 };
