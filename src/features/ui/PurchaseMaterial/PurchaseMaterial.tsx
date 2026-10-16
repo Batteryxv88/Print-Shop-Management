@@ -10,6 +10,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import {
     purchaseStock,
     fetchKnownSuppliers,
+    fetchLastSupplierForStock,
 } from '../../../services/stockAccounting';
 import {
     Material,
@@ -272,6 +273,17 @@ const PurchaseMaterial = ({ kind, layout = 'sidebar' }: Props) => {
         }
         if (allowedForms.length === 1) setForm(allowedForms[0]);
     }, [open, allowedForms]);
+
+    useEffect(() => {
+        if (!open || mode !== 'existing' || !stockId) return;
+        let cancelled = false;
+        fetchLastSupplierForStock(stockId).then((name) => {
+            if (!cancelled && name) setSupplier(name);
+        });
+        return () => {
+            cancelled = true;
+        };
+    }, [open, mode, stockId]);
 
     const reset = () => {
         setMode('existing');

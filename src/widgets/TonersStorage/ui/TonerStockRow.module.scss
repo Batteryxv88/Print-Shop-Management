@@ -1,0 +1,10 @@
+.main {
+    width: 140px;
+    cursor: pointer;
+    border-radius: 8px;
+    outline: none;
+
+    &:focus-visible {
+        box-shadow: 0 0 0 2px rgba(187, 134, 252, 0.45);
+    }
+}

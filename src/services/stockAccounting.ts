@@ -906,6 +906,28 @@ export const fetchLastPartPurchasePrices = async (
     return result;
 };
 
+const isFirestoreIndexError = (err: unknown): boolean =>
+    err instanceof Error && /requires an index/i.test(err.message);
+
+const collectSupplierNames = (set: Set<string>, raw: unknown) => {
+    const name = String(raw || '').trim();
+    if (name) set.add(name);
+};
+
+/** Поставщик с последнего прихода по позиции склада */
+export const fetchLastSupplierForStock = async (
+    stockId: string
+): Promise<string> => {
+    const id = String(stockId || '').trim();
+    if (!id) return '';
+    const lots = await fetchLotsByStockId(id, false);
+    for (let i = lots.length - 1; i >= 0; i--) {
+        const name = String(lots[i].supplier || '').trim();
+        if (name) return name;
+    }
+    return '';
+};
+
 export const fetchKnownSuppliers = async (): Promise<string[]> => {
     const now = Date.now();
     if (
@@ -915,28 +937,49 @@ export const fetchKnownSuppliers = async (): Promise<string[]> => {
         return knownSuppliersCache.list;
     }
 
-    const [openLots, movesSnap] = await Promise.all([
-        fetchOpenLots(),
-        getDocs(
-            query(
-                collection(db, MOVEMENTS),
-                where('kind', '==', 'purchase'),
-                orderBy('date', 'desc'),
-                limit(400)
-            )
-        ),
-    ]);
     const set = new Set<string>();
-    openLots.forEach((lot) => {
-        const name = String(lot.supplier || '').trim();
-        if (name) set.add(name);
-    });
-    movesSnap.docs.forEach((d) => {
-        const name = String(
-            (d.data() as StockMovement).supplier || ''
-        ).trim();
-        if (name) set.add(name);
-    });
+
+    try {
+        const openLots = await fetchOpenLots();
+        openLots.forEach((lot) => collectSupplierNames(set, lot.supplier));
+    } catch {
+        /* ignore */
+    }
+
+    try {
+        let moves: Array<{ date: string; supplier?: string }> = [];
+        try {
+            const snap = await getDocs(
+                query(
+                    collection(db, MOVEMENTS),
+                    where('kind', '==', 'purchase'),
+                    orderBy('date', 'desc'),
+                    limit(400)
+                )
+            );
+            moves = snap.docs.map((d) => d.data() as StockMovement);
+        } catch (err) {
+            if (!isFirestoreIndexError(err)) throw err;
+            const snap = await getDocs(
+                query(
+                    collection(db, MOVEMENTS),
+                    where('kind', '==', 'purchase')
+                )
+            );
+            moves = snap.docs
+                .map((d) => d.data() as StockMovement)
+                .sort(
+                    (a, b) =>
+                        new Date(b.date || 0).getTime() -
+                        new Date(a.date || 0).getTime()
+                )
+                .slice(0, 400);
+        }
+        moves.forEach((m) => collectSupplierNames(set, m.supplier));
+    } catch {
+        /* список подсказок может остаться только из открытых партий */
+    }
+
     const list = Array.from(set).sort((a, b) =>
         a.localeCompare(b, 'ru', { sensitivity: 'base' })
     );

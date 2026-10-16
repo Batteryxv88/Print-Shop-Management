@@ -105,7 +105,6 @@ const Stock = () => {
 
             {orderedParts.length > 0 && (
                 <div className={cls.titleBox} aria-hidden>
-                    <p className={cls.expandCol} title="Партии FIFO" />
                     <p className={cls.name}>Наименование</p>
                     <p className={cls.number}>Парт номер</p>
                     <p className={cls.life}>Ресурс</p>

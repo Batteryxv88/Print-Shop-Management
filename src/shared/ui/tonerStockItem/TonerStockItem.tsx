@@ -6,15 +6,16 @@ type TonerStockItemTypes = {
     color: string;
     qty: string | number;
     id: string;
+    className?: string;
 };
 
-const TonerStockItem = ({ color, qty }: TonerStockItemTypes) => {
+const TonerStockItem = ({ color, qty, className }: TonerStockItemTypes) => {
     const qtyNum = Number(qty) || 0;
     const isEmpty = qtyNum <= 0;
 
     return (
         <div
-            className={classNames(cls.tonerBox, {
+            className={classNames(cls.tonerBox, className, {
                 [cls.tonerEmpty]: isEmpty,
             })}
         >

@@ -75,11 +75,13 @@ const Part = (props: PartProps) => {
                     <span className={cls.optionBadge}>{optionModel}</span>
                 )}
             </div>
-            <CopyablePartNumber
-                value={number}
-                className={cls.number}
-                label="артикул"
-            />
+            <div className={cls.numberSlot}>
+                <CopyablePartNumber
+                    value={number}
+                    className={cls.number}
+                    label="артикул"
+                />
+            </div>
             <p className={cls.life}>{partLife || '—'}</p>
             <p className={cls.installed}>
                 {installedQty !== undefined && installedQty !== null

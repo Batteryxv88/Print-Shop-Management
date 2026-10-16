@@ -12,6 +12,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import {
     purchaseStock,
     fetchKnownSuppliers,
+    fetchLastSupplierForStock,
     StockItemType,
 } from '../../../services/stockAccounting';
 import { matchesModel } from '../../../shared/lib/printers/printerUtils';
@@ -302,6 +303,17 @@ const PurchaseStock = ({ type, layout = 'default' }: Props) => {
             setIsNewPart(false);
         }
     }, [exactMatch, selectedPartId]);
+
+    useEffect(() => {
+        if (!isModalOpen || type !== 'part' || !selectedPartId) return;
+        let cancelled = false;
+        fetchLastSupplierForStock(selectedPartId).then((name) => {
+            if (!cancelled && name) setSupplier(name);
+        });
+        return () => {
+            cancelled = true;
+        };
+    }, [isModalOpen, type, selectedPartId]);
 
     const showNotFound =
         type === 'part' &&

@@ -35,25 +35,31 @@ const CopyablePartNumber = ({
     };
 
     if (!text) {
-        return <span className={classNames(cls.root, className)}>—</span>;
+        return (
+            <span className={classNames(cls.wrap, className)}>
+                <span className={cls.root}>—</span>
+            </span>
+        );
     }
 
     return (
-        <button
-            type="button"
-            className={classNames(cls.root, className, {
-                [cls.copied]: copied,
-            })}
-            onClick={handleCopy}
-            title={copied ? 'Скопировано' : `Скопировать ${label}`}
-            aria-label={
-                copied
-                    ? `${label} скопирован`
-                    : `Скопировать ${label}: ${text}`
-            }
-        >
-            {copied ? 'Скопировано' : text}
-        </button>
+        <span className={classNames(cls.wrap, className)}>
+            <button
+                type="button"
+                className={classNames(cls.root, {
+                    [cls.copied]: copied,
+                })}
+                onClick={handleCopy}
+                title={copied ? 'Скопировано' : `Скопировать ${label}`}
+                aria-label={
+                    copied
+                        ? `${label} скопирован`
+                        : `Скопировать ${label}: ${text}`
+                }
+            >
+                {copied ? 'Скопировано' : text}
+            </button>
+        </span>
     );
 };
 

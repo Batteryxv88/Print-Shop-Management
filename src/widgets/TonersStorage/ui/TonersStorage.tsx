@@ -5,7 +5,7 @@ import {
     useToners,
     usePrinters,
 } from '../../../app/providers/StoreProvider/Store/hooks';
-import TonerStockItem from '../../../shared/ui/tonerStockItem/TonerStockItem';
+import TonerStockRow from './TonerStockRow';
 import LoadingPlug from '../../../shared/ui/LoadingPlug/LoadingPlug';
 import { matchesModel } from '../../../shared/lib/printers/printerUtils';
 import { getColorsForModel } from '../../../shared/lib/printers/tonerColors';
@@ -117,11 +117,16 @@ const TonersStorage = () => {
                 ) : filteredToners.length > 0 ? (
                     <>
                         {visibleItems.map((item) => (
-                            <TonerStockItem
+                            <TonerStockRow
                                 key={item.id}
+                                id={item.id}
                                 color={item.toner.color}
                                 qty={item.toner.qty}
-                                id={item.id}
+                                partLabel={
+                                    storageModel
+                                        ? `${storageModel} · ${item.toner.color}`
+                                        : item.toner.color
+                                }
                             />
                         ))}
                         <InfiniteScrollSentinel

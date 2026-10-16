@@ -4,31 +4,53 @@
 }
 
 .main {
+    position: relative;
     display: flex;
     align-items: stretch;
-    gap: 0;
-}
-
-.expandBtn {
-    flex: 0 0 28px;
-    margin-left: 4px;
-    align-self: center;
-    border: none;
-    background: transparent;
-    color: rgba(255, 255, 255, 0.45);
     cursor: pointer;
-    font-size: 10px;
-    transition: transform 0.15s ease, color 0.15s ease;
-    padding: 4px;
+    border-radius: 5px;
+    outline: none;
 
     &:hover {
+        .chevron {
+            opacity: 1;
+        }
+    }
+
+    &:focus-visible {
+        box-shadow: 0 0 0 2px rgba(187, 134, 252, 0.45);
+    }
+}
+
+.mainExpanded {
+    .chevron {
+        opacity: 1;
         color: #bb86fc;
     }
 }
 
-.expandOpen {
+.chevron {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    z-index: 1;
+    width: 0;
+    height: 0;
+    margin-top: -3px;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-left: 6px solid rgba(255, 255, 255, 0.4);
+    opacity: 0;
+    transition:
+        opacity 0.15s ease,
+        transform 0.15s ease,
+        border-left-color 0.15s ease;
+    pointer-events: none;
+}
+
+.chevronOpen {
     transform: rotate(90deg);
-    color: #bb86fc;
+    border-left-color: #bb86fc;
 }
 
 .partWrap {
