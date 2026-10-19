@@ -273,6 +273,7 @@ export const purchaseStock = async (
 
     await batch.commit();
     knownSuppliersCache = null;
+    invalidateStockLotsCache(input.stockId);
     return { lotId: lotRef.id, movementId: movementRef.id };
 };
 
@@ -309,7 +310,7 @@ export const writeOffFifo = async (
     const movementRef = doc(collection(db, MOVEMENTS));
     const date = input.date || nowIso();
 
-    return runTransaction(db, async (tx) => {
+    const result = await runTransaction(db, async (tx) => {
         const lotSnaps = await Promise.all(lotRefs.map((r) => tx.get(r)));
         const stockSnap = await tx.get(stockRef);
 
@@ -428,6 +429,8 @@ export const writeOffFifo = async (
             economyAmount,
         };
     });
+    invalidateStockLotsCache(input.stockId);
+    return result;
 };
 
 /**
@@ -448,6 +451,7 @@ export const reverseStockMovement = async (
 
     const moveRef = doc(db, MOVEMENTS, id);
     const stornoRef = doc(collection(db, MOVEMENTS));
+    let affectedStockId = '';
 
     // Транзакция: повторное сторно одного движения или параллельное списание
     // не испортят остатки партий.
@@ -458,6 +462,9 @@ export const reverseStockMovement = async (
         }
 
         const data = moveSnap.data() as Omit<StockMovement, 'id'>;
+        if (data.stockId) {
+            affectedStockId = data.stockId;
+        }
         if (data.reversed) {
             throw new Error('Движение уже сторнировано');
         }
@@ -544,6 +551,10 @@ export const reverseStockMovement = async (
             tx.update(stockRef, { [field]: cur + qty });
         }
     });
+
+    if (affectedStockId) {
+        invalidateStockLotsCache(affectedStockId);
+    }
 
     return { stornoMovementId: stornoRef.id };
 };
@@ -751,6 +762,57 @@ const mapLotToPriceDriftPoint = (
 });
 
 const driftAllCache = new Map<string, Promise<PriceDriftPoint[]>>();
+
+const openLotsCache = new Map<string, StockLot[]>();
+
+/** Сброс кэша открытых партий и дрейфа цены (после прихода / списания / сторно) */
+export const invalidateStockLotsCache = (stockId?: string) => {
+    if (stockId) {
+        openLotsCache.delete(stockId);
+        driftAllCache.delete(stockId);
+    } else {
+        openLotsCache.clear();
+        driftAllCache.clear();
+    }
+};
+
+export type LoadOpenLotsCallbacks = {
+    onData: (lots: StockLot[], meta: { fromCache: boolean }) => void;
+    onError: (message: string) => void;
+};
+
+/** Stale-while-revalidate: сразу отдаёт кэш, затем обновляет с сервера */
+export const loadOpenLotsForStock = (
+    stockId: string,
+    callbacks: LoadOpenLotsCallbacks
+): (() => void) => {
+    let cancelled = false;
+    const cached = openLotsCache.get(stockId);
+    if (cached) {
+        callbacks.onData(cached, { fromCache: true });
+    }
+
+    fetchLotsByStockId(stockId, true)
+        .then((lots) => {
+            if (cancelled) return;
+            openLotsCache.set(stockId, lots);
+            callbacks.onData(lots, { fromCache: false });
+        })
+        .catch((err) => {
+            if (cancelled) return;
+            if (!cached) {
+                const message =
+                    err instanceof Error
+                        ? err.message
+                        : 'Не удалось загрузить партии';
+                callbacks.onError(message);
+            }
+        });
+
+    return () => {
+        cancelled = true;
+    };
+};
 
 /** Все приходы позиции (тот же запрос, что и вкладка «Партии» — без составного индекса) */
 export const fetchPriceDriftAllForStock = async (

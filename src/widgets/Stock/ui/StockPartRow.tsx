@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import cls from './StockPartRow.module.scss';
 import Part from '../../../shared/ui/Part/Part';
+import CollapseHeight from '../../../shared/ui/CollapseHeight/CollapseHeight';
 import StockLotsPanel from '../../../shared/ui/StockLotsPanel/StockLotsPanel';
 
 type StockPartRowProps = {
@@ -67,13 +68,15 @@ const StockPartRow = (props: StockPartRowProps) => {
                     <Part {...props} />
                 </div>
             </div>
-            {expanded ? (
-                <StockLotsPanel
-                    stockId={props.id}
-                    cardQty={props.qty}
-                    partLabel={`${props.name}${props.number ? ` · ${props.number}` : ''}`}
-                />
-            ) : null}
+            <CollapseHeight open={expanded} className={cls.panelExpand}>
+                {expanded ? (
+                    <StockLotsPanel
+                        stockId={props.id}
+                        cardQty={props.qty}
+                        partLabel={`${props.name}${props.number ? ` · ${props.number}` : ''}`}
+                    />
+                ) : null}
+            </CollapseHeight>
         </div>
     );
 };

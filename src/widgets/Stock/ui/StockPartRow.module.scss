@@ -57,3 +57,7 @@
     flex: 1;
     min-width: 0;
 }
+
+.panelExpand {
+    will-change: max-height;
+}
