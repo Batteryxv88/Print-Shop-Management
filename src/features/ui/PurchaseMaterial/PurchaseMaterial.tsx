@@ -135,42 +135,28 @@ const Combobox = ({
     value,
     options,
     onChange,
-    onAdd,
     placeholder,
+    hint,
 }: {
     label: string;
     value: string;
     options: string[];
     onChange: (v: string) => void;
-    onAdd?: (v: string) => Promise<void>;
     placeholder?: string;
+    hint?: string;
 }) => {
     const listId = `opt-${label.replace(/\s+/g, '-')}`;
     return (
         <label className={cls.field}>
             <span>{label}</span>
-            <div className={cls.addRow}>
-                <input
-                    list={listId}
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                    placeholder={placeholder || 'Выберите или введите…'}
-                />
-                {onAdd ? (
-                    <button
-                        type="button"
-                        className={cls.miniBtn}
-                        title="Добавить в справочник"
-                        onClick={async () => {
-                            const v = value.trim();
-                            if (!v) return;
-                            await onAdd(v);
-                        }}
-                    >
-                        +
-                    </button>
-                ) : null}
-            </div>
+            {hint ? <span className={cls.fieldHint}>{hint}</span> : null}
+            <input
+                list={listId}
+                value={value}
+                autoComplete="off"
+                onChange={(e) => onChange(e.target.value)}
+                placeholder={placeholder || 'Выберите или введите…'}
+            />
             <datalist id={listId}>
                 {options.map((o) => (
                     <option key={o} value={o} />
@@ -178,6 +164,35 @@ const Combobox = ({
             </datalist>
         </label>
     );
+};
+
+const normField = (s: string) => s.trim().toLowerCase();
+
+const findDuplicatePaper = (
+    items: Material[],
+    form: PaperForm,
+    name: string,
+    materialType: string,
+    subtype: string,
+    density: string,
+    format: string
+): Material | undefined => {
+    const n = normField(name);
+    if (!n) return undefined;
+    return items.find((m) => {
+        if (m.form !== form) return false;
+        if (normField(m.name || m.type) !== n) return false;
+        if (normField(m.materialType || '') !== normField(materialType)) {
+            return false;
+        }
+        if (form === 'roll') {
+            return normField(m.subtype || '') === normField(subtype);
+        }
+        return (
+            normField(m.density || '') === normField(density) &&
+            normField(m.format || '') === normField(format)
+        );
+    });
 };
 
 const PurchaseMaterial = ({ kind, layout = 'sidebar' }: Props) => {
@@ -198,12 +213,8 @@ const PurchaseMaterial = ({ kind, layout = 'sidebar' }: Props) => {
     const [materialType, setMaterialType] = useState('');
     const [subtype, setSubtype] = useState('');
     const [thickness, setThickness] = useState('');
-    const [adhesive, setAdhesive] = useState('');
-    const [metersPerRoll, setMetersPerRoll] = useState('');
     const [density, setDensity] = useState('');
     const [format, setFormat] = useState('');
-    const [color, setColor] = useState('');
-    const [coating, setCoating] = useState('');
     const [note, setNote] = useState('');
     const [qty, setQty] = useState('1');
     const [unitPrice, setUnitPrice] = useState('');
@@ -293,21 +304,24 @@ const PurchaseMaterial = ({ kind, layout = 'sidebar' }: Props) => {
         setMaterialType('');
         setSubtype('');
         setThickness('');
-        setAdhesive('');
-        setMetersPerRoll('');
         setDensity('');
         setFormat('');
-        setColor('');
-        setCoating('');
         setNote('');
         setQty('1');
         setUnitPrice('');
         setError('');
     };
 
-    const addToCatalog = async (key: MaterialCatalogKey, value: string) => {
-        const next = await addCatalogValue(key, value);
-        setCatalog(next);
+    const syncCatalogValues = async (
+        entries: { key: MaterialCatalogKey; value: string }[]
+    ) => {
+        let next = catalog;
+        for (const { key, value } of entries) {
+            const trimmed = value.trim();
+            if (!trimmed) continue;
+            next = await addCatalogValue(key, trimmed);
+        }
+        if (next) setCatalog(next);
     };
 
     const handleSubmit = async () => {
@@ -332,23 +346,57 @@ const PurchaseMaterial = ({ kind, layout = 'sidebar' }: Props) => {
             if (kind === 'paper') {
                 if (mode === 'new') {
                     if (!name.trim()) throw new Error('Укажите название');
+                    const typeTrim = materialType.trim();
+                    const propsTrim = subtype.trim();
+                    const densityTrim = density.trim();
+                    const formatTrim = format.trim();
+                    if (!typeTrim) throw new Error('Укажите тип');
+                    if (form === 'roll' && !propsTrim) {
+                        throw new Error('Укажите свойства рулона');
+                    }
+                    if (form === 'sheet') {
+                        if (!densityTrim) {
+                            throw new Error('Укажите плотность');
+                        }
+                        if (!formatTrim) {
+                            throw new Error('Укажите формат');
+                        }
+                    }
+                    const duplicate = findDuplicatePaper(
+                        paperItems,
+                        form,
+                        name.trim(),
+                        typeTrim,
+                        propsTrim,
+                        densityTrim,
+                        formatTrim
+                    );
+                    if (duplicate) {
+                        throw new Error(
+                            `Позиция «${duplicate.name || duplicate.type}» уже есть — выберите «Пополнить»`
+                        );
+                    }
+                    if (form === 'roll') {
+                        await syncCatalogValues([
+                            { key: 'paperTypes', value: typeTrim },
+                            { key: 'paperSubtypes', value: propsTrim },
+                        ]);
+                    } else {
+                        await syncCatalogValues([
+                            { key: 'paperTypes', value: typeTrim },
+                            { key: 'densities', value: densityTrim },
+                            { key: 'formats', value: formatTrim },
+                        ]);
+                    }
                     const created = await createMaterial({
                         name: name.trim(),
                         type: name.trim(),
                         form,
-                        materialType,
-                        subtype,
-                        thickness,
-                        note,
-                        adhesive: form === 'roll' ? adhesive : undefined,
-                        metersPerRoll:
-                            form === 'roll'
-                                ? Number(metersPerRoll) || 0
-                                : undefined,
-                        density: form === 'sheet' ? density : undefined,
-                        format: form === 'sheet' ? format : undefined,
-                        color: form === 'sheet' ? color : undefined,
-                        coating: form === 'sheet' ? coating : undefined,
+                        materialType: typeTrim,
+                        subtype: form === 'roll' ? propsTrim : '',
+                        note: note.trim(),
+                        density: form === 'sheet' ? densityTrim : undefined,
+                        format: form === 'sheet' ? formatTrim : undefined,
                         qty: 0,
                         status: 'new',
                     });
@@ -548,7 +596,7 @@ const PurchaseMaterial = ({ kind, layout = 'sidebar' }: Props) => {
                                         )}
 
                                     <label className={cls.field}>
-                                        <span>Название</span>
+                                        <span>Наименование</span>
                                         <input
                                             value={name}
                                             onChange={(e) =>
@@ -566,92 +614,23 @@ const PurchaseMaterial = ({ kind, layout = 'sidebar' }: Props) => {
                                                     catalog?.paperTypes || []
                                                 }
                                                 onChange={setMaterialType}
-                                                onAdd={(v) =>
-                                                    addToCatalog(
-                                                        'paperTypes',
-                                                        v
-                                                    )
-                                                }
-                                                placeholder="Бумага / Плёнка / иное"
-                                            />
-                                            <Combobox
-                                                label="Толщина"
-                                                value={thickness}
-                                                options={
-                                                    catalog?.thicknesses || []
-                                                }
-                                                onChange={setThickness}
-                                                onAdd={(v) =>
-                                                    addToCatalog(
-                                                        'thicknesses',
-                                                        v
-                                                    )
-                                                }
+                                                placeholder="Бумага, плёнка…"
+                                                hint="Подсказки из справочника; можно ввести своё"
                                             />
                                             {form === 'roll' ? (
-                                                <>
-                                                    <Combobox
-                                                        label="Свойства"
-                                                        value={subtype}
-                                                        options={
-                                                            catalog?.paperSubtypes ||
-                                                            []
-                                                        }
-                                                        onChange={setSubtype}
-                                                        onAdd={(v) =>
-                                                            addToCatalog(
-                                                                'paperSubtypes',
-                                                                v
-                                                            )
-                                                        }
-                                                    />
-                                                    <Combobox
-                                                        label="Клей"
-                                                        value={adhesive}
-                                                        options={
-                                                            catalog?.adhesives ||
-                                                            []
-                                                        }
-                                                        onChange={setAdhesive}
-                                                        onAdd={(v) =>
-                                                            addToCatalog(
-                                                                'adhesives',
-                                                                v
-                                                            )
-                                                        }
-                                                    />
-                                                    <label className={cls.field}>
-                                                        <span>Метры в рулоне</span>
-                                                        <input
-                                                            type="number"
-                                                            min={0}
-                                                            value={metersPerRoll}
-                                                            onChange={(e) =>
-                                                                setMetersPerRoll(
-                                                                    e.target
-                                                                        .value
-                                                                )
-                                                            }
-                                                        />
-                                                    </label>
-                                                </>
+                                                <Combobox
+                                                    label="Свойства"
+                                                    value={subtype}
+                                                    options={
+                                                        catalog?.paperSubtypes ||
+                                                        []
+                                                    }
+                                                    onChange={setSubtype}
+                                                    placeholder="Тиснение, металл…"
+                                                    hint="Новое значение сохранится в справочник при оформлении"
+                                                />
                                             ) : (
                                                 <>
-                                                    <Combobox
-                                                        label="Подтип"
-                                                        value={subtype}
-                                                        options={
-                                                            catalog?.paperSubtypes ||
-                                                            []
-                                                        }
-                                                        onChange={setSubtype}
-                                                        onAdd={(v) =>
-                                                            addToCatalog(
-                                                                'paperSubtypes',
-                                                                v
-                                                            )
-                                                        }
-                                                    />
                                                     <Combobox
                                                         label="Плотность"
                                                         value={density}
@@ -660,12 +639,8 @@ const PurchaseMaterial = ({ kind, layout = 'sidebar' }: Props) => {
                                                             []
                                                         }
                                                         onChange={setDensity}
-                                                        onAdd={(v) =>
-                                                            addToCatalog(
-                                                                'densities',
-                                                                v
-                                                            )
-                                                        }
+                                                        placeholder="300 или 300 г/м²"
+                                                        hint="Можно выбрать из списка или ввести своё"
                                                     />
                                                     <Combobox
                                                         label="Формат"
@@ -675,42 +650,8 @@ const PurchaseMaterial = ({ kind, layout = 'sidebar' }: Props) => {
                                                             []
                                                         }
                                                         onChange={setFormat}
-                                                        onAdd={(v) =>
-                                                            addToCatalog(
-                                                                'formats',
-                                                                v
-                                                            )
-                                                        }
-                                                    />
-                                                    <Combobox
-                                                        label="Цвет"
-                                                        value={color}
-                                                        options={
-                                                            catalog?.colors ||
-                                                            []
-                                                        }
-                                                        onChange={setColor}
-                                                        onAdd={(v) =>
-                                                            addToCatalog(
-                                                                'colors',
-                                                                v
-                                                            )
-                                                        }
-                                                    />
-                                                    <Combobox
-                                                        label="Покрытие"
-                                                        value={coating}
-                                                        options={
-                                                            catalog?.coatings ||
-                                                            []
-                                                        }
-                                                        onChange={setCoating}
-                                                        onAdd={(v) =>
-                                                            addToCatalog(
-                                                                'coatings',
-                                                                v
-                                                            )
-                                                        }
+                                                        placeholder="SRA3, 320×450…"
+                                                        hint="Можно выбрать из списка или ввести своё"
                                                     />
                                                 </>
                                             )}
@@ -725,12 +666,6 @@ const PurchaseMaterial = ({ kind, layout = 'sidebar' }: Props) => {
                                                     []
                                                 }
                                                 onChange={setMaterialType}
-                                                onAdd={(v) =>
-                                                    addToCatalog(
-                                                        'laminationTypes',
-                                                        v
-                                                    )
-                                                }
                                             />
                                             <Combobox
                                                 label="Подтип"
@@ -740,12 +675,6 @@ const PurchaseMaterial = ({ kind, layout = 'sidebar' }: Props) => {
                                                     []
                                                 }
                                                 onChange={setSubtype}
-                                                onAdd={(v) =>
-                                                    addToCatalog(
-                                                        'laminationSubtypes',
-                                                        v
-                                                    )
-                                                }
                                             />
                                             <Combobox
                                                 label="Толщина"
@@ -754,25 +683,22 @@ const PurchaseMaterial = ({ kind, layout = 'sidebar' }: Props) => {
                                                     catalog?.thicknesses || []
                                                 }
                                                 onChange={setThickness}
-                                                onAdd={(v) =>
-                                                    addToCatalog(
-                                                        'thicknesses',
-                                                        v
-                                                    )
-                                                }
                                             />
                                         </>
                                     )}
 
-                                    <label className={cls.field}>
-                                        <span>Примечание</span>
-                                        <input
-                                            value={note}
-                                            onChange={(e) =>
-                                                setNote(e.target.value)
-                                            }
-                                        />
-                                    </label>
+                                    {mode === 'new' && (
+                                        <label className={cls.field}>
+                                            <span>Примечание</span>
+                                            <input
+                                                value={note}
+                                                placeholder="Необязательно: цвет, клей, метраж…"
+                                                onChange={(e) =>
+                                                    setNote(e.target.value)
+                                                }
+                                            />
+                                        </label>
+                                    )}
                                 </>
                             )}
 

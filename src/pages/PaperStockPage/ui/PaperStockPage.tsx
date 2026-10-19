@@ -8,18 +8,13 @@ const metaLine = (m: Material) => {
     const bits: string[] = [];
     bits.push(m.form === 'sheet' ? 'Лист' : 'Рулон');
     if (m.materialType) bits.push(m.materialType);
-    if (m.thickness) bits.push(m.thickness);
     if (m.form === 'roll') {
-        if (m.subtype) bits.push(m.subtype); // свойства
-        if (m.adhesive) bits.push(m.adhesive);
-        if (m.metersPerRoll) bits.push(`${m.metersPerRoll} м`);
-    } else {
         if (m.subtype) bits.push(m.subtype);
+    } else {
         if (m.density) bits.push(m.density);
         if (m.format) bits.push(m.format);
-        if (m.color) bits.push(m.color);
-        if (m.coating) bits.push(m.coating);
     }
+    if (m.note) bits.push(m.note);
     return bits.join(' · ');
 };
 

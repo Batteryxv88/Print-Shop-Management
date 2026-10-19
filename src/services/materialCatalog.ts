@@ -24,7 +24,7 @@ export const EMPTY_CATALOG: MaterialCatalog = {
     paperSubtypes: ['С тиснением', 'С покрытием', 'Металлизированная'],
     adhesives: ['Акрил', 'Каучук'],
     thicknesses: [],
-    densities: [],
+    densities: ['250', '300', '350', '400'],
     formats: ['SRA3', 'A3', 'A4'],
     colors: [],
     coatings: [],
@@ -108,7 +108,7 @@ export const addCatalogValue = async (
 
 export const CATALOG_LABELS: Record<MaterialCatalogKey, string> = {
     paperTypes: 'Тип (бумага)',
-    paperSubtypes: 'Свойства (рулонная бумага)',
+    paperSubtypes: 'Свойства',
     adhesives: 'Клей',
     thicknesses: 'Толщина',
     densities: 'Плотность',
