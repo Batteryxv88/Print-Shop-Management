@@ -179,9 +179,88 @@
     text-align: center;
 }
 
-.orderQty {
+.orderQtyHead {
     width: 88px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin: 0;
     text-align: center;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+}
+
+.orderQtyHeadPulse {
+    animation: orderQtyHeadFlash 0.48s ease-out;
+}
+
+@keyframes orderQtyHeadFlash {
+    0% {
+        background-color: rgba(187, 134, 252, 0.22);
+        box-shadow: 0 0 0 0 rgba(187, 134, 252, 0.35);
+    }
+
+    70% {
+        background-color: rgba(187, 134, 252, 0.08);
+        box-shadow: 0 0 0 6px rgba(187, 134, 252, 0);
+    }
+
+    100% {
+        background-color: transparent;
+        box-shadow: none;
+    }
+}
+
+.clearOrderBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: none;
+    border-radius: 5px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.35);
+    cursor: pointer;
+    transition:
+        color 0.15s ease,
+        background-color 0.15s ease;
+
+    img,
+    svg {
+        width: 14px;
+        height: 14px;
+        display: block;
+    }
+
+    &:hover:not(:disabled) {
+        color: rgba(255, 255, 255, 0.75);
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    &:focus-visible {
+        outline: 2px solid rgba(187, 134, 252, 0.45);
+        outline-offset: 1px;
+    }
+
+    &:disabled {
+        opacity: 0.55;
+        cursor: wait;
+    }
+}
+
+.clearOrderBtnBusy {
+    svg {
+        animation: clearOrderSpin 0.55s linear infinite;
+    }
+}
+
+@keyframes clearOrderSpin {
+    to {
+        transform: rotate(-360deg);
+    }
 }
 
 .emptyCard {

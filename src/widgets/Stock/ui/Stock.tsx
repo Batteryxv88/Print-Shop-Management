@@ -1,21 +1,29 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import classNames from 'classnames';
 import cls from './Stock.module.scss';
 import StockPartRow from './StockPartRow';
+import ClearOrderIcon from '../../../shared/assets/icons/clear-order.svg';
 import {
+    useAppDispatch,
     useAppSelector,
     useParts,
     usePrinters,
 } from '../../../app/providers/StoreProvider/Store/hooks';
+import { updateStock } from '../../../app/providers/StoreProvider/Store/PartSlice';
 import { matchesModel } from '../../../shared/lib/printers/printerUtils';
 import { sortSections } from '../../../shared/lib/printers/sectionOrder';
 import { useInfiniteList } from '../../../shared/lib/hooks/useInfiniteList';
 import InfiniteScrollSentinel from '../../../shared/ui/InfiniteScrollSentinel/InfiniteScrollSentinel';
 
 const Stock = () => {
+    const dispatch = useAppDispatch();
     const { partsArray } = useParts();
     usePrinters();
     const storageModel = useAppSelector((state) => state.machines.storageModel);
     const [search, setSearch] = useState('');
+    const [clearingOrder, setClearingOrder] = useState(false);
+    const [orderHeadPulse, setOrderHeadPulse] = useState(false);
+    const [expandedPartId, setExpandedPartId] = useState<string | null>(null);
 
     const filteredParts = useMemo(() => {
         const byModel = partsArray.filter((item) =>
@@ -64,6 +72,46 @@ const Stock = () => {
         [filteredParts]
     );
 
+    const partsWithOrderQty = useMemo(
+        () =>
+            filteredParts.filter(
+                (item) => (Number(item.part?.orderQty) || 0) > 0
+            ),
+        [filteredParts]
+    );
+
+    const handleClearOrderQty = useCallback(async () => {
+        if (partsWithOrderQty.length === 0 || clearingOrder) return;
+
+        setClearingOrder(true);
+        try {
+            await Promise.all(
+                partsWithOrderQty.map((item) =>
+                    dispatch(
+                        updateStock({
+                            id: item.id,
+                            part: { orderQty: 0 },
+                        })
+                    ).unwrap()
+                )
+            );
+            setOrderHeadPulse(true);
+            window.setTimeout(() => setOrderHeadPulse(false), 480);
+        } catch (err) {
+            console.error('Clear orderQty failed:', err);
+        } finally {
+            setClearingOrder(false);
+        }
+    }, [partsWithOrderQty, clearingOrder, dispatch]);
+
+    useEffect(() => {
+        setExpandedPartId(null);
+    }, [storageModel, search]);
+
+    const handleTogglePartRow = useCallback((id: string) => {
+        setExpandedPartId((current) => (current === id ? null : id));
+    }, []);
+
     let lastSection = '';
 
     return (
@@ -104,13 +152,35 @@ const Stock = () => {
             </header>
 
             {orderedParts.length > 0 && (
-                <div className={cls.titleBox} aria-hidden>
+                <div className={cls.titleBox}>
                     <p className={cls.name}>Наименование</p>
                     <p className={cls.number}>Парт номер</p>
                     <p className={cls.life}>Ресурс</p>
                     <p className={cls.installed}>В апп.</p>
                     <p className={cls.quantity}>Склад</p>
-                    <p className={cls.orderQty}>К заказу</p>
+                    <div
+                        className={classNames(
+                            cls.orderQtyHead,
+                            orderHeadPulse && cls.orderQtyHeadPulse
+                        )}
+                    >
+                        <span>К заказу</span>
+                        {partsWithOrderQty.length > 0 ? (
+                            <button
+                                type="button"
+                                className={classNames(
+                                    cls.clearOrderBtn,
+                                    clearingOrder && cls.clearOrderBtnBusy
+                                )}
+                                onClick={() => void handleClearOrderQty()}
+                                disabled={clearingOrder}
+                                title="Сбросить все «К заказу»"
+                                aria-label="Сбросить все поля «К заказу» в текущем списке"
+                            >
+                                <ClearOrderIcon aria-hidden />
+                            </button>
+                        ) : null}
+                    </div>
                 </div>
             )}
 
@@ -150,6 +220,7 @@ const Stock = () => {
                                     </div>
                                 ) : null}
                                 <StockPartRow
+                                    id={item.id}
                                     name={item.part.partName}
                                     number={item.part.partN}
                                     qty={item.part.quantity}
@@ -157,7 +228,8 @@ const Stock = () => {
                                     installedQty={item.part.installedQty}
                                     optionModel={item.part.optionModel}
                                     orderQty={item.part.orderQty}
-                                    id={item.id}
+                                    expanded={expandedPartId === item.id}
+                                    onToggle={handleTogglePartRow}
                                 />
                             </div>
                         );

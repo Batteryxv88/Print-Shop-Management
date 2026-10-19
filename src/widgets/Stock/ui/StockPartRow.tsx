@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import cls from './StockPartRow.module.scss';
 import Part from '../../../shared/ui/Part/Part';
 import StockLotsPanel from '../../../shared/ui/StockLotsPanel/StockLotsPanel';
@@ -12,6 +12,8 @@ type StockPartRowProps = {
     installedQty?: number;
     optionModel?: string;
     orderQty?: number;
+    expanded: boolean;
+    onToggle: (id: string) => void;
 };
 
 const isInteractiveTarget = (target: EventTarget | null) => {
@@ -24,11 +26,11 @@ const isInteractiveTarget = (target: EventTarget | null) => {
 };
 
 const StockPartRow = (props: StockPartRowProps) => {
-    const [expanded, setExpanded] = useState(false);
+    const { expanded, onToggle, id } = props;
 
     const toggle = useCallback(() => {
-        setExpanded((v) => !v);
-    }, []);
+        onToggle(id);
+    }, [id, onToggle]);
 
     const handleRowClick = (e: React.MouseEvent) => {
         if (isInteractiveTarget(e.target)) return;

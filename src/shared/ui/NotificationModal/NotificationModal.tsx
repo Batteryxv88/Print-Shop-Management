@@ -130,7 +130,7 @@ const NotificationModal = ({
                                 onClick={onConfirm}
                                 disabled={confirmLoading}
                             >
-                                {confirmLoading ? 'Сторно…' : confirmLabel}
+                                {confirmLoading ? 'Подождите…' : confirmLabel}
                             </button>
                         </>
                     ) : (
