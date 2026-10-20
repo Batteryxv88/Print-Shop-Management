@@ -1,3 +1,6 @@
+# Pushes static build to branch `gh-pages` (same as `npm run deploy`).
+# In repo Settings → Pages: source = Deploy from branch → gh-pages → / (root).
+
 name: Deploy GitHub Pages
 
 on:
@@ -8,25 +11,18 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  group: gh-pages-deploy
+  cancel-in-progress: true
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -49,22 +45,9 @@ jobs:
       - name: Add .nojekyll
         run: touch build/.nojekyll
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Publish to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: build
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
+          force_orphan: true
