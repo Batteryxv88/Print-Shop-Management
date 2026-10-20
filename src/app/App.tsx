@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { Navbar } from "../widgets/Navbar";
 import Sidebar from "../widgets/Sidebar/ui/Sidebar";
 import Favicon from "react-favicon";
-import Fvicon from '../../public/favicon.svg'
+import faviconUrl from '../../public/favicon.svg';
 import { CalculatorPageAsync } from "../pages/CalculatorPage/ui/CalculatorPage.async";
 import { AuthForm } from "../components/AuthForm";
 import { AuthProvider } from "../contexts/AuthContext";
@@ -22,7 +22,7 @@ const App = () => {
   return (
     <AuthProvider>
       <div className={cls.app}>
-        <Favicon url={Fvicon} />
+        <Favicon url={faviconUrl} />
         <Routes>
           <Route
             path="/login"
