@@ -1,3 +1,5 @@
+@import '../../../app/styles/breakpoints/breakpoints';
+
 .row {
     display: flex;
     flex-direction: column;
@@ -60,4 +62,19 @@
 
 .panelExpand {
     will-change: max-height;
+}
+
+@include down(sm) {
+    .main {
+        border-radius: 10px;
+    }
+
+    .chevron {
+        opacity: 0.85;
+        left: 8px;
+    }
+
+    .mainExpanded .chevron {
+        opacity: 1;
+    }
 }

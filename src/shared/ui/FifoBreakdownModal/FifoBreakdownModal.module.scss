@@ -1,3 +1,5 @@
+@import '../../styles/modalSheet';
+
 .overlay {
     position: fixed;
     inset: 0;
@@ -7,6 +9,7 @@
     justify-content: center;
     z-index: 1100;
     padding: 16px;
+    @include overlay-sheet-mobile;
 }
 
 .modal {
@@ -19,6 +22,7 @@
     overflow: auto;
     padding: 20px 22px 18px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+    @include dialog-sheet-mobile;
 }
 
 .title {

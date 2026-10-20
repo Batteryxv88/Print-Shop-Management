@@ -1,3 +1,5 @@
+@import '../../../app/styles/breakpoints/breakpoints';
+
 .panel {
     margin: 0 28px 8px;
     padding: 12px 14px 14px;
@@ -322,5 +324,30 @@
 
     strong {
         color: rgba(255, 255, 255, 0.85);
+    }
+}
+
+@include down(sm) {
+    .panel {
+        margin: 0 8px 8px;
+        padding: 10px 10px 12px;
+    }
+
+    .panelHead {
+        flex-wrap: wrap;
+    }
+
+    .driftOpenBtn {
+        min-height: var(--touch-target-min, 44px);
+        padding: 8px 14px;
+    }
+
+    .contentReveal {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table {
+        min-width: 520px;
     }
 }

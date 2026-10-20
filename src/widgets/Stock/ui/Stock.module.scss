@@ -1,3 +1,5 @@
+@import '../../../app/styles/breakpoints/breakpoints';
+
 .stock {
     width: 100%;
     padding: 12px 18px 20px;
@@ -260,6 +262,41 @@
 @keyframes clearOrderSpin {
     to {
         transform: rotate(-360deg);
+    }
+}
+
+@include down(sm) {
+    .stock {
+        padding: 10px 10px 16px;
+    }
+
+    .header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .searchWrap {
+        flex: none;
+        min-width: 0;
+        max-width: none;
+        width: 100%;
+    }
+
+    .search {
+        height: var(--touch-target-min, 44px);
+        font-size: 16px;
+    }
+
+    .titleBox {
+        display: none;
+    }
+
+    .stats {
+        gap: 6px;
+    }
+
+    .stat {
+        font-size: 11px;
     }
 }
 

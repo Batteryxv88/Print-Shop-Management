@@ -46,7 +46,7 @@ export default defineConfig({
                   },
                   {
                       name: 'mobile-authenticated',
-                      testMatch: 'mobile/shell.spec.ts',
+                      testMatch: /mobile\/(shell|stock)\.spec\.ts/,
                       dependencies: ['setup'],
                       use: {
                           ...devices['Pixel 5'],

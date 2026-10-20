@@ -115,7 +115,7 @@ const Stock = () => {
     let lastSection = '';
 
     return (
-        <div className={cls.stock}>
+        <div className={cls.stock} data-testid="stock-root">
             <header className={cls.header}>
                 <div className={cls.headerText}>
                     <div className={cls.stats}>
@@ -147,6 +147,7 @@ const Stock = () => {
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="Артикул или название…"
+                        data-testid="stock-search"
                     />
                 </label>
             </header>

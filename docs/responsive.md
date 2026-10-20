@@ -4,6 +4,8 @@ Foundation (Phase 0) defines shared breakpoints for SCSS and TypeScript.
 
 **Phase 1 (done):** mobile drawer for sidebar + primary nav, burger in Navbar, Redux `ui.sidebarOpen`, tablet/desktop keep inline sidebar and top nav.
 
+**Phase 2 (done):** Stock pilot — card rows on phone, compact header/search, hidden table header, FIFO panel + modals as bottom sheets, `e2e/mobile/stock.spec.ts`.
+
 ## Breakpoints
 
 | Token | Max width | Typical device |

@@ -1,3 +1,5 @@
+@import '../../../app/styles/breakpoints/breakpoints';
+
 .part {
     display: flex;
     align-items: center;
@@ -332,4 +334,77 @@
     width: 160px;
     gap: 8px;
     min-width: 160px;
+}
+
+@mixin mobile-field-label($text) {
+    &::before {
+        content: $text;
+        display: block;
+        margin-bottom: 2px;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.38);
+        font-family: var(--font-family-main, system-ui, sans-serif);
+    }
+}
+
+@include down(sm) {
+    .part {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px 12px;
+        align-items: start;
+        min-height: 0;
+        padding: 12px 12px 12px 28px;
+        font-size: 13px;
+    }
+
+    .nameBlock,
+    .numberSlot {
+        width: auto;
+        grid-column: 1 / -1;
+    }
+
+    .name,
+    .number {
+        font-size: 13px;
+    }
+
+    .life,
+    .installed,
+    .qty {
+        width: auto;
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .life {
+        @include mobile-field-label('Ресурс');
+    }
+
+    .installed {
+        @include mobile-field-label('В апп.');
+    }
+
+    .qty {
+        @include mobile-field-label('Склад');
+        font-weight: 600;
+    }
+
+    .orderBox {
+        width: auto;
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+        @include mobile-field-label('К заказу');
+    }
+
+    .orderInput {
+        width: 72px;
+        height: var(--touch-target-min, 44px);
+        font-size: 16px;
+    }
 }
