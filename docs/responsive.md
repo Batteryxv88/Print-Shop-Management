@@ -6,6 +6,8 @@ Foundation (Phase 0) defines shared breakpoints for SCSS and TypeScript.
 
 **Phase 2 (done):** Stock pilot — card rows on phone, compact header/search, hidden table header, FIFO panel + modals as bottom sheets, `e2e/mobile/stock.spec.ts`.
 
+**Phase 3 (done):** Field flows — login touch targets, journal shell/toolbar, counter reading form, journal list cards (parts/toner/lists), bottom-sheet modals (`AddReplacedPart`, `NotificationModal`), parts inventorization cards, `e2e/mobile/journal.spec.ts`.
+
 ## Breakpoints
 
 | Token | Max width | Typical device |
@@ -42,7 +44,7 @@ Mixins: `down(xs|sm|md)`, `up(xs|sm|md|lg)`, `between(from, to)`.
 |------|-------|--------|---------|
 | Login | Full | Full | Full |
 | Stock | P1 → P0 | P0 | Full |
-| Journal / counter / inventorization | P0 | P0 | Full |
+| Journal / counter / inventorization | P3 | P0 | Full |
 | Analytics / Admin | Stub or read-only | P1 | Full |
 
 See chat roadmap for phase order.

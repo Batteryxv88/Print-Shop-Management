@@ -1,3 +1,5 @@
+@import '../../../app/styles/breakpoints/breakpoints';
+
 .page {
     height: 100%;
     min-height: 0;
@@ -143,6 +145,42 @@
         &:focus {
             outline: none;
             border-color: #BB86FC;
+        }
+    }
+}
+
+@include down(sm) {
+    .page {
+        padding: 8px 8px 12px;
+    }
+
+    .breadcrumb {
+        padding: 8px 12px;
+        font-size: 11px;
+    }
+
+    .printersRow {
+        padding: 0 4px;
+    }
+
+    .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 10px 10px 0;
+        gap: 10px;
+    }
+
+    .sectionFilter {
+        margin-left: 0;
+        width: 100%;
+        justify-content: space-between;
+
+        select {
+            flex: 1;
+            min-width: 0;
+            max-width: none;
+            height: var(--touch-target-min, 44px);
+            font-size: 16px;
         }
     }
 }

@@ -35,7 +35,11 @@ export const AuthForm: React.FC = () => {
 
   return (
     <div className={styles.authContainer}>
-      <form onSubmit={handleSubmit} className={styles.authForm}>
+      <form
+        onSubmit={handleSubmit}
+        className={styles.authForm}
+        data-testid="login-form"
+      >
         <h2>Вход в систему</h2>
         
         {error && (

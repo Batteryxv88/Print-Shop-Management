@@ -1,3 +1,5 @@
+@import '../../styles/modalSheet';
+
 .modalOverlay {
     position: fixed;
     top: 0;
@@ -10,17 +12,19 @@
     align-items: center;
     z-index: 1000;
     animation: fadeIn 0.2s ease-out;
+    @include overlay-sheet-mobile;
 }
 
 .modalContent {
     background: #1E1E1E;
     border-radius: 8px;
     position: relative;
-    min-width: 320px;
-    max-width: 480px;
+    min-width: min(320px, 100%);
+    max-width: min(480px, 100%);
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 1px 3px 1px rgba(0, 0, 0, 0.15);
     animation: slideIn 0.2s ease-out;
+    @include dialog-sheet-mobile;
 
     &.info {
         border-left: 4px solid #BB86FC;

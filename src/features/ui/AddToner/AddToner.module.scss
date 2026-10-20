@@ -1,3 +1,5 @@
+@import '../../../app/styles/breakpoints/breakpoints';
+
 .bar {
     display: flex;
     flex-wrap: wrap;
@@ -109,5 +111,20 @@
     &:disabled {
         opacity: 0.55;
         cursor: not-allowed;
+    }
+}
+
+@include down(sm) {
+    .colorBtn {
+        min-height: var(--touch-target-min, 44px);
+        height: auto;
+        padding-top: 8px;
+        padding-bottom: 8px;
+    }
+
+    .replaceBtn {
+        width: 100%;
+        min-height: var(--touch-target-min, 44px);
+        height: auto;
     }
 }

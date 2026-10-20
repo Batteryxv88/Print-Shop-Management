@@ -43,3 +43,20 @@
         color: rgba(255, 255, 255, 0.38);
     }
 }
+
+@import '../../../../app/styles/breakpoints/breakpoints';
+
+@include down(sm) {
+    .auditHeader {
+        padding: 12px;
+    }
+
+    .fieldGroup {
+        min-width: 0;
+    }
+
+    .input {
+        min-height: var(--touch-target-min, 44px);
+        font-size: 16px;
+    }
+}

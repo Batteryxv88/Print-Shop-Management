@@ -117,3 +117,59 @@
     justify-content: flex-end;
     width: 80px;
 }
+
+@import '../../../shared/styles/journalMobile';
+
+@include down(sm) {
+    .replacedPart {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px 12px;
+        align-items: start;
+        padding: 12px;
+        min-height: 0;
+    }
+
+    .name,
+    .number {
+        grid-column: 1 / -1;
+        width: auto;
+        text-align: left;
+    }
+
+    .number {
+        @include mobile-field-label('Парт номер');
+    }
+
+    .man {
+        width: auto;
+        text-align: left;
+        @include mobile-field-label('Ответственный');
+    }
+
+    .qty {
+        width: auto;
+        text-align: left;
+        @include mobile-field-label('Кол-во');
+    }
+
+    .percent {
+        width: auto;
+        justify-content: flex-start;
+        @include mobile-field-label('Ресурс');
+    }
+
+    .date {
+        width: auto;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        @include mobile-field-label('Дата');
+    }
+
+    .deleteBox {
+        grid-column: 1 / -1;
+        width: 100%;
+        justify-content: flex-end;
+        padding-top: 4px;
+    }
+}

@@ -1,3 +1,5 @@
+@import '../../../app/styles/breakpoints/breakpoints';
+
 .partsInventorization {
     width: 100%;
     padding: 38px;
@@ -6,6 +8,14 @@
     gap: 16px;
     opacity: 0;
     animation: fadeIn 0.15s ease-in forwards;
+    box-sizing: border-box;
+}
+
+@include down(sm) {
+    .partsInventorization {
+        padding: 10px 10px 16px;
+        gap: 12px;
+    }
 }
 
 @keyframes fadeIn {

@@ -78,7 +78,7 @@ const PartsInventorization = () => {
     };
 
     return (
-      <div className={cls.partsInventorization}>
+      <div className={cls.partsInventorization} data-testid="inventorization-root">
         {/* Метаданные аудита */}
         <AuditHeader />
 

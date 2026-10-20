@@ -113,3 +113,15 @@
     color: rgba(255, 255, 255, 0.4);
     text-align: center;
 }
+
+@import '../../app/styles/breakpoints/breakpoints';
+
+@include down(sm) {
+    .calendar {
+        padding: 10px 10px 16px;
+    }
+
+    .box {
+        display: none;
+    }
+}

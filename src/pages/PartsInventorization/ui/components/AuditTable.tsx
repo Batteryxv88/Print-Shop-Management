@@ -34,11 +34,11 @@ const AuditTable: React.FC<AuditTableProps> = ({ data, onActualChange, onRestart
         {data.map(item => {
           const diff = item.actualQty - item.expectedQty;
           return (
-            <tr key={item.id}>
-              <td>{item.partN}</td>
-              <td>{item.partName}</td>
-              <td>{item.expectedQty}</td>
-              <td>
+            <tr key={item.id} className={cls.row}>
+              <td data-label="Штрих-код">{item.partN}</td>
+              <td data-label="Наименование">{item.partName}</td>
+              <td data-label="Ожидаемое">{item.expectedQty}</td>
+              <td data-label="Фактическое">
                 <input
                   type="number"
                   className={cls.input}
@@ -46,9 +46,14 @@ const AuditTable: React.FC<AuditTableProps> = ({ data, onActualChange, onRestart
                   onChange={e => onActualChange(item.id, Number(e.target.value))}
                 />
               </td>
-              <td className={diff < 0 ? cls.negative : cls.positive}>{diff}</td>
-              <td>{item.units}</td>
-              <td>
+              <td
+                data-label="Разница"
+                className={diff < 0 ? cls.negative : cls.positive}
+              >
+                {diff}
+              </td>
+              <td data-label="Ед. изм.">{item.units}</td>
+              <td data-label="Действия">
                 <button className={cls.buttonRestart} onClick={() => onRestartCount(item.id)}>
                   Пересчитать
                 </button>

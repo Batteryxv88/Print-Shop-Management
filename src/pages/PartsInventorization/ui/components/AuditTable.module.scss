@@ -69,3 +69,59 @@
 .buttonRestart:hover {
   background: #C397FC;
 }
+
+@import '../../../../app/styles/breakpoints/breakpoints';
+
+@include down(sm) {
+  .auditTable thead {
+    display: none;
+  }
+
+  .auditTable tbody tr {
+    display: block;
+    margin-bottom: 10px;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    background: #1a1a1a;
+  }
+
+  .auditTable tbody tr:hover {
+    background: #222;
+  }
+
+  .auditTable td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 13px;
+
+    &::before {
+      content: attr(data-label);
+      flex-shrink: 0;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.38);
+    }
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  .input {
+    width: 88px;
+    height: var(--touch-target-min, 44px);
+    font-size: 16px;
+  }
+
+  .buttonRestart {
+    min-height: var(--touch-target-min, 44px);
+    padding: 0 14px;
+  }
+}

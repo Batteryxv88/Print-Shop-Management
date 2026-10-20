@@ -68,3 +68,18 @@
 .exportButton:active {
   background: #B77EFC;
 }
+
+@import '../../../../app/styles/breakpoints/breakpoints';
+
+@include down(sm) {
+  .buttons {
+    flex-direction: column;
+  }
+
+  .saveButton,
+  .finishButton,
+  .exportButton {
+    width: 100%;
+    min-height: var(--touch-target-min, 44px);
+  }
+}

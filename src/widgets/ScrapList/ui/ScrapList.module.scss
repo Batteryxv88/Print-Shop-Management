@@ -124,3 +124,60 @@
     font-size: 12px;
     color: rgba(255, 255, 255, 0.4);
 }
+
+@import '../../../shared/styles/journalMobile';
+
+@include down(sm) {
+    .list {
+        padding: 10px 10px 16px;
+    }
+
+    .head {
+        display: none;
+    }
+
+    .row {
+        @include journal-list-row-mobile;
+    }
+
+    .colName,
+    .colType,
+    .colQty,
+    .colAmount,
+    .colMachine,
+    .colMan,
+    .colDate {
+        width: 100%;
+        text-align: start;
+    }
+
+    .colType {
+        @include mobile-field-label('Тип');
+    }
+
+    .colQty {
+        @include mobile-field-label('Кол-во');
+    }
+
+    .colAmount {
+        @include mobile-field-label('Сумма');
+    }
+
+    .colMachine {
+        @include mobile-field-label('Машина');
+    }
+
+    .colMan {
+        @include mobile-field-label('Ответственный');
+    }
+
+    .colDate {
+        @include mobile-field-label('Дата');
+    }
+
+    .colDel {
+        width: 100%;
+        justify-content: flex-end;
+        padding-top: 4px;
+    }
+}

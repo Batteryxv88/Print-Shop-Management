@@ -1,3 +1,5 @@
+@import '../../../shared/styles/journalMobile';
+
 .wrap {
     width: 100%;
     padding: 14px 18px 20px;
@@ -359,4 +361,80 @@
     text-align: center;
     font-size: 12px;
     color: rgba(255, 255, 255, 0.4);
+}
+
+@include down(sm) {
+    .wrap {
+        padding: 10px 10px 16px;
+    }
+
+    .bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .actions {
+        margin-left: 0;
+        width: 100%;
+        flex-wrap: wrap;
+
+        .editBtn,
+        .cancelBtn,
+        .saveBtn {
+            flex: 1;
+            min-width: calc(50% - 4px);
+            min-height: var(--touch-target-min, 44px);
+        }
+
+        .saveBtn {
+            flex: 1 1 100%;
+        }
+    }
+
+    .periodField input {
+        height: var(--touch-target-min, 44px);
+        font-size: 16px;
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .field {
+        width: 100%;
+    }
+
+    .fieldInput {
+        height: var(--touch-target-min, 44px);
+        font-size: 16px;
+    }
+
+    .historyHead {
+        display: none;
+    }
+
+    .historyRow {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        padding: 10px 12px;
+    }
+
+    .colPeriod {
+        width: 100%;
+        min-width: 0;
+        @include mobile-field-label('Период');
+    }
+
+    .colMan {
+        width: 100%;
+        text-align: start;
+        @include mobile-field-label('Ответственный');
+    }
+
+    .colDate {
+        width: 100%;
+        text-align: start;
+        @include mobile-field-label('Дата');
+    }
 }

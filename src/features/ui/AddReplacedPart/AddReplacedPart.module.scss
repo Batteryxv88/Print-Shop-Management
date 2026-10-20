@@ -1,3 +1,6 @@
+@import '../../../app/styles/breakpoints/breakpoints';
+@import '../../../shared/styles/modalSheet';
+
 .addReplacedPart {
     width: 100%;
     padding: 24px;
@@ -214,6 +217,7 @@ select.input {
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    @include overlay-sheet-mobile;
 }
 
 .modalContent {
@@ -221,12 +225,13 @@ select.input {
     padding: 2rem;
     border-radius: 8px;
     position: relative;
-    min-width: 400px;
+    min-width: min(400px, 100%);
     max-width: 90%;
     max-height: 90vh;
     overflow-y: auto;
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 1px 3px 1px rgba(0, 0, 0, 0.15);
+    @include dialog-sheet-mobile;
 }
 
 .modalTitle {
@@ -274,5 +279,18 @@ select.input {
 
     &:active {
         background-color: #B77EFC;
+    }
+}
+
+@include down(sm) {
+    .openModalButton {
+        width: 100%;
+        min-height: var(--touch-target-min, 44px);
+        height: auto;
+        padding: 10px 14px;
+    }
+
+    .modalContent {
+        padding: 1.25rem 1rem 1.5rem;
     }
 }

@@ -98,6 +98,7 @@ const SidebarJournal = () => {
                         <button
                             key={mode.kind}
                             type="button"
+                            data-testid={`journal-kind-${mode.kind}`}
                             className={`${cls.item} ${active ? cls.itemActive : ''}`}
                             onClick={() =>
                                 dispatch(changeJournalKind(mode.kind))

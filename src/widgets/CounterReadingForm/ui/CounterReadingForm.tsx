@@ -244,7 +244,7 @@ const CounterReadingForm = () => {
     const loading = printersPending || recordsLoading;
 
     return (
-        <div className={cls.wrap}>
+        <div className={cls.wrap} data-testid="counter-reading-form">
             <div className={cls.bar}>
                 <label className={cls.periodField}>
                     <span>Период</span>

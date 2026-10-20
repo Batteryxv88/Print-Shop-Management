@@ -106,7 +106,7 @@ const JournalPage = () => {
                     : 'Ввести счётчики';
 
     return (
-        <div className={cls.page}>
+        <div className={cls.page} data-testid="journal-root">
             <div className={cls.browser}>
                 <div className={cls.browserTop}>
                     <nav className={cls.breadcrumb} aria-label="Путь">

@@ -74,3 +74,15 @@
     border-bottom: 1px solid rgba(98, 218, 251, 0.15);
     padding-bottom: 4px;
 }
+
+@import '../../../app/styles/breakpoints/breakpoints';
+
+@include down(sm) {
+    .toners {
+        padding: 10px 10px 16px;
+    }
+
+    .box {
+        display: none;
+    }
+}
