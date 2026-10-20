@@ -44,22 +44,47 @@ export default defineConfig({
                           storageState: 'e2e/.auth/user.json',
                       },
                   },
+                  {
+                      name: 'mobile-authenticated',
+                      testMatch: 'mobile/shell.spec.ts',
+                      dependencies: ['setup'],
+                      use: {
+                          ...devices['Pixel 5'],
+                          storageState: 'e2e/.auth/user.json',
+                      },
+                  },
+                  {
+                      name: 'tablet-authenticated',
+                      testMatch: 'tablet/shell.spec.ts',
+                      dependencies: ['setup'],
+                      use: {
+                          ...devices['Desktop Chrome'],
+                          viewport: { width: 768, height: 1024 },
+                          isMobile: true,
+                          hasTouch: true,
+                          storageState: 'e2e/.auth/user.json',
+                      },
+                  },
               ]
             : []),
         {
             name: 'chromium-smoke',
             testMatch: '**/*.spec.ts',
-            testIgnore: ['**/mobile/**', '**/tablet/**', '**/authenticated.spec.ts'],
+            testIgnore: [
+                '**/mobile/**',
+                '**/tablet/**',
+                '**/authenticated.spec.ts',
+            ],
             use: { ...devices['Desktop Chrome'] },
         },
         {
             name: 'mobile-chrome',
-            testMatch: 'mobile/**/*.spec.ts',
+            testMatch: 'mobile/smoke.spec.ts',
             use: { ...devices['Pixel 5'] },
         },
         {
             name: 'tablet-chrome',
-            testMatch: 'tablet/**/*.spec.ts',
+            testMatch: 'tablet/smoke.spec.ts',
             use: {
                 ...devices['Desktop Chrome'],
                 viewport: { width: 768, height: 1024 },

@@ -1,6 +1,8 @@
 # Responsive roadmap — PSM
 
-Foundation (Phase 0) defines shared breakpoints for SCSS and TypeScript. Layout changes start in Phase 1 (app shell).
+Foundation (Phase 0) defines shared breakpoints for SCSS and TypeScript.
+
+**Phase 1 (done):** mobile drawer for sidebar + primary nav, burger in Navbar, Redux `ui.sidebarOpen`, tablet/desktop keep inline sidebar and top nav.
 
 ## Breakpoints
 

@@ -1,3 +1,5 @@
+@import './styles/breakpoints/breakpoints';
+
 .app {
     height: 100vh;
     height: 100dvh;
@@ -38,6 +40,12 @@
     flex: 1;
     min-height: 0;
     overflow: hidden;
+}
+
+@include down(sm) {
+    .content {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }
 
 .pages {

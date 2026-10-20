@@ -2,7 +2,7 @@ import { Route, Routes, Navigate } from "react-router-dom";
 import { MainPage } from "../pages/MainPage";
 import { Suspense } from "react";
 import { Navbar } from "../widgets/Navbar";
-import Sidebar from "../widgets/Sidebar/ui/Sidebar";
+import { AppShellSidebar } from "./layout/AppShellSidebar";
 import Favicon from "react-favicon";
 import faviconUrl from '../../public/favicon.svg';
 import { CalculatorPageAsync } from "../pages/CalculatorPage/ui/CalculatorPage.async";
@@ -36,7 +36,7 @@ const App = () => {
                   <div className={cls.container}>
                     <Navbar />
                     <div className={cls.content}>
-                      <Sidebar />
+                      <AppShellSidebar />
                       <div className={cls.pages}>
                         <Suspense fallback={<div className={cls.loading}>Loading...</div>}>
                           <Routes>

@@ -1,18 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
 import classNames from 'classnames';
-import cls from "./Navbar.module.scss";
-import Button from "../../../shared/ui/Button/Button";
-import { useAuth } from "../../../contexts/AuthContext";
-import { logout } from "../../../services/auth";
-import CounterReadingReminder from '../../../shared/ui/CounterReadingReminder/CounterReadingReminder';
+import cls from './Navbar.module.scss';
+import { useAuth } from '../../../contexts/AuthContext';
+import { logout } from '../../../services/auth';
 import { useCounterReadingReminder } from '../../../shared/lib/hooks/useCounterReadingReminder';
+import { PrimaryNavLinks } from '../../../app/layout/PrimaryNavLinks';
+import {
+    useAppDispatch,
+    useAppSelector,
+} from '../../../app/providers/StoreProvider/Store/hooks';
+import { toggleSidebar } from '../../../app/providers/StoreProvider/Store/UiSlice';
 
 const SCROLL_SOLID_AT = 12;
 
 const Navbar: React.FC = () => {
-    const location = useLocation();
     const navigate = useNavigate();
+    const dispatch = useAppDispatch();
+    const sidebarOpen = useAppSelector((state) => state.ui.sidebarOpen);
     const { user, userData } = useAuth();
     const [scrolled, setScrolled] = useState(false);
     useCounterReadingReminder();
@@ -54,78 +59,39 @@ const Navbar: React.FC = () => {
         }
     };
 
-    const isAdmin = userData?.role === 'администратор';
-    const isDirector = userData?.role === 'руководитель';
-    const isPrinter = userData?.role === 'печатник';
-
     return (
         <div className={classNames(cls.navbar, scrolled && cls.scrolled)}>
-            <div className={cls.navLinks}>
-                <Link
-                    className={`${cls.button} ${location.pathname === "/" ? cls.active : ""}`}
-                    to={"/"}
+            <div className={cls.leftCluster}>
+                <button
+                    type="button"
+                    className={cls.menuButton}
+                    aria-label="Открыть меню"
+                    aria-expanded={sidebarOpen}
+                    data-testid="nav-menu-toggle"
+                    onClick={() => dispatch(toggleSidebar())}
                 >
-                    <Button name={'СКЛАД'} />
-                </Link>
-                {(isDirector || isAdmin || isPrinter) && (
-                    <Link
-                        className={`${cls.button} ${
-                            location.pathname === '/journal' ||
-                            location.pathname === '/toner' ||
-                            location.pathname === '/schedule'
-                                ? cls.active
-                                : ''
-                        }`}
-                        to={'/journal'}
-                    >
-                        <Button name={'ЖУРНАЛ УЧЁТА'} />
-                    </Link>
-                )}
-                {(isDirector || isAdmin) && (
-                    <Link
-                        className={`${cls.button} ${location.pathname === "/analytics" ? cls.active : ""}`}
-                        to={"/analytics"}
-                    >
-                        <Button name={'АНАЛИТИКА'} />
-                    </Link>
-                )}
-                <Link
-                    className={`${cls.button} ${location.pathname === "/calculator" ? cls.active : ""}`}
-                    to={"/calculator"}
-                >
-                    <Button name={'КАЛЬКУЛЯТОР'} />
-                </Link>
-                <Link
-                    className={`${cls.button} ${location.pathname === "/rotation" ? cls.active : ""}`}
-                    to={"/rotation"}
-                >
-                    <Button name={'РОТАЦИЯ'} />
-                </Link>
-                <Link
-                    className={`${cls.button} ${location.pathname === "/manuals" ? cls.active : ""}`}
-                    to={"/manuals"}
-                >
-                    <Button name={'СЕРВИС ИНСТРУКЦИИ'} />
-                </Link>
-                {/* Отображаем кнопку админ-панели только для администраторов */}
-                {isAdmin && (
-                    <Link
-                        className={`${cls.button} ${location.pathname === "/admin" ? cls.active : ""}`}
-                        to={"/admin"}
-                    >
-                        <Button name={'АДМИНИСТРИРОВАНИЕ'} />
-                    </Link>
-                )}
-                {(isAdmin || isDirector || isPrinter) && <CounterReadingReminder />}
+                    <span className={cls.menuIcon} aria-hidden />
+                </button>
+                <span className={cls.brand}>PSM</span>
+                <PrimaryNavLinks
+                    className={cls.navLinks}
+                    linkClassName={cls.button}
+                    activeClassName={cls.active}
+                />
             </div>
             <div className={cls.rightSection}>
                 {user && (
                     <div className={cls.userInfo}>
                         <div className={cls.userInfoContent}>
                             <span className={cls.name}>{user.displayName}</span>
-                            {userData && <span className={cls.role}>{userData.role}</span>}
+                            {userData && (
+                                <span className={cls.role}>{userData.role}</span>
+                            )}
                         </div>
-                        <button onClick={handleLogout} className={cls.logoutButton}>
+                        <button
+                            onClick={handleLogout}
+                            className={cls.logoutButton}
+                        >
                             Выйти
                         </button>
                     </div>

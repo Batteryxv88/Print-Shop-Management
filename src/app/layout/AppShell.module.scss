@@ -1,0 +1,116 @@
+@import '../styles/breakpoints/breakpoints';
+
+.backdrop {
+    display: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+}
+
+@include down(sm) {
+    .backdrop {
+        position: fixed;
+        inset: 0;
+        top: calc(44px + env(safe-area-inset-top, 0));
+        z-index: 270;
+        background: var(--overlay-color, rgba(0, 0, 0, 0.6));
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.22s ease;
+    }
+
+    .backdropVisible {
+        display: block;
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .sidebarShell {
+        position: fixed;
+        top: calc(44px + env(safe-area-inset-top, 0));
+        left: 0;
+        bottom: 0;
+        z-index: 280;
+        width: min(100vw - 32px, 320px);
+        max-width: 100%;
+        display: flex;
+        flex-direction: column;
+        background: #1a1a1a;
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 8px 0 32px rgba(0, 0, 0, 0.45);
+        transform: translateX(-105%);
+        transition: transform 0.25s ease;
+        overflow: hidden;
+    }
+
+    .sidebarShellOpen {
+        transform: translateX(0);
+    }
+
+    .mobilePrimaryNav {
+        flex-shrink: 0;
+        padding: 12px 12px 8px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        max-height: 42vh;
+        overflow-y: auto;
+    }
+
+    .mobileNavTitle {
+        margin: 0 0 8px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.45);
+    }
+
+    .mobileNavLinks {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        align-items: stretch;
+    }
+
+    .mobileNavLink {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+        border-radius: 8px;
+        padding: 2px 4px;
+
+        :global(button) {
+            width: 100%;
+            min-height: var(--touch-target-min, 44px);
+            justify-content: flex-start;
+            font-size: 0.75rem;
+        }
+    }
+
+    .mobileNavLinkActive {
+        background: rgba(187, 134, 252, 0.12);
+    }
+
+    .contextSidebar {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+    }
+}
+
+@include up(sm) {
+    .mobilePrimaryNav {
+        display: none;
+    }
+
+    .sidebarShell {
+        min-height: 0;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .contextSidebar {
+        height: 100%;
+        min-height: 0;
+    }
+}

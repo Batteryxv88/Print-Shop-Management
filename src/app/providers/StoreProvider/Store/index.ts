@@ -20,6 +20,7 @@ import printersReducer from './PrintersSlice';
 import counterReadingReducer from './CounterReadingSlice';
 import analyticsFilterReducer from './AnalyticsFilterSlice';
 import appSettingsReducer from './AppSettingsSlice';
+import uiReducer from './UiSlice';
 
 const store = configureStore({
     reducer: {
@@ -44,6 +45,7 @@ const store = configureStore({
         counterReading: counterReadingReducer,
         analyticsFilter: analyticsFilterReducer,
         appSettings: appSettingsReducer,
+        ui: uiReducer,
     }
 })
 

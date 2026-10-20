@@ -44,6 +44,7 @@ npm run test:e2e
 | `npm run test:e2e:smoke` | desktop + mobile + tablet public smoke |
 | `npm run test:e2e:mobile` | только phone viewport |
 | `npm run test:e2e:tablet` | только tablet viewport |
+| `npm run test:e2e:shell` | mobile/tablet drawer (нужны `E2E_EMAIL`, `E2E_PASSWORD`) |
 | `npm run test:e2e:ui` | интерактивный UI Playwright |
 | `npm run test:e2e:report` | HTML-отчёт после прогона |
 
