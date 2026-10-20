@@ -46,7 +46,7 @@ export default defineConfig({
                   },
                   {
                       name: 'mobile-authenticated',
-                      testMatch: /mobile\/(shell|stock|journal)\.spec\.ts/,
+                      testMatch: /mobile\/(shell|stock|journal|analytics)\.spec\.ts/,
                       dependencies: ['setup'],
                       use: {
                           ...devices['Pixel 5'],
@@ -55,11 +55,11 @@ export default defineConfig({
                   },
                   {
                       name: 'tablet-authenticated',
-                      testMatch: 'tablet/shell.spec.ts',
+                      testMatch: /tablet\/(shell|stock|analytics)\.spec\.ts/,
                       dependencies: ['setup'],
                       use: {
                           ...devices['Desktop Chrome'],
-                          viewport: { width: 768, height: 1024 },
+                          viewport: { width: 834, height: 1194 },
                           isMobile: true,
                           hasTouch: true,
                           storageState: 'e2e/.auth/user.json',
@@ -87,7 +87,7 @@ export default defineConfig({
             testMatch: 'tablet/smoke.spec.ts',
             use: {
                 ...devices['Desktop Chrome'],
-                viewport: { width: 768, height: 1024 },
+                viewport: { width: 834, height: 1194 },
                 isMobile: true,
                 hasTouch: true,
             },

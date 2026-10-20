@@ -135,3 +135,11 @@
     text-align: center;
 }
 
+@import '../../../app/styles/breakpoints/breakpoints';
+
+@include down(md) {
+    .reportEditor {
+        padding: 12px 10px 20px;
+        overflow-x: auto;
+    }
+}

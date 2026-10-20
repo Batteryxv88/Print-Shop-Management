@@ -1,0 +1,54 @@
+@import '../../app/styles/breakpoints/breakpoints';
+@import 'journalMobile';
+
+@mixin material-stock-list-md {
+    @include down(md) {
+        .page {
+            padding: 10px 10px 16px;
+        }
+
+        .titleBox {
+            display: none;
+        }
+
+        .row {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 8px;
+            padding: 12px;
+            min-height: 0;
+        }
+
+        .colName {
+            width: auto;
+            flex-shrink: 1;
+        }
+
+        .colMeta {
+            width: auto;
+            flex: none;
+            min-width: 0;
+            white-space: normal;
+            overflow: visible;
+            text-overflow: unset;
+            @include mobile-field-label('Параметры');
+        }
+
+        .colNote {
+            width: auto;
+            flex: none;
+            min-width: 0;
+            white-space: normal;
+            overflow: visible;
+            text-overflow: unset;
+            @include mobile-field-label('Примечание');
+        }
+
+        .colQty {
+            width: auto;
+            flex: none;
+            text-align: left;
+            @include mobile-field-label('Склад');
+        }
+    }
+}

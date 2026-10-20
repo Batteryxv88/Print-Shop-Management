@@ -1,0 +1,6 @@
+@import '../../../shared/styles/compactNotice';
+
+.rotationStub {
+    @include compact-stub-page;
+    padding-top: 24px;
+}

@@ -110,6 +110,40 @@
     font-size: 14px;
 }
 
+@import '../../../app/styles/breakpoints/breakpoints';
+
+@include down(md) {
+    .gridContainer {
+        height: auto;
+        min-height: 0;
+        padding: 12px 10px 20px;
+    }
+
+    .content {
+        flex-direction: column;
+        height: auto;
+        gap: 20px;
+    }
+
+    .leftColumn {
+        flex: none;
+        width: 100%;
+        max-height: none;
+        padding-right: 0;
+    }
+
+    .rightColumn {
+        width: 100%;
+        min-height: 240px;
+    }
+
+    .title {
+        margin-bottom: 16px;
+        font-size: 16px;
+        text-align: start;
+    }
+}
+
 .formDetailItem {
     padding: 8px 12px;
     background: #2A2A2A;

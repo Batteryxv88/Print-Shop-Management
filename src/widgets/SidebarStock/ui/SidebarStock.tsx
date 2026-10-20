@@ -24,6 +24,23 @@ type SectionItem = {
     hasModels?: boolean;
 };
 
+const storageSectionTestId = (name: string): string | undefined => {
+    switch (name) {
+        case 'Детали':
+            return 'storage-parts';
+        case 'Тонеры':
+            return 'storage-toners';
+        case 'Бумага':
+            return 'storage-paper';
+        case 'Ламинация':
+            return 'storage-lamination';
+        case 'Держатели / Лезвия':
+            return 'storage-holders';
+        default:
+            return undefined;
+    }
+};
+
 const PRINTER_SECTIONS: SectionItem[] = [
     {
         name: 'Детали',
@@ -121,6 +138,7 @@ const SidebarStock = () => {
             <button
                 key={section.name}
                 type="button"
+                data-testid={storageSectionTestId(section.name)}
                 className={`${cls.item} ${active ? cls.itemActive : ''}`}
                 onClick={() => dispatch(changeStorage(section.name))}
             >

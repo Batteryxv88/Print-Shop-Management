@@ -119,3 +119,9 @@
         padding: 0 4px;
     }
 }
+
+@include between(sm, md) {
+    .MainPage {
+        padding: 10px 12px 14px;
+    }
+}

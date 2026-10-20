@@ -126,3 +126,11 @@
     font-size: 12px;
     color: #FF8A80;
 }
+
+@import '../../../app/styles/breakpoints/breakpoints';
+
+@include down(md) {
+    .editor {
+        padding: 12px 10px 20px;
+    }
+}

@@ -474,3 +474,21 @@
         max-width: 200px;
     }
 }
+
+@import '../../../app/styles/breakpoints/breakpoints';
+
+@include down(md) {
+    .editor {
+        padding: 12px 10px 20px;
+    }
+
+    .sections {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .sectionButton,
+    .sectionActive {
+        min-height: var(--touch-target-min, 44px);
+    }
+}

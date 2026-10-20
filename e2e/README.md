@@ -14,7 +14,7 @@ npm run test:e2e
 npm run test:e2e:smoke
 ```
 
-Проекты: `chromium-smoke` (desktop), `mobile-chrome` (Pixel 5), `tablet-chrome` (iPad). Документация: [docs/responsive.md](../docs/responsive.md).
+Проекты: `chromium-smoke` (desktop), `mobile-chrome` (Pixel 5), `tablet-chrome` (834×1194, inline sidebar). Документация: [docs/responsive.md](../docs/responsive.md).
 
 ## Авторизованные сценарии
 
@@ -47,6 +47,8 @@ npm run test:e2e
 | `npm run test:e2e:shell` | mobile/tablet drawer (нужны `E2E_EMAIL`, `E2E_PASSWORD`) |
 | `npm run test:e2e:stock` | mobile Stock + FIFO (`mobile-authenticated`) |
 | `npm run test:e2e:journal` | mobile Journal + счётчики (`mobile-authenticated`) |
+| `npm run test:e2e:tablet-stock` | tablet toners / paper / lamination (`tablet-authenticated`, 834px) |
+| `npm run test:e2e:analytics` | mobile KPI stub + tablet charts (нужна роль с `/analytics`) |
 | `npm run test:e2e:ui` | интерактивный UI Playwright |
 | `npm run test:e2e:report` | HTML-отчёт после прогона |
 

@@ -206,4 +206,23 @@
     color: rgba(255, 255, 255, 0.6);
     font-style: italic;
   }
-} 
+}
+
+@import '../app/styles/breakpoints/breakpoints';
+
+@include down(md) {
+  .adminPage {
+    padding: 12px 10px 20px;
+  }
+
+  .pageTitle {
+    font-size: 22px;
+  }
+
+  .userForm input,
+  .userForm select,
+  .userForm button {
+    min-height: var(--touch-target-min, 44px);
+    font-size: 16px;
+  }
+}

@@ -1,0 +1,22 @@
+@import '../../../app/styles/breakpoints/breakpoints';
+@import '../../../shared/styles/compactNotice';
+
+.adminPage {
+    min-height: 100%;
+    box-sizing: border-box;
+}
+
+.adminSurface {
+    min-height: 0;
+}
+
+.mobileEditorStub {
+    @include compact-stub-page;
+    padding-top: 24px;
+}
+
+@include down(md) {
+    .adminPage {
+        padding: 0 4px;
+    }
+}

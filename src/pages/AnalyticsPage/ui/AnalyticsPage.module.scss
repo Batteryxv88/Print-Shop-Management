@@ -917,3 +917,88 @@
         border-color: #BB86FC;
     }
 }
+
+@import '../../../shared/styles/compactNotice';
+
+.compactNotice {
+    @include compact-notice-block;
+}
+
+.analyticsBody {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+
+    @include down(sm) {
+        display: none;
+    }
+}
+
+@include down(md) {
+    .page {
+        padding: 12px 12px 24px;
+        gap: 16px;
+    }
+
+    .title {
+        font-size: 20px;
+    }
+
+    .kpis {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 10px;
+    }
+
+    .kpi {
+        padding: 14px;
+    }
+
+    .kpiValue {
+        font-size: 18px;
+    }
+
+    .charts {
+        grid-template-columns: 1fr;
+    }
+
+    .chartCard {
+        min-height: 260px;
+        padding: 14px;
+    }
+
+    .movementFilters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filterSelect {
+        max-width: none;
+        width: 100%;
+        min-height: var(--touch-target-min, 44px);
+        font-size: 16px;
+    }
+
+    .materialDl {
+        grid-template-columns: 1fr;
+    }
+
+    .catRow {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    .unattachedList li {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+
+    .volumeToggle,
+    .costModeBtn,
+    .costModeActive {
+        min-height: var(--touch-target-min, 44px);
+    }
+
+    .ghostBtn {
+        min-height: var(--touch-target-min, 44px);
+    }
+}

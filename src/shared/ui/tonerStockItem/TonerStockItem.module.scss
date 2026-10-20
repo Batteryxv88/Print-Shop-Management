@@ -97,3 +97,11 @@
     line-height: 1;
     color: rgba(255, 255, 255, 0.45);
 }
+
+@import '../../../app/styles/breakpoints/breakpoints';
+
+@include down(md) {
+    .tonerBox {
+        width: 100%;
+    }
+}

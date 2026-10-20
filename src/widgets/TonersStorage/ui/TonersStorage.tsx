@@ -66,7 +66,7 @@ const TonersStorage = () => {
         useInfiniteList(filteredToners);
 
     return (
-        <div className={cls.tonerStorage}>
+        <div className={cls.tonerStorage} data-testid="toners-storage-root">
             <header className={cls.header}>
                 <div className={cls.headerText}>
                     <div className={cls.stats}>
@@ -107,6 +107,7 @@ const TonersStorage = () => {
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="Поиск по цвету…"
+                        data-testid="toners-search"
                     />
                 </label>
             </header>

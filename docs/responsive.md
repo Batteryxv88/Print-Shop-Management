@@ -8,6 +8,10 @@ Foundation (Phase 0) defines shared breakpoints for SCSS and TypeScript.
 
 **Phase 3 (done):** Field flows — login touch targets, journal shell/toolbar, counter reading form, journal list cards (parts/toner/lists), bottom-sheet modals (`AddReplacedPart`, `NotificationModal`), parts inventorization cards, `e2e/mobile/journal.spec.ts`.
 
+**Phase 4 (done):** Tablet parity for toners / paper / lamination — list cards ≤1024px, responsive toner grid, narrow sidebar 769–1024px, Playwright tablet viewport 834px, `e2e/tablet/stock.spec.ts`.
+
+**Phase 5 (done):** Analytics / Rotation / Admin — phone KPI-only analytics + stubs for heavy admin/rotation editors; tablet layouts for charts and rotation; `e2e/mobile/analytics.spec.ts`, `e2e/tablet/analytics.spec.ts`.
+
 ## Breakpoints
 
 | Token | Max width | Typical device |
@@ -43,9 +47,10 @@ Mixins: `down(xs|sm|md)`, `up(xs|sm|md|lg)`, `between(from, to)`.
 | Area | Phone | Tablet | Desktop |
 |------|-------|--------|---------|
 | Login | Full | Full | Full |
-| Stock | P1 → P0 | P0 | Full |
+| Stock (parts) | P2 | P0 | Full |
+| Stock (toners / paper / lamination) | P4 | P4 | Full |
 | Journal / counter / inventorization | P3 | P0 | Full |
-| Analytics / Admin | Stub or read-only | P1 | Full |
+| Analytics / Admin / Rotation | P5 stub (phone) | P5 layout | Full |
 
 See chat roadmap for phase order.
 

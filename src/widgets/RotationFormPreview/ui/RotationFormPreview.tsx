@@ -127,7 +127,7 @@ const RotationFormPreview = () => {
     };
     
     return (
-        <div className={cls.gridContainer}>
+        <div className={cls.gridContainer} data-testid="rotation-preview-root">
             <h2 className={cls.title}>Предварительный вид формы</h2>
             
             <div className={cls.content}>

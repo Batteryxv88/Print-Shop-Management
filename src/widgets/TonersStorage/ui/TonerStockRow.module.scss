@@ -1,3 +1,5 @@
+@import '../../../app/styles/breakpoints/breakpoints';
+
 .main {
     width: 140px;
     cursor: pointer;
@@ -6,5 +8,11 @@
 
     &:focus-visible {
         box-shadow: 0 0 0 2px rgba(187, 134, 252, 0.45);
+    }
+}
+
+@include down(md) {
+    .main {
+        width: 100%;
     }
 }

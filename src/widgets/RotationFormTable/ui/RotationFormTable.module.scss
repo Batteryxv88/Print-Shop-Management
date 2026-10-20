@@ -113,8 +113,25 @@
     text-align: center;
 }
 
+@import '../../../app/styles/breakpoints/breakpoints';
 
+@include down(md) {
+    .rotationFormTable {
+        padding: 12px 10px 20px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
 
+    .nameContainer {
+        min-width: 680px;
+    }
+
+    .title {
+        margin-bottom: 20px;
+        font-size: 16px;
+        text-align: start;
+    }
+}
 
 
 

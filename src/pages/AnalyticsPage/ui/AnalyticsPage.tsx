@@ -899,7 +899,7 @@ const AnalyticsPage = () => {
     };
 
     return (
-        <div className={cls.page}>
+        <div className={cls.page} data-testid="analytics-root">
             <div className={cls.header}>
                 <h1 className={cls.title}>Аналитика затрат</h1>
                 {loading && (
@@ -956,9 +956,18 @@ const AnalyticsPage = () => {
                 </div>
             </div>
 
+            <p
+                className={cls.compactNotice}
+                data-testid="analytics-mobile-notice"
+            >
+                На телефоне доступны только сводные KPI. Графики, таблицы и
+                выгрузка Excel — на планшете или компьютере.
+            </p>
+
             {loading && movements.length === 0 ? (
                 <div className={cls.loading}>Загрузка…</div>
             ) : (
+                <div className={cls.analyticsBody}>
                 <>
                     <div className={cls.charts}>
                         <div className={`${cls.chartCard} ${cls.chartWide}`}>
@@ -1986,6 +1995,7 @@ const AnalyticsPage = () => {
                         />
                     </div>
                 </>
+                </div>
             )}
         </div>
     );

@@ -40,7 +40,7 @@ const PaperStockPage = () => {
     if (isLoading) return <LoadingPlug />;
 
     return (
-        <div className={cls.page}>
+        <div className={cls.page} data-testid="paper-stock-root">
             <header className={cls.header}>
                 <div className={cls.stats}>
                     <span className={cls.stat}>

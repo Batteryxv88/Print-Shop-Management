@@ -1,0 +1,37 @@
+@import '../../app/styles/breakpoints/breakpoints';
+
+@mixin compact-notice-block {
+    display: none;
+
+    @include down(sm) {
+        display: block;
+        margin: 0;
+        padding: 12px 14px;
+        border-radius: 8px;
+        background: rgba(187, 134, 252, 0.1);
+        border: 1px solid rgba(187, 134, 252, 0.32);
+        font-size: 13px;
+        line-height: 1.45;
+        color: rgba(255, 255, 255, 0.78);
+    }
+}
+
+@mixin compact-stub-page {
+    padding: 16px 14px 24px;
+    max-width: 420px;
+    margin: 0 auto;
+
+    h2 {
+        margin: 0 0 10px;
+        font-size: 18px;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.92);
+    }
+
+    p {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.5;
+        color: rgba(255, 255, 255, 0.6);
+    }
+}

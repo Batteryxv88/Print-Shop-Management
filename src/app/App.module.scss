@@ -48,6 +48,12 @@
     }
 }
 
+@include between(sm, md) {
+    .content {
+        grid-template-columns: 200px minmax(0, 1fr);
+    }
+}
+
 .pages {
     min-height: 0;
     height: 100%;
