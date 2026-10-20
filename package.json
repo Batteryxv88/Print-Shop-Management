@@ -8,7 +8,7 @@
     "build:prod": "webpack --env mode=production",
     "build:dev": "webpack --env mode=development",
     "dev": "webpack",
-    "predeploy": "npm run build:prod",
+    "predeploy": "npm run build:prod && node -e \"require('fs').writeFileSync('build/.nojekyll','')\"",
     "deploy": "gh-pages -d build",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -20,6 +20,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "homepage": "https://batteryxv88.github.io/Print-Shop-Management",
   "devDependencies": {
     "@playwright/test": "^1.64.1",
     "@svgr/webpack": "^8.1.0",

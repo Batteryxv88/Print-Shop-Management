@@ -7,13 +7,14 @@ import path from 'path'
 import { buildDevServer } from "./buildDevServer";
 
 export function buildWebpackConfig(options: BuildOptions): webpack.Configuration  {
-    const {paths, mode, isDev} = options;
+    const {paths, mode, isDev, publicPath} = options;
 return {
     mode: mode,
     entry: paths.entry,
     output: {
         filename: "[name].[contenthash].js",
         path: paths.build,
+        publicPath,
         clean: true,
     },
     plugins: buildPlugins(options),

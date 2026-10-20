@@ -8,6 +8,7 @@ export function buildPlugins ({paths}: BuildOptions): webpack.WebpackPluginInsta
     return [
         new HtmlWebpackPlugin({
             template: paths.html,
+            favicon: path.resolve(paths.html, '..', 'favicon.svg'),
         }),
         new webpack.ProgressPlugin(),
         new MiniCssExtractPlugin({

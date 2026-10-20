@@ -16,4 +16,5 @@ export interface BuildOptions {
     paths: BuildPaths;
     isDev: boolean;
     port: number;
+    publicPath: string;
 }
