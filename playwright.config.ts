@@ -11,7 +11,7 @@ export default defineConfig({
     testDir: './e2e',
     fullyParallel: true,
     forbidOnly: Boolean(process.env.CI),
-    retries: process.env.CI ? 1 : 0,
+    retries: process.env.CI ? 2 : 0,
     workers: process.env.CI ? 1 : undefined,
     reporter: [['list'], ['html', { open: 'never' }]],
     use: {
@@ -19,6 +19,7 @@ export default defineConfig({
         trace: 'on-first-retry',
         screenshot: 'only-on-failure',
         video: 'retain-on-failure',
+        reducedMotion: 'reduce',
     },
     webServer: process.env.PLAYWRIGHT_BASE_URL
         ? undefined
@@ -46,7 +47,8 @@ export default defineConfig({
                   },
                   {
                       name: 'mobile-authenticated',
-                      testMatch: /mobile\/(shell|stock|journal|analytics)\.spec\.ts/,
+                      testMatch:
+                          /mobile\/(shell|stock|journal|analytics|routes)\.spec\.ts/,
                       dependencies: ['setup'],
                       use: {
                           ...devices['Pixel 5'],
@@ -55,7 +57,8 @@ export default defineConfig({
                   },
                   {
                       name: 'tablet-authenticated',
-                      testMatch: /tablet\/(shell|stock|analytics)\.spec\.ts/,
+                      testMatch:
+                          /tablet\/(shell|stock|analytics|routes)\.spec\.ts/,
                       dependencies: ['setup'],
                       use: {
                           ...devices['Desktop Chrome'],

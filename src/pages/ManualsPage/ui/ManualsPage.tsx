@@ -98,7 +98,7 @@ const ManualsPage = () => {
     };
 
     return (
-        <div className={cls.manualsPage}>
+        <div className={cls.manualsPage} data-testid="manuals-root">
             <div className={cls.manualsContainer}>
                 <div className={cls.findErrorForm}>
                     <form onSubmit={handleSearch}>

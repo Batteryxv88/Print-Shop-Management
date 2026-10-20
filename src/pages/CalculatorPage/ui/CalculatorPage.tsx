@@ -311,7 +311,7 @@ const CalculatorPage = () => {
     // };
 
     return (
-        <div className={cls.CalculatorPage}>
+        <div className={cls.CalculatorPage} data-testid="calculator-root">
             {/* Combined lamination calculators with mode toggle */}
             <div className={cls.calculator}>
                 <h2 className={cls.title}>Расчет ламинации</h2>

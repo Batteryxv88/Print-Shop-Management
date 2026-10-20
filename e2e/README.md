@@ -8,6 +8,8 @@ npm run test:e2e
 
 Запускает dev-сервер на порту **3000** (если не задан `PLAYWRIGHT_BASE_URL`) и прогоняет E2E-тесты.
 
+Playwright по умолчанию эмулирует **`prefers-reduced-motion: reduce`** (Phase 6), в CI — **2 retry** на флаки.
+
 **Smoke (Phase 0 responsive):**
 
 ```bash
@@ -49,6 +51,8 @@ npm run test:e2e
 | `npm run test:e2e:journal` | mobile Journal + счётчики (`mobile-authenticated`) |
 | `npm run test:e2e:tablet-stock` | tablet toners / paper / lamination (`tablet-authenticated`, 834px) |
 | `npm run test:e2e:analytics` | mobile KPI stub + tablet charts (нужна роль с `/analytics`) |
+| `npm run test:e2e:responsive` | все сценарии с тегами `@mobile` / `@tablet` |
+| `npm run test:e2e:routes` | горизонтальный скролл на `/`, `/calculator`, `/journal`, держатели |
 | `npm run test:e2e:ui` | интерактивный UI Playwright |
 | `npm run test:e2e:report` | HTML-отчёт после прогона |
 

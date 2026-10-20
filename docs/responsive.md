@@ -12,6 +12,8 @@ Foundation (Phase 0) defines shared breakpoints for SCSS and TypeScript.
 
 **Phase 5 (done):** Analytics / Rotation / Admin — phone KPI-only analytics + stubs for heavy admin/rotation editors; tablet layouts for charts and rotation; `e2e/mobile/analytics.spec.ts`, `e2e/tablet/analytics.spec.ts`.
 
+**Phase 6 (done):** Hardening — global `prefers-reduced-motion` (`_accessibility.scss`), Playwright `reducedMotion: 'reduce'` + CI retries (2), light responsive for Calculator / Manuals / Holders stock, route layout E2E (`e2e/mobile/routes.spec.ts`, `e2e/tablet/routes.spec.ts`), `npm run test:e2e:responsive` / `test:e2e:routes`. PWA/offline — out of v1 scope.
+
 ## Breakpoints
 
 | Token | Max width | Typical device |
@@ -51,8 +53,18 @@ Mixins: `down(xs|sm|md)`, `up(xs|sm|md|lg)`, `between(from, to)`.
 | Stock (toners / paper / lamination) | P4 | P4 | Full |
 | Journal / counter / inventorization | P3 | P0 | Full |
 | Analytics / Admin / Rotation | P5 stub (phone) | P5 layout | Full |
+| Calculator / Manuals / Holders | P6 layout | P6 layout | Full |
 
 See chat roadmap for phase order.
+
+## Release checklist (responsive / Pages)
+
+1. `npm test` — unit tests green.
+2. `npm run test:e2e:smoke` — desktop + public mobile/tablet smoke (CI gate).
+3. With `E2E_EMAIL` / `E2E_PASSWORD`: `npm run test:e2e:responsive` or targeted `test:e2e:shell`, `stock`, `journal`, `routes`, `analytics`.
+4. Manual spot-check: phone drawer, stock FIFO bottom sheet, journal counter form, tablet sidebar + toners list.
+5. `npm run build:prod` then `npm run deploy` when ready; Firebase Auth authorized domain includes `batteryxv88.github.io`.
+6. Optional: enable `E2E_EMAIL` / `E2E_PASSWORD` in GitHub Actions secrets for authenticated responsive runs (not required for deploy today).
 
 ## PR checklist (responsive changes)
 
@@ -70,7 +82,7 @@ See chat roadmap for phase order.
 
 ```bash
 npm test
-npm run test:e2e -- --project=chromium-smoke
-npm run test:e2e -- --project=mobile-chrome
-npm run test:e2e -- --project=tablet-chrome
+npm run test:e2e:smoke
+npm run test:e2e:responsive   # all @mobile / @tablet (auth projects if env set)
+npm run test:e2e:routes       # layout checks for primary routes
 ```

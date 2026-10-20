@@ -1,3 +1,5 @@
+@import '../../../app/styles/breakpoints/breakpoints';
+
 .CalculatorPage {
     padding: 38px;
     height: 100%;
@@ -151,4 +153,41 @@
         font-weight: 500;
         color: #BB86FC;
     }
-} 
+}
+
+@include down(md) {
+    .CalculatorPage {
+        flex-direction: column;
+        padding: 16px;
+        gap: 16px;
+        align-items: stretch;
+    }
+
+    .calculator {
+        padding: 20px 16px;
+        min-height: 0;
+        max-width: none;
+    }
+
+    .title {
+        font-size: 20px;
+    }
+
+    .button {
+        min-width: calc(50% - 6px);
+    }
+}
+
+@include down(sm) {
+    .CalculatorPage {
+        padding: 12px;
+    }
+
+    .buttonsWrapper {
+        gap: 8px;
+    }
+
+    .button {
+        min-width: 100%;
+    }
+}

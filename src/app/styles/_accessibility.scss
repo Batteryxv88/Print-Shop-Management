@@ -1,0 +1,11 @@
+// Phase 6 — respect OS “reduce motion” globally (page-level fade-ins, transitions, etc.).
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

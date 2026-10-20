@@ -142,7 +142,11 @@ const HoldersAndKnifesStockPage = () => {
     }
 
     return (
-        <div className={cls.HoldersAndKnifesStockPage} ref={containerRef}>
+        <div
+            className={cls.HoldersAndKnifesStockPage}
+            ref={containerRef}
+            data-testid="holders-stock-root"
+        >
             <h2 className={cls.title}>Склад держателей и ножей</h2>
             <div className={cls.container}>
                 <div className={cls.holder}>
