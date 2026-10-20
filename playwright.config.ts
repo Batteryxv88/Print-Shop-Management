@@ -48,8 +48,24 @@ export default defineConfig({
             : []),
         {
             name: 'chromium-smoke',
-            testMatch: /smoke\.spec\.ts/,
+            testMatch: '**/*.spec.ts',
+            testIgnore: ['**/mobile/**', '**/tablet/**', '**/authenticated.spec.ts'],
             use: { ...devices['Desktop Chrome'] },
+        },
+        {
+            name: 'mobile-chrome',
+            testMatch: 'mobile/**/*.spec.ts',
+            use: { ...devices['Pixel 5'] },
+        },
+        {
+            name: 'tablet-chrome',
+            testMatch: 'tablet/**/*.spec.ts',
+            use: {
+                ...devices['Desktop Chrome'],
+                viewport: { width: 768, height: 1024 },
+                isMobile: true,
+                hasTouch: true,
+            },
         },
     ],
 });

@@ -6,7 +6,15 @@
 npm run test:e2e
 ```
 
-Запускает dev-сервер на порту **3000** (если не задан `PLAYWRIGHT_BASE_URL`) и прогоняет **smoke**-тесты без Firebase-учётки.
+Запускает dev-сервер на порту **3000** (если не задан `PLAYWRIGHT_BASE_URL`) и прогоняет E2E-тесты.
+
+**Smoke (Phase 0 responsive):**
+
+```bash
+npm run test:e2e:smoke
+```
+
+Проекты: `chromium-smoke` (desktop), `mobile-chrome` (Pixel 5), `tablet-chrome` (iPad). Документация: [docs/responsive.md](../docs/responsive.md).
 
 ## Авторизованные сценарии
 
@@ -32,7 +40,10 @@ npm run test:e2e
 
 | Команда | Описание |
 |---------|----------|
-| `npm run test:e2e` | headless прогон |
+| `npm run test:e2e` | headless прогон (все projects) |
+| `npm run test:e2e:smoke` | desktop + mobile + tablet public smoke |
+| `npm run test:e2e:mobile` | только phone viewport |
+| `npm run test:e2e:tablet` | только tablet viewport |
 | `npm run test:e2e:ui` | интерактивный UI Playwright |
 | `npm run test:e2e:report` | HTML-отчёт после прогона |
 

@@ -1,0 +1,80 @@
+// Canonical breakpoints for PSM responsive layout (Phase 0).
+// lg (>1024px) = desktop baseline — no mixin required.
+
+$bp-xs-max: 480px;
+$bp-sm-max: 768px;
+$bp-md-max: 1024px;
+
+@mixin down($breakpoint) {
+    @if $breakpoint == xs {
+        @media (max-width: $bp-xs-max) {
+            @content;
+        }
+    } @else if $breakpoint == sm {
+        @media (max-width: $bp-sm-max) {
+            @content;
+        }
+    } @else if $breakpoint == md {
+        @media (max-width: $bp-md-max) {
+            @content;
+        }
+    } @else {
+        @error "Unknown breakpoint `#{$breakpoint}`. Use xs, sm, or md.";
+    }
+}
+
+@mixin up($breakpoint) {
+    @if $breakpoint == xs {
+        @media (min-width: ($bp-xs-max + 1)) {
+            @content;
+        }
+    } @else if $breakpoint == sm {
+        @media (min-width: ($bp-sm-max + 1)) {
+            @content;
+        }
+    } @else if $breakpoint == md {
+        @media (min-width: ($bp-md-max + 1)) {
+            @content;
+        }
+    } @else if $breakpoint == lg {
+        @media (min-width: ($bp-md-max + 1)) {
+            @content;
+        }
+    } @else {
+        @error "Unknown breakpoint `#{$breakpoint}`. Use xs, sm, md, or lg.";
+    }
+}
+
+@mixin between($from, $to) {
+    $min: null;
+    $max: null;
+
+    @if $from == xs {
+        $min: 0;
+    } @else if $from == sm {
+        $min: ($bp-xs-max + 1);
+    } @else if $from == md {
+        $min: ($bp-sm-max + 1);
+    } @else if $from == lg {
+        $min: ($bp-md-max + 1);
+    }
+
+    @if $to == xs {
+        $max: $bp-xs-max;
+    } @else if $to == sm {
+        $max: $bp-sm-max;
+    } @else if $to == md {
+        $max: $bp-md-max;
+    }
+
+    @media (min-width: $min) and (max-width: $max) {
+        @content;
+    }
+}
+
+:root {
+    --bp-xs-max: #{$bp-xs-max};
+    --bp-sm-max: #{$bp-sm-max};
+    --bp-md-max: #{$bp-md-max};
+    --touch-target-min: 44px;
+}
