@@ -1058,3 +1058,178 @@ export const persistPartCostCategory = async (
 };
 
 export { inferPartCostCategory };
+
+export type StockInventoryItemType = 'part' | 'toner' | 'paper' | 'lamination';
+
+export interface StockInventoryLine {
+    type: StockInventoryItemType;
+    stockId: string;
+    partN: string;
+    partName: string;
+    model?: string;
+    color?: string;
+    costCategory?: CostCategory;
+    partLife?: string | number;
+    expectedQty: number;
+    actualQty: number;
+}
+
+/** @deprecated use StockInventoryLine */
+export type PartInventoryLine = StockInventoryLine;
+
+const avgOpenLotPrice = async (stockId: string): Promise<number> => {
+    const lots = await fetchLotsByStockId(stockId, true);
+    if (!lots.length) return 0;
+    let sum = 0;
+    let qty = 0;
+    for (const lot of lots) {
+        sum += lot.qtyLeft * lot.unitPrice;
+        qty += lot.qtyLeft;
+    }
+    return qty > 0 ? sum / qty : 0;
+};
+
+const resolveInventoryCostCategory = (
+    line: StockInventoryLine,
+    data?: Record<string, unknown>
+): CostCategory => {
+    if (line.type === 'toner') return 'toner';
+    if (line.type === 'paper') return 'paper';
+    if (line.type === 'lamination') return 'lamination';
+    if (line.costCategory) return line.costCategory;
+    return inferPartCostCategory({
+        costCategory: data?.costCategory as string | undefined,
+        partLife:
+            line.partLife ?? (data?.partLife as string | number | undefined),
+    });
+};
+
+/** Прямая установка остатка (если FIFO не покрывает недостачу по партиям). */
+export const inventorySetStockQuantity = async (
+    line: StockInventoryLine,
+    ctx: { createdBy: string }
+): Promise<void> => {
+    const stockCollection = stockCollectionFor(line.type);
+    const stockRef = doc(db, stockCollection, line.stockId);
+    const qtyField = stockQtyFieldFor(line.type);
+    const movementRef = doc(collection(db, MOVEMENTS));
+    const date = nowIso();
+
+    await runTransaction(db, async (tx) => {
+        const stockSnap = await tx.get(stockRef);
+        if (!stockSnap.exists()) {
+            throw new Error(`Позиция ${line.partN} не найдена`);
+        }
+        const data = stockSnap.data() as Record<string, unknown>;
+        const current = Number(data[qtyField] || 0);
+        const target = Number(line.actualQty);
+        const delta = target - current;
+        if (delta === 0) return;
+
+        const costCategory = resolveInventoryCostCategory(line, data);
+
+        tx.update(stockRef, { [qtyField]: target });
+        tx.set(movementRef, {
+            kind: 'adjustment',
+            type: line.type,
+            stockId: line.stockId,
+            partN: line.partN,
+            partName: line.partName,
+            color: line.color || '',
+            model: line.model || String(data.model || ''),
+            costCategory,
+            qty: Math.abs(delta),
+            totalCost: 0,
+            unitPriceAvg: 0,
+            date,
+            machine: '',
+            man: ctx.createdBy,
+            lots: [],
+            comment: `Инвентаризация: было ${current}, стало ${target}`,
+        });
+    });
+    invalidateStockLotsCache(line.stockId);
+};
+
+/** @deprecated */
+export const inventorySetPartQuantity = inventorySetStockQuantity;
+
+/** Одна строка инвентаризации: излишек через приход, недостача через FIFO или adjustment. */
+export const applyStockInventoryLine = async (
+    line: StockInventoryLine,
+    ctx: { createdBy: string; model?: string }
+): Promise<'applied' | 'unchanged'> => {
+    const delta = line.actualQty - line.expectedQty;
+    if (delta === 0) return 'unchanged';
+
+    const costCategory = resolveInventoryCostCategory(line);
+
+    if (delta > 0) {
+        const unitPrice = await avgOpenLotPrice(line.stockId);
+        await purchaseStock({
+            type: line.type,
+            stockId: line.stockId,
+            partN: line.partN,
+            partName: line.partName,
+            color: line.color || '',
+            model: line.model || ctx.model || '',
+            costCategory,
+            qty: delta,
+            unitPrice,
+            supplier: 'инвентаризация',
+            comment: 'Излишек по результатам инвентаризации',
+            createdBy: ctx.createdBy,
+            currentStockQty: line.expectedQty,
+        });
+        return 'applied';
+    }
+
+    const qty = Math.abs(delta);
+    try {
+        await writeOffFifo({
+            type: line.type,
+            stockId: line.stockId,
+            partN: line.partN,
+            partName: line.partName,
+            color: line.color || '',
+            model: line.model || ctx.model || '',
+            costCategory,
+            qty,
+            currentStockQty: line.expectedQty,
+            man: ctx.createdBy,
+            comment: 'Недостача по результатам инвентаризации',
+        });
+    } catch {
+        await inventorySetStockQuantity(line, ctx);
+    }
+    return 'applied';
+};
+
+/** @deprecated */
+export const applyPartInventoryLine = applyStockInventoryLine;
+
+export const applyStockInventoryLines = async (
+    lines: StockInventoryLine[],
+    ctx: { createdBy: string; model?: string }
+): Promise<{ applied: number; unchanged: number; errors: string[] }> => {
+    let applied = 0;
+    let unchanged = 0;
+    const errors: string[] = [];
+
+    for (const line of lines) {
+        try {
+            const result = await applyStockInventoryLine(line, ctx);
+            if (result === 'applied') applied += 1;
+            else unchanged += 1;
+        } catch (err) {
+            const msg =
+                err instanceof Error ? err.message : 'Ошибка проведения';
+            errors.push(`${line.partN}: ${msg}`);
+        }
+    }
+
+    return { applied, unchanged, errors };
+};
+
+/** @deprecated */
+export const applyPartInventoryLines = applyStockInventoryLines;

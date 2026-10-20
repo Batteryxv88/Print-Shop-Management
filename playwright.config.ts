@@ -48,7 +48,7 @@ export default defineConfig({
                   {
                       name: 'mobile-authenticated',
                       testMatch:
-                          /mobile\/(shell|stock|journal|analytics|routes)\.spec\.ts/,
+                          /mobile\/(shell|stock|journal|analytics|routes|inventorization)\.spec\.ts/,
                       dependencies: ['setup'],
                       use: {
                           ...devices['Pixel 5'],
@@ -58,7 +58,7 @@ export default defineConfig({
                   {
                       name: 'tablet-authenticated',
                       testMatch:
-                          /tablet\/(shell|stock|analytics|routes)\.spec\.ts/,
+                          /tablet\/(shell|stock|analytics|routes|journal|inventorization)\.spec\.ts/,
                       dependencies: ['setup'],
                       use: {
                           ...devices['Desktop Chrome'],

@@ -16,6 +16,8 @@ const ChangePageSlice = createSlice({
         tonerMachine: "C71cf",
         storage: 'Детали',
         storageModel: '',
+        /** Режим инвентаризации внутри текущего раздела склада */
+        storageInventorizationOpen: false,
         reportEditorMachine: '',
         /** Режим журнала учёта */
         journalKind: 'toner' as JournalKind,
@@ -28,7 +30,11 @@ const ChangePageSlice = createSlice({
             state.tonerMachine = action.payload
         },
         changeStorage(state, action) {
-            state.storage = action.payload
+            state.storage = action.payload;
+            state.storageInventorizationOpen = false;
+        },
+        setStorageInventorizationOpen(state, action) {
+            state.storageInventorizationOpen = Boolean(action.payload);
         },
         changeStorageModel(state, action) {
             state.storageModel = action.payload
@@ -47,6 +53,7 @@ export const {
     changeMachine,
     changeTonerMachine,
     changeStorage,
+    setStorageInventorizationOpen,
     changeStorageModel,
     changeReportEditorMachine,
     changeJournalKind,

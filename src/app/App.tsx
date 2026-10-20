@@ -17,6 +17,7 @@ import { ManualsPageAsync } from "../pages/ManualsPage/ui/ManualsPage.async";
 import { AdminPageAsync } from "../pages/AdminPage/ui/AdminPage.async";
 import { AnalyticsPage } from "../pages/AnalyticsPage";
 import { JournalPage } from "../pages/JournalPage";
+import InventorizationRedirect from "../pages/MainPage/ui/InventorizationRedirect";
 
 const App = () => {
   return (
@@ -51,6 +52,20 @@ const App = () => {
                             <Route path="/toner" element={<Navigate to="/journal" replace />} />
                             <Route path="/schedule" element={<Navigate to="/journal" replace />} />
                             <Route path="/" element={<MainPage />} />
+                            <Route
+                              path="/inventorization"
+                              element={
+                                <RoleBasedRoute
+                                  allowedRoles={[
+                                    'администратор',
+                                    'руководитель',
+                                    'печатник',
+                                  ]}
+                                >
+                                  <InventorizationRedirect />
+                                </RoleBasedRoute>
+                              }
+                            />
                             <Route
                               path="/analytics"
                               element={

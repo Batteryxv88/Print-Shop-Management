@@ -4,6 +4,7 @@ import reducer, {
     changeJournalKind,
     changeStorage,
     changeStorageModel,
+    setStorageInventorizationOpen,
 } from './ChangeMachineSlice';
 
 describe('ChangeMachineSlice', () => {
@@ -15,6 +16,12 @@ describe('ChangeMachineSlice', () => {
     it('changeStorage updates active storage tab', () => {
         const state = reducer(undefined, changeStorage('Тонеры'));
         expect(state.storage).toBe('Тонеры');
+    });
+
+    it('changeStorage closes inventorization mode', () => {
+        let state = reducer(undefined, setStorageInventorizationOpen(true));
+        state = reducer(state, changeStorage('Бумага'));
+        expect(state.storageInventorizationOpen).toBe(false);
     });
 
     it('changeJournalKind updates journal mode', () => {

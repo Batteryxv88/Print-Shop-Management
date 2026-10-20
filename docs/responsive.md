@@ -14,6 +14,8 @@ Foundation (Phase 0) defines shared breakpoints for SCSS and TypeScript.
 
 **Phase 6 (done):** Hardening — global `prefers-reduced-motion` (`_accessibility.scss`), Playwright `reducedMotion: 'reduce'` + CI retries (2), light responsive for Calculator / Manuals / Holders stock, route layout E2E (`e2e/mobile/routes.spec.ts`, `e2e/tablet/routes.spec.ts`), `npm run test:e2e:responsive` / `test:e2e:routes`. PWA/offline — out of v1 scope.
 
+**Phase 7 (done):** Field P0 closure — вкладка **Инвентаризация** в сайдбаре склада (не navbar), проведение расхождений через FIFO/adjustment, черновики `InventorySessions`, редирект `/inventorization` → склад, tablet journal E2E, optional workflow `.github/workflows/e2e-responsive.yml`.
+
 ## Breakpoints
 
 | Token | Max width | Typical device |
@@ -51,7 +53,8 @@ Mixins: `down(xs|sm|md)`, `up(xs|sm|md|lg)`, `between(from, to)`.
 | Login | Full | Full | Full |
 | Stock (parts) | P2 | P0 | Full |
 | Stock (toners / paper / lamination) | P4 | P4 | Full |
-| Journal / counter / inventorization | P3 | P0 | Full |
+| Journal / counter | P3 | P0 | Full |
+| Parts inventorization | P7 | P7 | Full |
 | Analytics / Admin / Rotation | P5 stub (phone) | P5 layout | Full |
 | Calculator / Manuals / Holders | P6 layout | P6 layout | Full |
 
@@ -64,7 +67,7 @@ See chat roadmap for phase order.
 3. With `E2E_EMAIL` / `E2E_PASSWORD`: `npm run test:e2e:responsive` or targeted `test:e2e:shell`, `stock`, `journal`, `routes`, `analytics`.
 4. Manual spot-check: phone drawer, stock FIFO bottom sheet, journal counter form, tablet sidebar + toners list.
 5. `npm run build:prod` then `npm run deploy` when ready; Firebase Auth authorized domain includes `batteryxv88.github.io`.
-6. Optional: enable `E2E_EMAIL` / `E2E_PASSWORD` in GitHub Actions secrets for authenticated responsive runs (not required for deploy today).
+6. Optional: GitHub secrets `E2E_EMAIL` / `E2E_PASSWORD` → run workflow **E2E responsive (auth)** or `npm run test:e2e:responsive` locally.
 
 ## PR checklist (responsive changes)
 

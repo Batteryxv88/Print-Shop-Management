@@ -2,13 +2,38 @@ import React from 'react';
 import cls from './AuditHeader.module.scss';
 import { useAuth } from '../../../../contexts/AuthContext';
 
-const AuditHeader = () => {
+type AuditHeaderProps = {
+  model?: string;
+  sectionLabel?: string;
+  onClose?: () => void;
+};
+
+const AuditHeader = ({
+  model,
+  sectionLabel,
+  onClose,
+}: AuditHeaderProps) => {
   const { userData } = useAuth();
   const [startTime, setStartTime] = React.useState<string>('');
   const [endTime, setEndTime] = React.useState<string>('');
 
   return (
     <div className={cls.auditHeader}>
+      <div className={cls.topRow}>
+        <h3 className={cls.title}>
+          Инвентаризация{sectionLabel ? `: ${sectionLabel}` : ''}
+        </h3>
+        {onClose ? (
+          <button
+            type="button"
+            className={cls.closeBtn}
+            onClick={onClose}
+            data-testid="inventorization-close"
+          >
+            ← К складу
+          </button>
+        ) : null}
+      </div>
       <div className={cls.fieldGroup}>
         <label className={cls.label}>Начало проверки:</label>
         <input
@@ -27,6 +52,12 @@ const AuditHeader = () => {
           onChange={(e) => setEndTime(e.target.value)}
         />
       </div>
+      {model ? (
+        <div className={cls.fieldGroup}>
+          <label className={cls.label}>Модель:</label>
+          <input type="text" className={cls.input} value={model} disabled />
+        </div>
+      ) : null}
       <div className={cls.fieldGroup}>
         <label className={cls.label}>Аудитор:</label>
         <input

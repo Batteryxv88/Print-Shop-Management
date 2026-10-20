@@ -8,6 +8,7 @@ interface AuditFooterProps {
   onFinish: () => void;
   exportOptions?: ('CSV' | 'PDF')[];
   onExport: (format: 'CSV' | 'PDF') => void;
+  disabled?: boolean;
 }
 
 const AuditFooter: React.FC<AuditFooterProps> = ({
@@ -17,6 +18,7 @@ const AuditFooter: React.FC<AuditFooterProps> = ({
   onFinish,
   exportOptions = ['CSV', 'PDF'],
   onExport,
+  disabled = false,
 }) => {
   const progressPercent = totalCount > 0 ? (scannedCount / totalCount) * 100 : 0;
 
@@ -32,10 +34,20 @@ const AuditFooter: React.FC<AuditFooterProps> = ({
         </div>
       </div>
       <div className={cls.buttons}>
-        <button className={cls.saveButton} onClick={onSave}>
+        <button
+          className={cls.saveButton}
+          onClick={onSave}
+          disabled={disabled}
+          type="button"
+        >
           Сохранить
         </button>
-        <button className={cls.finishButton} onClick={onFinish}>
+        <button
+          className={cls.finishButton}
+          onClick={onFinish}
+          disabled={disabled}
+          type="button"
+        >
           Завершить
         </button>
         {exportOptions.map(opt => (

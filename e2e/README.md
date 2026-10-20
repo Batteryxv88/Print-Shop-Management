@@ -53,6 +53,8 @@ npm run test:e2e
 | `npm run test:e2e:analytics` | mobile KPI stub + tablet charts (нужна роль с `/analytics`) |
 | `npm run test:e2e:responsive` | все сценарии с тегами `@mobile` / `@tablet` |
 | `npm run test:e2e:routes` | горизонтальный скролл на `/`, `/calculator`, `/journal`, держатели |
+| `npm run test:e2e:inventorization` | вкладка «Инвентаризация» в сайдбаре склада (mobile + tablet) |
+| `npm run test:e2e:tablet-journal` | журнал и счётчики на tablet viewport |
 | `npm run test:e2e:ui` | интерактивный UI Playwright |
 | `npm run test:e2e:report` | HTML-отчёт после прогона |
 

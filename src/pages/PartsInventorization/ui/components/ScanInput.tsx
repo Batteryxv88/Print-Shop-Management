@@ -4,9 +4,14 @@ import cls from './ScanInput.module.scss';
 interface ScanInputProps {
   onPartScan?: (partN: string) => void;
   onManualEntry?: (partN: string) => void;
+  placeholder?: string;
 }
 
-const ScanInput: React.FC<ScanInputProps> = ({ onPartScan, onManualEntry }) => {
+const ScanInput: React.FC<ScanInputProps> = ({
+  onPartScan,
+  onManualEntry,
+  placeholder = 'Сканируйте штрих-код или введите вручную',
+}) => {
   const [value, setValue] = useState<string>('');
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -30,7 +35,8 @@ const ScanInput: React.FC<ScanInputProps> = ({ onPartScan, onManualEntry }) => {
       <input
         type="text"
         className={cls.input}
-        placeholder="Сканируйте штрих-код или введите вручную"
+        data-testid="inventorization-scan-input"
+        placeholder={placeholder}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyPress={handleKeyPress}

@@ -4,7 +4,10 @@ import {
     useAppDispatch,
     useAppSelector,
 } from '../../../app/providers/StoreProvider/Store/hooks';
-import { changeStorage } from '../../../app/providers/StoreProvider/Store/ChangeMachineSlice';
+import {
+    changeStorage,
+    setStorageInventorizationOpen,
+} from '../../../app/providers/StoreProvider/Store/ChangeMachineSlice';
 import { RoleBasedRoute } from '../../../components/RoleBasedRoute';
 import PurchaseStock from '../../../features/ui/PurchaseStock/PurchaseStock';
 import PurchaseMaterial from '../../../features/ui/PurchaseMaterial/PurchaseMaterial';
@@ -55,6 +58,13 @@ const PRINTER_SECTIONS: SectionItem[] = [
         hasModels: true,
     },
 ];
+
+const INVENTORY_TEST_ID: Record<string, string> = {
+    Детали: 'inventory-open-parts',
+    Тонеры: 'inventory-open-toners',
+    Бумага: 'inventory-open-paper',
+    Ламинация: 'inventory-open-lamination',
+};
 
 const SidebarStock = () => {
     const dispatch = useAppDispatch();
@@ -217,6 +227,32 @@ const SidebarStock = () => {
                                     Заказ деталей
                                 </button>
                             )}
+                            {INVENTORY_TEST_ID[storage] ? (
+                                <RoleBasedRoute
+                                    allowedRoles={[
+                                        'администратор',
+                                        'руководитель',
+                                        'печатник',
+                                    ]}
+                                >
+                                    <button
+                                        type="button"
+                                        className={cls.secondaryBtn}
+                                        data-testid={
+                                            INVENTORY_TEST_ID[storage]
+                                        }
+                                        onClick={() =>
+                                            dispatch(
+                                                setStorageInventorizationOpen(
+                                                    true
+                                                )
+                                            )
+                                        }
+                                    >
+                                        Инвентаризация
+                                    </button>
+                                </RoleBasedRoute>
+                            ) : null}
                         </div>
                         <p className={cls.hint}>
                             {storage === 'Детали' || storage === 'Тонеры'

@@ -1,0 +1,36 @@
+# Optional authenticated responsive E2E (mobile + tablet tags).
+# Run manually from Actions after adding repo secrets: E2E_EMAIL, E2E_PASSWORD.
+
+name: E2E responsive (auth)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  responsive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci --legacy-peer-deps
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Responsive E2E (@mobile / @tablet, authenticated)
+        run: npm run test:e2e:responsive
+        env:
+          CI: true
+          E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
+          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}

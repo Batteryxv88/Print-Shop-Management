@@ -29,6 +29,15 @@ test.describe('@mobile Primary routes layout', () => {
             timeout: 30_000,
         });
         await expectNoHorizontalDocumentScroll(page);
+
+        const invBtn = page.getByTestId('inventory-open-parts');
+        if (await invBtn.isVisible().catch(() => false)) {
+            await invBtn.click();
+            await expect(page.getByTestId('inventorization-root')).toBeVisible({
+                timeout: 15_000,
+            });
+            await expectNoHorizontalDocumentScroll(page);
+        }
     });
 
     test('holders section — no horizontal scroll', async ({ page }) => {

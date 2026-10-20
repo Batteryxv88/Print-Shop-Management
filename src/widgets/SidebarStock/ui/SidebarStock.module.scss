@@ -144,6 +144,10 @@
 }
 
 .secondaryBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
     width: 100%;
     height: var(--sb-btn-h, 32px);
     padding: 0 10px;
@@ -157,6 +161,7 @@
     text-transform: uppercase;
     letter-spacing: 0.04em;
     transition: all 0.15s ease;
+    text-decoration: none;
 
     &:hover {
         background: rgba(255, 255, 255, 0.07);
