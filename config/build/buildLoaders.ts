@@ -23,7 +23,15 @@ const cssLoader = {
         
       }
     },
-    "sass-loader",
+    {
+      loader: 'sass-loader',
+      options: {
+        api: 'modern',
+        sassOptions: {
+          silenceDeprecations: ['import'],
+        },
+      },
+    },
   ],
 }
 

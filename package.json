@@ -9,7 +9,7 @@
     "build:dev": "webpack --env mode=development",
     "dev": "webpack",
     "predeploy": "npm run build:prod && node -e \"require('fs').writeFileSync('build/.nojekyll','')\"",
-    "deploy": "gh-pages -d build",
+    "deploy": "node -e \"require('gh-pages/lib/index.js').clean()\" && gh-pages -d build -r https://github.com/Batteryxv88/Print-Shop-Management.git",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
