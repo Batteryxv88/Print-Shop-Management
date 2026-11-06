@@ -15,7 +15,7 @@
 
     &:hover {
         background: rgba(207, 102, 121, 0.12);
-        color: #CF6679;
+        color: var(--danger);
     }
 
     &:active {

@@ -24,7 +24,7 @@
     gap: 12px;
     margin-bottom: 10px;
     padding: 0 0 10px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--border);
 }
 
 .headerText {
@@ -43,10 +43,10 @@
 
 .stat {
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.45);
+    color: var(--text-muted);
 
     b {
-        color: rgba(255, 255, 255, 0.85);
+        color: var(--text-secondary);
         font-weight: 600;
     }
 }
@@ -75,7 +75,7 @@
     left: 12px;
     top: 50%;
     transform: translateY(-50%);
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--text-faint);
     font-size: 15px;
     pointer-events: none;
 }
@@ -85,7 +85,7 @@
     height: 34px;
     padding: 0 12px 0 32px;
     font-size: 13px;
-    background: #242424;
+    background: var(--surface-3);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     color: rgba(255, 255, 255, 0.9);
@@ -93,12 +93,12 @@
 
     &:focus {
         outline: none;
-        border-color: #BB86FC;
-        background: #2A2A2A;
+        border-color: var(--accent);
+        background: var(--field);
     }
 
     &::placeholder {
-        color: rgba(255, 255, 255, 0.32);
+        color: var(--text-faint);
     }
 }
 
@@ -110,7 +110,7 @@
     padding: 5px 28px;
     background: rgba(255, 255, 255, 0.03);
     border-radius: 5px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-soft);
     margin-bottom: 6px;
     font-size: 10px;
     font-weight: 500;
@@ -204,7 +204,7 @@
     }
 
     70% {
-        background-color: rgba(187, 134, 252, 0.08);
+        background-color: var(--accent-soft);
         box-shadow: 0 0 0 6px rgba(187, 134, 252, 0);
     }
 
@@ -224,7 +224,7 @@
     border: none;
     border-radius: 5px;
     background: transparent;
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--text-faint);
     cursor: pointer;
     transition:
         color 0.15s ease,
@@ -239,7 +239,7 @@
 
     &:hover:not(:disabled) {
         color: rgba(255, 255, 255, 0.75);
-        background: rgba(255, 255, 255, 0.08);
+        background: var(--border);
     }
 
     &:focus-visible {
@@ -303,8 +303,8 @@
 .emptyCard {
     margin-top: 24px;
     padding: 28px 24px;
-    border-radius: 12px;
-    border: 1px dashed rgba(255, 255, 255, 0.14);
+    border-radius: var(--radius-card);
+    border: 1px dashed var(--border-strong);
     background: rgba(255, 255, 255, 0.025);
     text-align: center;
 
@@ -313,13 +313,13 @@
         margin-bottom: 8px;
         font-size: 16px;
         font-weight: 600;
-        color: rgba(255, 255, 255, 0.85);
+        color: var(--text-secondary);
     }
 
     p {
         margin: 0;
         font-size: 13px;
         line-height: 1.5;
-        color: rgba(255, 255, 255, 0.45);
+        color: var(--text-muted);
     }
 }

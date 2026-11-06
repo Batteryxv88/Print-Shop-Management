@@ -18,8 +18,6 @@ const ChangePageSlice = createSlice({
         storageModel: '',
         /** Режим инвентаризации внутри текущего раздела склада */
         storageInventorizationOpen: false,
-        /** printerId */
-        reportEditorMachine: '',
         /** Режим журнала учёта */
         journalKind: 'toner' as JournalKind,
     },
@@ -40,9 +38,6 @@ const ChangePageSlice = createSlice({
         changeStorageModel(state, action) {
             state.storageModel = action.payload
         },
-        changeReportEditorMachine(state, action) {
-            state.reportEditorMachine = action.payload
-        },
         changeJournalKind(state, action) {
             state.journalKind = action.payload
         },
@@ -56,6 +51,5 @@ export const {
     changeStorage,
     setStorageInventorizationOpen,
     changeStorageModel,
-    changeReportEditorMachine,
     changeJournalKind,
 } = ChangePageSlice.actions

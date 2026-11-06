@@ -14,7 +14,7 @@
     justify-content: space-between;
     gap: 8px;
     padding: 0 2px 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--border);
     margin-bottom: 6px;
 }
 
@@ -22,7 +22,7 @@
     margin: 0;
     font-size: 13px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.88);
+    color: var(--text);
     letter-spacing: 0.01em;
 }
 
@@ -31,7 +31,7 @@
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.32);
+    color: var(--text-faint);
 }
 
 .list {
@@ -48,7 +48,7 @@
     }
 
     &::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.14);
+        background: var(--border-strong);
         border-radius: 3px;
     }
 }
@@ -59,7 +59,7 @@
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.32);
+    color: var(--text-faint);
 }
 
 .item {
@@ -68,32 +68,32 @@
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    min-height: 36px;
+    min-height: var(--control-height);
     padding: 7px 10px;
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius-control);
     background: transparent;
-    color: rgba(255, 255, 255, 0.78);
+    color: var(--text-secondary);
     cursor: pointer;
     text-align: left;
     transition: background 0.12s ease, color 0.12s ease;
 
     &:hover {
-        background: rgba(255, 255, 255, 0.05);
-        color: rgba(255, 255, 255, 0.95);
+        background: var(--border-soft);
+        color: var(--text);
     }
 }
 
 .itemActive {
-    background: rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.96);
+    background: transparent;
+    color: var(--text);
 
     .itemName {
-        color: rgba(255, 255, 255, 0.96);
+        color: var(--accent);
     }
 
     .chevron {
-        color: rgba(255, 255, 255, 0.55);
+        color: var(--text-muted);
     }
 }
 
@@ -108,13 +108,13 @@
     font-size: 13px;
     font-weight: 500;
     line-height: 1.25;
-    color: rgba(255, 255, 255, 0.82);
+    color: var(--text-secondary);
 }
 
 .itemHint {
     font-size: 10px;
     line-height: 1.3;
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--text-faint);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -134,7 +134,7 @@
     gap: 6px;
     margin-top: auto;
     padding: 10px 0 14px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid var(--border);
 }
 
 .actions {
@@ -154,7 +154,7 @@
     font-size: 10px;
     font-weight: 600;
     border-radius: var(--sb-radius, 7px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid var(--border-strong);
     background: rgba(255, 255, 255, 0.03);
     color: rgba(255, 255, 255, 0.72);
     cursor: pointer;
@@ -165,8 +165,8 @@
 
     &:hover {
         background: rgba(255, 255, 255, 0.07);
-        border-color: rgba(255, 255, 255, 0.22);
-        color: rgba(255, 255, 255, 0.92);
+        border-color: var(--text-faint);
+        color: var(--text);
     }
 }
 
@@ -174,6 +174,6 @@
     margin: 0;
     font-size: 10px;
     line-height: 1.35;
-    color: rgba(255, 255, 255, 0.32);
+    color: var(--text-faint);
     text-align: center;
 }

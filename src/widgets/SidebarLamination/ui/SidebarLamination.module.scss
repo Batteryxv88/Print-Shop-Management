@@ -14,7 +14,7 @@
     justify-content: space-between;
     gap: 8px;
     padding: 0 2px 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--border);
     margin-bottom: 6px;
 }
 
@@ -22,7 +22,7 @@
     margin: 0;
     font-size: 13px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.88);
+    color: var(--text);
 }
 
 .headerMeta {
@@ -30,7 +30,7 @@
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.32);
+    color: var(--text-faint);
 }
 
 .list {
@@ -46,7 +46,7 @@
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.32);
+    color: var(--text-faint);
 }
 
 .note {
@@ -60,10 +60,10 @@
 .noteName {
     font-size: 13px;
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.82);
+    color: var(--text-secondary);
 }
 
 .noteHint {
     font-size: 10px;
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--text-faint);
 }

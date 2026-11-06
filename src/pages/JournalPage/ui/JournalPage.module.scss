@@ -14,9 +14,9 @@
     min-height: 0;
     display: flex;
     flex-direction: column;
-    background: #1a1a1a;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
     overflow: hidden;
 }
 
@@ -24,8 +24,8 @@
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    background: #1e1e1e;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
 }
 
 .breadcrumb {
@@ -36,7 +36,7 @@
     padding: 10px 16px;
     min-height: 40px;
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.45);
+    color: var(--text-muted);
 }
 
 .crumbHome {
@@ -46,23 +46,23 @@
     width: 22px;
     height: 22px;
     border-radius: 4px;
-    color: rgba(255, 255, 255, 0.55);
+    color: var(--text-muted);
     font-size: 13px;
 }
 
 .crumbSep {
-    color: rgba(255, 255, 255, 0.22);
+    color: var(--text-faint);
     font-size: 12px;
     user-select: none;
 }
 
 .crumb {
-    color: rgba(255, 255, 255, 0.55);
+    color: var(--text-muted);
     font-weight: 500;
 }
 
 .crumbCurrent {
-    color: rgba(255, 255, 255, 0.92);
+    color: var(--text);
     font-weight: 600;
 }
 
@@ -71,7 +71,7 @@
     align-items: stretch;
     gap: 0;
     padding: 0 8px;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-top: 1px solid var(--border-soft);
     overflow-x: auto;
 
     &::-webkit-scrollbar {
@@ -79,7 +79,7 @@
     }
 
     &::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.14);
+        background: var(--border-strong);
         border-radius: 3px;
     }
 }
@@ -93,7 +93,7 @@
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.32);
+    color: var(--text-faint);
     white-space: nowrap;
 }
 
@@ -134,8 +134,8 @@
         max-width: 260px;
         padding: 0 28px 0 10px;
         border-radius: 6px;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        background: #2A2A2A
+        border: 1px solid var(--border-strong);
+        background: var(--field)
             url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.45)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")
             no-repeat right 8px center;
         color: rgba(255, 255, 255, 0.9);
@@ -145,7 +145,7 @@
 
         &:focus {
             outline: none;
-            border-color: #BB86FC;
+            border-color: var(--accent);
         }
     }
 }

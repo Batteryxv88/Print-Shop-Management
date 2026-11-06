@@ -16,18 +16,18 @@
 }
 
 .modalContent {
-    background: #1E1E1E;
+    background: var(--surface-2);
     border-radius: 8px;
     position: relative;
     min-width: min(320px, 100%);
     max-width: min(480px, 100%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 1px 3px 1px rgba(0, 0, 0, 0.15);
     animation: slideIn 0.2s ease-out;
     @include dialog-sheet-mobile;
 
     &.info {
-        border-left: 4px solid #BB86FC;
+        border-left: 4px solid var(--accent);
     }
 
     &.warning {
@@ -35,7 +35,7 @@
     }
 
     &.error {
-        border-left: 4px solid #CF6679;
+        border-left: 4px solid var(--danger);
     }
 
     &.success {
@@ -51,7 +51,7 @@
 }
 
 .title {
-    color: rgba(255, 255, 255, 0.87);
+    color: var(--text);
     font-size: 18px;
     font-weight: 500;
     margin: 0;
@@ -62,7 +62,7 @@
     border: none;
     font-size: 24px;
     cursor: pointer;
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--text-muted);
     width: 32px;
     height: 32px;
     display: flex;
@@ -72,8 +72,8 @@
     transition: all 0.2s ease;
     
     &:hover {
-        background: rgba(255, 255, 255, 0.08);
-        color: rgba(255, 255, 255, 0.87);
+        background: var(--border);
+        color: var(--text);
     }
 }
 
@@ -107,7 +107,7 @@
     transition: all 0.2s ease;
 
     &:hover:not(:disabled) {
-        background: rgba(255, 255, 255, 0.06);
+        background: var(--border-soft);
         color: rgba(255, 255, 255, 0.9);
     }
 
@@ -119,8 +119,8 @@
 
 .okButton {
     padding: 8px 20px;
-    background: #BB86FC;
-    color: rgba(0, 0, 0, 0.87);
+    background: var(--accent);
+    color: var(--on-accent);
     border: none;
     border-radius: 6px;
     cursor: pointer;
@@ -146,7 +146,7 @@
 }
 
 .dangerButton {
-    background: #CF6679;
+    background: var(--danger);
     color: rgba(0, 0, 0, 0.9);
 
     &:hover:not(:disabled) {

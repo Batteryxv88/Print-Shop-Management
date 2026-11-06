@@ -1,11 +1,18 @@
 .editor {
     width: 100%;
-    padding: 38px;
+    padding: 10px 12px 12px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 8px;
     opacity: 0;
     animation: fadeIn 0.15s ease-in forwards;
+}
+
+.topBar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 28px;
 }
 
 @keyframes fadeIn {
@@ -15,23 +22,10 @@
 }
 
 .h2 {
-    background: linear-gradient(
-        to right,
-        rgba(98, 218, 251, 0.9),
-        rgba(98, 218, 251, 0.7)
-    );
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    font-size: 20px;
-    font-weight: 500;
-    margin-bottom: 8px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    text-align: end;
-    font-family: monospace;
-    border-bottom: 1px solid rgba(98, 218, 251, 0.15);
-    padding-bottom: 5px;
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
 }
 
 .sections {
@@ -42,35 +36,37 @@
 
 .sectionButton,
 .sectionActive {
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-size: 14px;
+    height: var(--control-height);
+    padding: 0 8px;
+    border: none;
+    background: transparent;
+    font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
 }
 
 .sectionButton {
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: #2a2a2a;
-    color: rgba(255, 255, 255, 0.87);
+    color: var(--text-muted);
 
     &:hover {
-        background: #333;
-        border-color: rgba(255, 255, 255, 0.24);
+        color: var(--text);
     }
 }
 
 .sectionActive {
-    border: 1px solid #bb86fc;
-    background: rgba(187, 134, 252, 0.12);
-    color: #bb86fc;
+    color: var(--accent);
 }
 
 .content {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 12px;
+}
+
+.work {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .hint {
@@ -83,11 +79,30 @@
 .form {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 16px;
-    background: rgba(98, 218, 251, 0.04);
-    border: 1px solid rgba(98, 218, 251, 0.15);
-    border-radius: 8px;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+}
+
+.work .formRow {
+    display: grid;
+    grid-template-columns: minmax(120px, 0.8fr) minmax(180px, 1.4fr) minmax(140px, 1fr) minmax(110px, 0.7fr);
+    gap: 8px;
+}
+
+.work .label {
+    flex: none;
+    width: auto;
+    min-width: 0;
+}
+
+.formTitle {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
 }
 
 .formRow {
@@ -107,16 +122,17 @@
 }
 
 .input {
-    padding: 10px 12px;
-    background: #1e1e1e;
-    color: rgba(255, 255, 255, 0.87);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 6px;
-    font-size: 14px;
+    height: var(--control-height);
+    padding: 0 10px;
+    box-sizing: border-box;
+    background: var(--field);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    font-size: 13px;
 
     &:focus {
         outline: none;
-        border-color: #bb86fc;
     }
 }
 
@@ -129,58 +145,71 @@
 .submit,
 .cancel,
 .editBtn,
-.deleteBtn {
-    padding: 10px 16px;
-    border-radius: 6px;
-    font-size: 14px;
+.replaceBtn,
+.deleteBtn,
+.deleteLabeled {
+    height: var(--control-height);
+    padding: 0 12px;
+    border-radius: var(--radius-control);
+    font-size: 13px;
     font-weight: 500;
     cursor: pointer;
     border: none;
-    transition: background 0.2s ease;
+    background: transparent;
 }
 
 .submit {
-    background: #bb86fc;
-    color: #121212;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-weight: 600;
 
     &:hover {
-        background: #c397fc;
+        background: var(--accent-hover);
     }
 
     &:disabled {
-        opacity: 0.5;
+        opacity: 0.45;
         cursor: not-allowed;
     }
 }
 
-.cancel {
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: rgba(255, 255, 255, 0.7);
+.cancel,
+.editBtn,
+.replaceBtn {
+    color: var(--accent);
+
+    &:hover {
+        color: var(--accent-hover);
+    }
 }
 
-.editBtn {
-    background: rgba(98, 218, 251, 0.15);
-    color: rgba(98, 218, 251, 0.95);
-    padding: 6px 10px;
-    font-size: 13px;
+.deleteBtn,
+.deleteLabeled {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--danger);
+
+    &:hover {
+        color: var(--danger);
+    }
 }
 
-.deleteBtn {
-    background: rgba(207, 102, 121, 0.15);
-    color: #cf6679;
-    padding: 6px 10px;
-    font-size: 13px;
+.deleteIcon {
+    width: 14px;
+    height: 14px;
+    display: block;
+    stroke: currentColor;
 }
 
 .error {
-    color: #cf6679;
-    font-size: 14px;
+    color: var(--danger);
+    font-size: 13px;
 }
 
 .success {
-    color: rgba(98, 218, 251, 0.95);
-    font-size: 14px;
+    color: var(--highlight-text);
+    font-size: 13px;
 }
 
 .fieldHint {
@@ -262,8 +291,9 @@
 
 .actions {
     display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
+    gap: 2px;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
 }
 
 .empty {
@@ -274,7 +304,21 @@
 .printerList {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 2px;
+}
+
+.listHead,
+.printerHeader {
+    display: grid;
+    grid-template-columns: 140px minmax(160px, 1.5fr) 150px 130px 88px auto;
+    align-items: center;
+    column-gap: 12px;
+}
+
+.listHead {
+    padding: 0 8px 2px 12px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
 }
 
 .printerCard {
@@ -284,35 +328,39 @@
     overflow: hidden;
 }
 
+.printerCardHighlight {
+    border-color: var(--accent);
+    box-shadow: inset 3px 0 0 var(--accent);
+}
+
 .printerHeader {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    justify-content: space-between;
-    align-items: center;
-    padding: 14px 16px;
+    padding: 2px 8px 2px 12px;
+    min-height: 36px;
     background: rgba(98, 218, 251, 0.04);
 }
 
-.printerInfo {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px 18px;
-    align-items: center;
+.printerName,
+.cell {
+    min-width: 0;
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.7);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 
-    strong {
-        color: rgba(255, 255, 255, 0.92);
-        font-size: 15px;
-    }
+.printerName {
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.cell {
+    color: rgba(255, 255, 255, 0.72);
 }
 
 .printerBody {
-    padding: 16px;
+    padding: 10px 12px 12px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 12px;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -371,18 +419,18 @@
 }
 
 .uploadBtn {
-    padding: 8px 14px;
-    border-radius: 6px;
-    border: 1px solid rgba(98, 218, 251, 0.35);
-    background: rgba(98, 218, 251, 0.1);
-    color: rgba(98, 218, 251, 0.95);
+    height: var(--control-height);
+    padding: 0 12px;
+    border-radius: var(--radius-control);
+    border: none;
+    background: transparent;
+    color: var(--accent);
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    transition: background 0.2s ease;
 
     &:hover {
-        background: rgba(98, 218, 251, 0.18);
+        color: var(--accent-hover);
     }
 
     &:disabled {
@@ -398,10 +446,11 @@
 
 .colorConfig {
     display: flex;
-    flex-direction: column;
-    gap: 12px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
     width: 100%;
-    padding-top: 4px;
 }
 
 .colorModeRow {
@@ -414,7 +463,6 @@
 .colorModeLabel {
     color: rgba(255, 255, 255, 0.7);
     font-size: 13px;
-    min-width: 90px;
 }
 
 .colorModeButtons {
@@ -425,23 +473,21 @@
 
 .modeButton,
 .modeActive {
-    padding: 8px 12px;
-    border-radius: 6px;
+    height: var(--control-height);
+    padding: 0 8px;
+    border: none;
+    background: transparent;
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
 }
 
 .modeButton {
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: #2a2a2a;
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--text-muted);
 }
 
 .modeActive {
-    border: 1px solid #bb86fc;
-    background: rgba(187, 134, 252, 0.12);
-    color: #bb86fc;
+    color: var(--accent);
 }
 
 .colorChips {
@@ -523,39 +569,37 @@
 }
 
 .modalPrimary,
+.modalDanger,
 .modalSecondary,
 .modalGhost {
-    min-height: 40px;
-    border-radius: 8px;
+    height: var(--control-height);
+    border-radius: var(--radius-control);
     border: none;
     cursor: pointer;
-    font-size: 0.95rem;
+    font-size: 13px;
 }
 
 .modalPrimary {
-    background: #bb86fc;
-    color: #121212;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-weight: 600;
 }
 
-.modalSecondary {
-    background: rgba(255, 255, 255, 0.12);
-    color: inherit;
+.modalDanger {
+    background: var(--danger);
+    color: rgba(0, 0, 0, 0.87);
+    font-weight: 600;
 }
 
+.modalSecondary,
 .modalGhost {
     background: transparent;
-    color: inherit;
-    opacity: 0.8;
+    color: var(--text-secondary);
 }
 
 @include down(md) {
     .editor {
         padding: 12px 10px 20px;
-    }
-
-    .sections {
-        flex-direction: column;
-        align-items: stretch;
     }
 
     .sectionButton,

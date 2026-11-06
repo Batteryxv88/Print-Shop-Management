@@ -125,8 +125,6 @@ export const AdminMainComponent: React.FC = () => {
 
   return (
     <div className={styles.adminPage}>
-      <h1 className={styles.pageTitle}>Административная панель</h1>
-      
       <div className={styles.currentUser}>
         <h2 className={styles.sectionTitle}>Текущий пользователь</h2>
         <p>Email: {user?.email}</p>

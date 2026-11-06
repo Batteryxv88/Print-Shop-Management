@@ -3,8 +3,8 @@
 .app {
     height: 100vh;
     height: 100dvh;
-    background: #121212;
-    color: rgba(255, 255, 255, 0.87);
+    background: var(--bg);
+    color: var(--text);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -15,7 +15,7 @@
     flex-direction: column;
     flex: 1;
     min-height: 0;
-    background: #121212;
+    background: var(--bg);
     position: relative;
     overflow: hidden;
 
@@ -26,7 +26,7 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background: radial-gradient(circle at top right, rgba(187, 134, 252, 0.05), transparent 50%);
+        background: radial-gradient(circle at top right, var(--accent-wash), transparent 50%);
         pointer-events: none;
         z-index: 0;
     }

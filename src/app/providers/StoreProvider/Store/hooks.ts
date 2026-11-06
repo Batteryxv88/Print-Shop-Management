@@ -20,7 +20,6 @@ import {
     changeMachine,
     changeTonerMachine,
     changeStorageModel,
-    changeReportEditorMachine,
 } from './ChangeMachineSlice';
 import { getUniqueModels } from '../../../../shared/lib/printers/printerUtils';
 import { resolveSelectedPrinterId } from '../../../../shared/lib/printers/printerIdentity';
@@ -49,9 +48,6 @@ export const usePrinters = () => {
     const machine = useAppSelector((state) => state.machines.machine);
     const tonerMachine = useAppSelector((state) => state.machines.tonerMachine);
     const storageModel = useAppSelector((state) => state.machines.storageModel);
-    const reportEditorMachine = useAppSelector(
-        (state) => state.machines.reportEditorMachine
-    );
 
     useEffect(() => {
         // Флаг загрузки ставим только когда подписка реально стартует:
@@ -69,7 +65,6 @@ export const usePrinters = () => {
         if (printers.length === 0) return;
 
         const models = getUniqueModels(printers);
-        const firstId = printers[0]?.id || '';
 
         const nextMachine = resolveSelectedPrinterId(machine, printers);
         if (nextMachine !== machine) {
@@ -82,19 +77,11 @@ export const usePrinters = () => {
         if (!storageModel || !models.includes(storageModel)) {
             dispatch(changeStorageModel(models[0] || ''));
         }
-        const nextReport = resolveSelectedPrinterId(
-            reportEditorMachine,
-            printers
-        );
-        if (!reportEditorMachine || nextReport !== reportEditorMachine) {
-            dispatch(changeReportEditorMachine(nextReport || firstId));
-        }
     }, [
         printers,
         machine,
         tonerMachine,
         storageModel,
-        reportEditorMachine,
         dispatch,
     ]);
 

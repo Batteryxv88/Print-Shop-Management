@@ -1,12 +1,9 @@
-import { useEffect, useState, FormEvent } from 'react';
+import { useEffect, useRef, useState, FormEvent } from 'react';
 import cls from './VariablesEditor.module.scss';
 import { usePrinters } from '../../../app/providers/StoreProvider/Store/hooks';
 import { useAppDispatch, useAppSelector } from '../../../app/providers/StoreProvider/Store/hooks';
 import { loadAppSettings } from '../../../app/providers/StoreProvider/Store/AppSettingsSlice';
-import {
-    loadLastCounterReading,
-    saveCounterReadingDay,
-} from '../../../app/providers/StoreProvider/Store/CounterReadingSlice';
+import { saveCounterReadingDay } from '../../../app/providers/StoreProvider/Store/CounterReadingSlice';
 import {
     addPrinter,
     updatePrinter,
@@ -20,9 +17,15 @@ import { resolvePrinterColors } from '../../../shared/lib/printers/tonerColors';
 import ExcelPartsUpload from './ExcelPartsUpload';
 import ColorConfigFields from './ColorConfigFields';
 import DeleteButton from '../../../shared/ui/DeleteButton/DeleteButton';
-import { seedTestCounterReadings } from '../../../services/seedTestCounterReadings';
+import DeleteBinIcon from '../../../shared/assets/icon/delete-bin.svg';
 
 type Section = 'printers' | 'schedule';
+
+type ConfirmState =
+    | { type: 'delete-printer'; printer: Printer }
+    | { type: 'delete-option'; printer: Printer; optionId: string; model: string }
+    | { type: 'replace' }
+    | null;
 
 const emptyForm: PrinterInput = {
     name: '',
@@ -49,29 +52,17 @@ const VariablesEditor = () => {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [error, setError] = useState('');
+    const [notice, setNotice] = useState('');
+    const [highlightId, setHighlightId] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
     const [dayDraft, setDayDraft] = useState('');
     const [daySavedFlash, setDaySavedFlash] = useState(false);
-    const [seedStatus, setSeedStatus] = useState('');
-    const [seedBusy, setSeedBusy] = useState(false);
+    const [confirm, setConfirm] = useState<ConfirmState>(null);
 
     const [optionDraft, setOptionDraft] = useState({ model: '', serialNumber: '' });
-    const [editSnapshot, setEditSnapshot] = useState<{
-        name: string;
-        ip: string;
-        serialNumber: string;
-    } | null>(null);
-    const [identityPrompt, setIdentityPrompt] = useState<{
-        payload: PrinterInput;
-    } | null>(null);
-
-    const identityFieldsChanged = (
-        payload: PrinterInput,
-        snap: { name: string; ip: string; serialNumber: string }
-    ) =>
-        payload.name.trim() !== snap.name.trim() ||
-        (payload.ip || '').trim() !== snap.ip.trim() ||
-        (payload.serialNumber || '').trim() !== snap.serialNumber.trim();
+    const formRef = useRef<HTMLFormElement>(null);
+    const formTitleRef = useRef<HTMLHeadingElement>(null);
+    const scrolledHighlight = useRef<string | null>(null);
 
     useEffect(() => {
         dispatch(loadAppSettings());
@@ -83,6 +74,22 @@ const VariablesEditor = () => {
             counterReadingDay != null ? String(counterReadingDay) : ''
         );
     }, [settingsLoaded, counterReadingDay]);
+
+    useEffect(() => {
+        if (!highlightId) {
+            scrolledHighlight.current = null;
+            return;
+        }
+        if (!printers.some((printer) => printer.id === highlightId)) return;
+        if (scrolledHighlight.current !== highlightId) {
+            document
+                .getElementById(`printer-card-${highlightId}`)
+                ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            scrolledHighlight.current = highlightId;
+        }
+        const timer = window.setTimeout(() => setHighlightId(null), 4000);
+        return () => window.clearTimeout(timer);
+    }, [highlightId, printers]);
 
     const handleSaveCounterDay = async (e: FormEvent) => {
         e.preventDefault();
@@ -126,32 +133,26 @@ const VariablesEditor = () => {
         return null;
     };
 
+    const buildPayload = (): PrinterInput => ({
+        name: form.name.trim(),
+        model: form.model.trim(),
+        ip: form.ip?.trim() || '',
+        serialNumber: form.serialNumber?.trim() || '',
+        options: form.options || [],
+        colorMode: form.colorMode || 'color',
+        colors: resolvePrinterColors(form),
+    });
+
     const finishPrinterForm = () => {
         setForm(emptyForm);
         setEditingId(null);
-        setEditSnapshot(null);
-        setIdentityPrompt(null);
-    };
-
-    const savePrinterWithIdentity = async (
-        payload: PrinterInput,
-        sameMachine: boolean
-    ) => {
-        if (!editingId) {
-            await addPrinter(payload);
-            return;
-        }
-        if (sameMachine) {
-            await updatePrinter(editingId, payload);
-            return;
-        }
-        await addPrinter(payload);
-        await deletePrinter(editingId);
+        setConfirm(null);
     };
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         setError('');
+        setNotice('');
 
         const validationError = validate(form);
         if (validationError) {
@@ -159,47 +160,19 @@ const VariablesEditor = () => {
             return;
         }
 
-        const payload: PrinterInput = {
-            name: form.name.trim(),
-            model: form.model.trim(),
-            ip: form.ip?.trim() || '',
-            serialNumber: form.serialNumber?.trim() || '',
-            options: form.options || [],
-            colorMode: form.colorMode || 'color',
-            colors: resolvePrinterColors(form),
-        };
-
-        if (
-            editingId &&
-            editSnapshot &&
-            identityFieldsChanged(payload, editSnapshot)
-        ) {
-            setIdentityPrompt({ payload });
-            return;
-        }
-
+        const payload = buildPayload();
         setSaving(true);
         try {
-            await savePrinterWithIdentity(payload, true);
-            finishPrinterForm();
-        } catch (err) {
-            setError(
-                err instanceof Error
-                    ? err.message
-                    : 'Не удалось сохранить принтер'
-            );
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const confirmIdentity = async (sameMachine: boolean) => {
-        if (!identityPrompt) return;
-        setSaving(true);
-        setError('');
-        try {
-            await savePrinterWithIdentity(identityPrompt.payload, sameMachine);
-            finishPrinterForm();
+            if (editingId) {
+                await updatePrinter(editingId, payload);
+                setNotice(`Изменения «${payload.name}» сохранены`);
+                finishPrinterForm();
+            } else {
+                const id = await addPrinter(payload);
+                setNotice(`Принтер «${payload.name}» сохранён`);
+                setHighlightId(id);
+                finishPrinterForm();
+            }
         } catch (err) {
             setError(
                 err instanceof Error
@@ -213,7 +186,7 @@ const VariablesEditor = () => {
 
     const handleEdit = (printer: Printer) => {
         setEditingId(printer.id);
-        setExpandedId(printer.id);
+        setExpandedId((current) => (current === printer.id ? null : current));
         setForm({
             name: printer.name,
             model: printer.model,
@@ -224,29 +197,31 @@ const VariablesEditor = () => {
             colors: resolvePrinterColors(printer),
         });
         setOptionDraft({ model: '', serialNumber: '' });
-        setEditSnapshot({
-            name: printer.name,
-            ip: printer.ip || '',
-            serialNumber: printer.serialNumber || '',
-        });
+        setConfirm(null);
         setError('');
+        setNotice('');
+        window.setTimeout(() => {
+            formTitleRef.current?.scrollIntoView({
+                behavior: 'auto',
+                block: 'start',
+            });
+        }, 0);
     };
 
     const handleCancelEdit = () => {
+        setExpandedId((current) => (current === editingId ? null : current));
         setEditingId(null);
         setForm(emptyForm);
         setOptionDraft({ model: '', serialNumber: '' });
-        setEditSnapshot(null);
-        setIdentityPrompt(null);
+        setConfirm(null);
         setError('');
     };
 
-    const handleDelete = async (printer: Printer) => {
-        const confirmed = window.confirm(
-            `Удалить принтер «${printer.name}»? История операций останется в базе по id аппарата, но в программе он больше не будет отображаться.`
-        );
-        if (!confirmed) return;
-
+    const confirmDelete = async () => {
+        if (!confirm || confirm.type !== 'delete-printer') return;
+        const printer = confirm.printer;
+        setSaving(true);
+        setError('');
         try {
             await deletePrinter(printer.id);
             if (editingId === printer.id) {
@@ -255,12 +230,48 @@ const VariablesEditor = () => {
             if (expandedId === printer.id) {
                 setExpandedId(null);
             }
+            setConfirm(null);
         } catch (err) {
             setError(
                 err instanceof Error
                     ? err.message
                     : 'Не удалось удалить принтер'
             );
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const confirmReplace = async () => {
+        if (!editingId) return;
+        const validationError = validate(form);
+        if (validationError) {
+            setError(validationError);
+            setConfirm(null);
+            return;
+        }
+
+        const payload = buildPayload();
+        const previousId = editingId;
+        setSaving(true);
+        setError('');
+        try {
+            const id = await addPrinter(payload);
+            await deletePrinter(previousId);
+            setNotice(`Принтер «${payload.name}» заведён как новый`);
+            setHighlightId(id);
+            if (expandedId === previousId) {
+                setExpandedId(null);
+            }
+            finishPrinterForm();
+        } catch (err) {
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : 'Не удалось завести новый аппарат'
+            );
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -278,21 +289,6 @@ const VariablesEditor = () => {
             colors: resolvePrinterColors(printer),
             ...patch,
         });
-    };
-
-    const handleSaveSerial = async (printer: Printer, serialNumber: string) => {
-        try {
-            await persistPrinter(printer, { serialNumber: serialNumber.trim() });
-            if (editingId === printer.id) {
-                setForm((prev) => ({ ...prev, serialNumber: serialNumber.trim() }));
-            }
-        } catch (err) {
-            setError(
-                err instanceof Error
-                    ? err.message
-                    : 'Не удалось сохранить серийный номер'
-            );
-        }
     };
 
     const handleAddOption = async (printer: Printer) => {
@@ -347,32 +343,46 @@ const VariablesEditor = () => {
         }
     };
 
-    const handleDeleteOption = async (printer: Printer, optionId: string) => {
-        const option = (printer.options || []).find((o) => o.id === optionId);
-        const confirmed = window.confirm(
-            `Удалить опцию «${option?.model || ''}» у принтера «${printer.name}»? Каталог деталей опции на складе останется.`
-        );
-        if (!confirmed) return;
-
+    const confirmDeleteOption = async () => {
+        if (!confirm || confirm.type !== 'delete-option') return;
+        const { printer, optionId } = confirm;
         const options = (printer.options || []).filter((o) => o.id !== optionId);
+        setSaving(true);
         try {
             await persistPrinter(printer, { options });
             if (editingId === printer.id) {
                 setForm((prev) => ({ ...prev, options }));
             }
+            setConfirm(null);
         } catch (err) {
             setError(
                 err instanceof Error
                     ? err.message
                     : 'Не удалось удалить опцию'
             );
+        } finally {
+            setSaving(false);
         }
     };
 
+    const runConfirm = () => {
+        if (!confirm) return;
+        if (confirm.type === 'delete-printer') {
+            void confirmDelete();
+            return;
+        }
+        if (confirm.type === 'delete-option') {
+            void confirmDeleteOption();
+            return;
+        }
+        void confirmReplace();
+    };
+
+    const editingName = form.name.trim() || 'принтер';
+
     return (
         <div className={cls.editor}>
-            <h2 className={cls.h2}>Редактор переменных</h2>
-
+            <div className={cls.topBar}>
             <div className={cls.sections}>
                 <button
                     type="button"
@@ -396,6 +406,7 @@ const VariablesEditor = () => {
                 >
                     Расписание
                 </button>
+            </div>
             </div>
 
             {section === 'schedule' && (
@@ -446,57 +457,21 @@ const VariablesEditor = () => {
                             <p className={cls.error}>{scheduleError}</p>
                         )}
                     </form>
-
-                    <div className={cls.seedBox}>
-                        <button
-                            type="button"
-                            className={cls.cancel}
-                            disabled={seedBusy}
-                            onClick={async () => {
-                                setSeedBusy(true);
-                                setSeedStatus('');
-                                try {
-                                    const r = await seedTestCounterReadings();
-                                    await dispatch(loadLastCounterReading());
-                                    setSeedStatus(
-                                        `Ок: ${r.dateKeys.join(', ')}. ` +
-                                            `Найдено: ${r.matched.join('; ') || '—'}` +
-                                            (r.missing.length
-                                                ? `. Не найдены: ${r.missing.join(', ')}. В базе: ${r.printersInDb.join(', ')}`
-                                                : '')
-                                    );
-                                } catch (err) {
-                                    setSeedStatus(
-                                        err instanceof Error
-                                            ? err.message
-                                            : 'Ошибка заливки'
-                                    );
-                                } finally {
-                                    setSeedBusy(false);
-                                }
-                            }}
-                        >
-                            {seedBusy
-                                ? 'Заливка…'
-                                : 'Залить тест счётчиков (окт → янв)'}
-                        </button>
-                        {seedStatus && (
-                            <p className={cls.fieldHint}>{seedStatus}</p>
-                        )}
-                    </div>
                 </div>
             )}
 
             {section === 'printers' && (
-                <div className={cls.content}>
-                    <p className={cls.hint}>
-                        Имя — в отчётах и заменах. Модель группирует склады.
-                        Тип печати задаёт тонеры: Ч/Б = K, цветной = CMYK, можно
-                        добавить цвета (например W для Label 400). Склад тонеров
-                        создаётся автоматически.
-                    </p>
-
-                    <form className={cls.form} onSubmit={handleSubmit}>
+                <div className={`${cls.content} ${cls.work}`}>
+                    <form
+                        ref={formRef}
+                        className={cls.form}
+                        onSubmit={handleSubmit}
+                    >
+                        <h3 ref={formTitleRef} className={cls.formTitle}>
+                            {editingId
+                                ? `Редактирование: ${editingName}`
+                                : 'Новый принтер'}
+                        </h3>
                         <div className={cls.formRow}>
                             <label className={cls.label}>
                                 Имя *
@@ -572,6 +547,7 @@ const VariablesEditor = () => {
                         />
 
                         {error && <p className={cls.error}>{error}</p>}
+                        {notice && <p className={cls.success}>{notice}</p>}
 
                         <div className={cls.formActions}>
                             <button
@@ -596,6 +572,24 @@ const VariablesEditor = () => {
                                     Отмена
                                 </button>
                             )}
+                            {editingId && (
+                                <button
+                                    type="button"
+                                    className={cls.replaceBtn}
+                                    disabled={saving}
+                                    onClick={() => {
+                                        const validationError = validate(form);
+                                        if (validationError) {
+                                            setError(validationError);
+                                            return;
+                                        }
+                                        setError('');
+                                        setConfirm({ type: 'replace' });
+                                    }}
+                                >
+                                    Завести как новый аппарат
+                                </button>
+                            )}
                         </div>
                     </form>
 
@@ -606,35 +600,42 @@ const VariablesEditor = () => {
                             <p className={cls.empty}>Принтеры не найдены</p>
                         ) : (
                             <div className={cls.printerList}>
+                                <div className={cls.listHead}>
+                                    <span>Имя</span>
+                                    <span>Модель</span>
+                                    <span>S/N</span>
+                                    <span>IP</span>
+                                    <span>Тонеры</span>
+                                    <span />
+                                </div>
                                 {printers.map((printer) => {
                                     const expanded = expandedId === printer.id;
+                                    const highlighted = highlightId === printer.id;
                                     return (
                                         <div
                                             key={printer.id}
-                                            className={cls.printerCard}
+                                            id={`printer-card-${printer.id}`}
+                                            className={`${cls.printerCard} ${
+                                                highlighted ? cls.printerCardHighlight : ''
+                                            }`}
                                         >
                                             <div className={cls.printerHeader}>
-                                                <div className={cls.printerInfo}>
-                                                    <strong>{printer.name}</strong>
-                                                    <span>{printer.model}</span>
-                                                    <span>
-                                                        S/N:{' '}
-                                                        {printer.serialNumber || '—'}
-                                                    </span>
-                                                    <span>
-                                                        IP: {printer.ip || '—'}
-                                                    </span>
-                                                    <span>
-                                                        Опций:{' '}
-                                                        {(printer.options || []).length}
-                                                    </span>
-                                                    <span>
-                                                        Тонеры:{' '}
-                                                        {resolvePrinterColors(printer).join(
-                                                            ', '
-                                                        )}
-                                                    </span>
-                                                </div>
+                                                <strong className={cls.printerName}>
+                                                    {printer.name}
+                                                </strong>
+                                                <span className={cls.cell}>{printer.model}</span>
+                                                <span className={cls.cell}>
+                                                    {printer.serialNumber || '—'}
+                                                </span>
+                                                <span className={cls.cell}>
+                                                    {printer.ip || '—'}
+                                                </span>
+                                                <span className={cls.cell}>
+                                                    {resolvePrinterColors(printer).join(' ')}
+                                                    {(printer.options || []).length
+                                                        ? ` · ${(printer.options || []).length}`
+                                                        : ''}
+                                                </span>
                                                 <div className={cls.actions}>
                                                     <button
                                                         type="button"
@@ -647,9 +648,7 @@ const VariablesEditor = () => {
                                                             )
                                                         }
                                                     >
-                                                        {expanded
-                                                            ? 'Свернуть'
-                                                            : 'Опции и Excel'}
+                                                        {expanded ? 'Свернуть' : 'Опции'}
                                                     </button>
                                                     <button
                                                         type="button"
@@ -660,12 +659,22 @@ const VariablesEditor = () => {
                                                     >
                                                         Изменить
                                                     </button>
-                                                    <DeleteButton
-                                                        label={`Удалить принтер «${printer.name}»`}
+                                                    <button
+                                                        type="button"
+                                                        className={cls.deleteLabeled}
+                                                        aria-label={`Удалить принтер «${printer.name}»`}
                                                         onClick={() =>
-                                                            handleDelete(printer)
+                                                            setConfirm({
+                                                                type: 'delete-printer',
+                                                                printer,
+                                                            })
                                                         }
-                                                    />
+                                                    >
+                                                        <DeleteBinIcon
+                                                            className={cls.deleteIcon}
+                                                        />
+                                                        Удалить
+                                                    </button>
                                                 </div>
                                             </div>
 
@@ -673,43 +682,9 @@ const VariablesEditor = () => {
                                                 <div className={cls.printerBody}>
                                                     <div className={cls.subBlock}>
                                                         <h4 className={cls.subTitle}>
-                                                            Тушка · {printer.model}
+                                                            Ресурсные детали ·{' '}
+                                                            {printer.model}
                                                         </h4>
-                                                        <label className={cls.label}>
-                                                            Серийный номер тушки
-                                                            <input
-                                                                className={cls.input}
-                                                                defaultValue={
-                                                                    printer.serialNumber ||
-                                                                    ''
-                                                                }
-                                                                key={`sn-${printer.id}-${printer.serialNumber}`}
-                                                                onBlur={(e) =>
-                                                                    handleSaveSerial(
-                                                                        printer,
-                                                                        e.target.value
-                                                                    )
-                                                                }
-                                                                placeholder="S/N"
-                                                            />
-                                                        </label>
-                                                        <ColorConfigFields
-                                                            colorMode={
-                                                                printer.colorMode || 'color'
-                                                            }
-                                                            colors={resolvePrinterColors(
-                                                                printer
-                                                            )}
-                                                            onChange={({
-                                                                colorMode,
-                                                                colors,
-                                                            }) =>
-                                                                persistPrinter(printer, {
-                                                                    colorMode,
-                                                                    colors,
-                                                                })
-                                                            }
-                                                        />
                                                         <ExcelPartsUpload
                                                             printerModel={printer.model}
                                                             source="body"
@@ -846,10 +821,15 @@ const VariablesEditor = () => {
                                                                             <DeleteButton
                                                                                 label={`Удалить опцию «${opt.model || ''}»`}
                                                                                 onClick={() =>
-                                                                                    handleDeleteOption(
+                                                                                    setConfirm({
+                                                                                        type: 'delete-option',
                                                                                         printer,
-                                                                                        opt.id
-                                                                                    )
+                                                                                        optionId:
+                                                                                            opt.id,
+                                                                                        model:
+                                                                                            opt.model ||
+                                                                                            '',
+                                                                                    })
                                                                                 }
                                                                             />
                                                                         </div>
@@ -879,44 +859,43 @@ const VariablesEditor = () => {
                 </div>
             )}
 
-            {identityPrompt ? (
+            {confirm ? (
                 <div className={cls.modalOverlay} role="dialog" aria-modal>
                     <div className={cls.modalCard}>
                         <h3 className={cls.modalTitle}>
-                            Изменились данные аппарата
+                            {confirm.type === 'replace'
+                                ? 'Новый аппарат'
+                                : confirm.type === 'delete-option'
+                                  ? 'Удалить опцию'
+                                  : 'Удалить принтер'}
                         </h3>
                         <p className={cls.modalText}>
-                            Это та же физическая машина (сохранить учёт по id)
-                            или другая (новый учёт, старая история останется в
-                            базе, но скрыта)?
-                        </p>
-                        <p className={cls.modalHint}>
-                            Если меняли только IP или серийник без смены имени
-                            и нужен новый учёт — добавьте новый принтер и
-                            удалите старый.
+                            {confirm.type === 'replace'
+                                ? `«${editingName}» появится как новый принтер. Текущий пропадёт из списков. Старые записи останутся.`
+                                : confirm.type === 'delete-option'
+                                  ? `Удалить опцию «${confirm.model}» у «${confirm.printer.name}»? Каталог деталей на складе останется.`
+                                  : `Удалить «${confirm.printer.name}»? В списках его больше не будет. Старые записи останутся.`}
                         </p>
                         <div className={cls.modalActions}>
                             <button
                                 type="button"
-                                className={cls.modalPrimary}
+                                className={
+                                    confirm.type === 'replace'
+                                        ? cls.modalPrimary
+                                        : cls.modalDanger
+                                }
                                 disabled={saving}
-                                onClick={() => void confirmIdentity(true)}
+                                onClick={runConfirm}
                             >
-                                Та же машина
-                            </button>
-                            <button
-                                type="button"
-                                className={cls.modalSecondary}
-                                disabled={saving}
-                                onClick={() => void confirmIdentity(false)}
-                            >
-                                Другая машина
+                                {confirm.type === 'replace'
+                                    ? 'Завести новый'
+                                    : 'Удалить'}
                             </button>
                             <button
                                 type="button"
                                 className={cls.modalGhost}
                                 disabled={saving}
-                                onClick={() => setIdentityPrompt(null)}
+                                onClick={() => setConfirm(null)}
                             >
                                 Отмена
                             </button>

@@ -2,12 +2,12 @@
 .activeButton {
     width: 100%;
     max-width: none;
-    height: var(--sb-btn-h, 32px);
+    height: var(--control-height);
     padding: 0 10px;
     font-size: var(--sb-font-md, 12px);
     font-weight: 500;
     line-height: 1.2;
-    border-radius: var(--sb-radius, 7px);
+    border-radius: var(--radius-control);
     cursor: pointer;
     transition: all 0.15s ease;
     text-transform: uppercase;
@@ -15,31 +15,21 @@
 }
 
 .button {
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: var(--sb-control, #2a2a2a);
-    color: rgba(255, 255, 255, 0.87);
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
 
     &:hover {
-        background: #333333;
-        border-color: rgba(255, 255, 255, 0.24);
-    }
-
-    &:active {
-        background: #3a3a3a;
+        color: var(--text);
     }
 }
 
 .activeButton {
-    border: 1px solid #bb86fc;
-    background: rgba(187, 134, 252, 0.12);
-    color: #bb86fc;
+    border: none;
+    background: transparent;
+    color: var(--accent);
 
     &:hover {
-        background: rgba(187, 134, 252, 0.16);
-        border-color: #c397fc;
-    }
-
-    &:active {
-        background: rgba(187, 134, 252, 0.24);
+        color: var(--accent-hover);
     }
 }

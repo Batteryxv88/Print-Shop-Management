@@ -15,7 +15,7 @@
     background: rgba(30, 30, 30, 0.72);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid var(--border-soft);
     box-shadow: none;
     transition:
         background 0.22s ease,
@@ -28,7 +28,7 @@
     background: rgba(26, 26, 26, 0.96);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
-    border-bottom-color: rgba(255, 255, 255, 0.14);
+    border-bottom-color: var(--border-strong);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
 }
 
@@ -55,7 +55,7 @@
     color: rgba(255, 255, 255, 0.9);
 
     &:hover {
-        background: rgba(255, 255, 255, 0.08);
+        background: var(--border);
     }
 }
 
@@ -75,7 +75,7 @@
     font-weight: 700;
     font-size: 0.85rem;
     letter-spacing: 0.04em;
-    color: #23ccc3;
+    color: var(--brand);
     flex-shrink: 0;
 }
 
@@ -129,7 +129,7 @@
     }
 
     :global(button) {
-        height: 24px;
+        height: var(--control-height);
         font-size: 0.68rem;
         margin: 0 2px;
     }
@@ -143,33 +143,32 @@
     .name {
         font-weight: 500;
         font-size: 0.8rem;
-        color: rgba(255, 255, 255, 0.9);
+        color: var(--text);
     }
 
     .email {
-        color: rgba(255, 255, 255, 0.7);
+        color: var(--text-muted);
         font-size: 0.85rem;
     }
 
     .role {
-        color: #bb86fc;
+        color: var(--accent);
         font-size: 0.68rem;
         font-weight: 500;
     }
 
     .logoutButton {
+        height: var(--control-height);
         background: none;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        color: rgba(255, 255, 255, 0.7);
-        padding: 0.3rem 0.7rem;
-        border-radius: 4px;
+        border: none;
+        color: var(--text-muted);
+        padding: 0 10px;
+        border-radius: var(--radius-control);
         cursor: pointer;
         font-size: 0.72rem;
-        transition: all 0.2s;
 
         &:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.5);
+            color: var(--text);
         }
     }
 }

@@ -38,16 +38,16 @@
     min-height: 0;
     display: flex;
     flex-direction: column;
-    background: #1a1a1a;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
     overflow: hidden;
 }
 
 .browserTop {
     flex-shrink: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    background: #1e1e1e;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
 }
 
 .breadcrumb {
@@ -58,7 +58,7 @@
     padding: 10px 16px;
     min-height: 40px;
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.45);
+    color: var(--text-muted);
 }
 
 .crumbHome {
@@ -68,18 +68,18 @@
     width: 22px;
     height: 22px;
     border-radius: 4px;
-    color: rgba(255, 255, 255, 0.55);
+    color: var(--text-muted);
     font-size: 13px;
 }
 
 .crumbSep {
-    color: rgba(255, 255, 255, 0.22);
+    color: var(--text-faint);
     font-size: 12px;
     user-select: none;
 }
 
 .crumbCurrent {
-    color: rgba(255, 255, 255, 0.92);
+    color: var(--text);
     font-weight: 600;
 }
 
@@ -114,12 +114,12 @@
     margin: 0 0 4px;
     font-size: 13px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.88);
+    color: var(--text);
 }
 
 .tableWrap {
     overflow-x: auto;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border);
     border-radius: 8px;
 }
 
@@ -135,12 +135,12 @@
         padding: 3px 6px;
         text-align: right;
         white-space: nowrap;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-        --chart-row-soft: #1e1e1e;
-        --chart-row-strong: #1e1e1e;
-        --chart-col-soft: #1e1e1e;
-        --chart-col-strong: #1e1e1e;
-        color: rgba(255, 255, 255, 0.82);
+        border-bottom: 1px solid var(--border-soft);
+        --chart-row-soft: var(--surface-2);
+        --chart-row-strong: var(--surface-2);
+        --chart-col-soft: var(--surface-2);
+        --chart-col-strong: var(--surface-2);
+        color: var(--text-secondary);
         background-image:
             linear-gradient(to bottom, var(--chart-row-soft), var(--chart-row-strong)),
             linear-gradient(to right, var(--chart-col-soft), var(--chart-col-strong));
@@ -173,7 +173,7 @@
     }
 
     tbody th {
-        color: rgba(255, 255, 255, 0.92);
+        color: var(--text);
         font-weight: 600;
         font-size: 11px;
         letter-spacing: 0;
@@ -189,33 +189,33 @@
 .table thead th.cellRow,
 .table th.cellRow,
 .table td.cellRow {
-    --chart-row-soft: #1e1e1e;
-    --chart-row-strong: #3d5c48;
-    color: #cfe8db;
+    --chart-row-soft: var(--surface-2);
+    --chart-row-strong: var(--highlight);
+    color: var(--highlight-text);
 }
 
 .table thead th.cellCol,
 .table th.cellCol,
 .table td.cellCol {
-    --chart-col-soft: #1e1e1e;
-    --chart-col-strong: #3d5c48;
-    color: #cfe8db;
+    --chart-col-soft: var(--surface-2);
+    --chart-col-strong: var(--highlight);
+    color: var(--highlight-text);
 }
 
 .table thead th.cellCross,
 .table th.cellCross,
 .table td.cellCross {
-    --chart-row-soft: #1e1e1e;
-    --chart-row-strong: #3d5c48;
-    --chart-col-soft: #1e1e1e;
-    --chart-col-strong: #3d5c48;
-    color: #e9fff4;
+    --chart-row-soft: var(--surface-2);
+    --chart-row-strong: var(--highlight);
+    --chart-col-soft: var(--surface-2);
+    --chart-col-strong: var(--highlight);
+    color: var(--highlight-text-strong);
 }
 
 .chartNote {
     margin: 4px 0 0;
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--text-faint);
 }
 
 .calc {
@@ -234,16 +234,16 @@
     padding: 3px 8px;
     border: none;
     background: transparent;
-    color: rgba(255, 255, 255, 0.55);
+    color: var(--text-muted);
     font-size: 11px;
     cursor: pointer;
 
     &:hover {
-        color: rgba(255, 255, 255, 0.82);
+        color: var(--text-secondary);
     }
 
     &.active {
-        color: #bb86fc;
+        color: var(--accent);
     }
 }
 
@@ -256,15 +256,20 @@
 .input {
     flex: 1;
     min-width: 0;
-    height: 30px;
+    height: var(--control-height);
     padding: 0 10px;
     box-sizing: border-box;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 6px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
     font-size: 12px;
     outline: none;
-    background: #1e1e1e;
-    color: rgba(255, 255, 255, 0.9);
+    background: var(--surface-2);
+    color: var(--text);
+
+    &:focus,
+    &:focus-visible {
+        outline: none;
+    }
 
     &[type='number'] {
         -moz-appearance: textfield;
@@ -277,7 +282,7 @@
     }
 
     &::placeholder {
-        color: rgba(255, 255, 255, 0.32);
+        color: var(--text-faint);
     }
 }
 
@@ -288,16 +293,16 @@
     font-size: 13px;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
-    color: #bb86fc;
+    color: var(--accent);
 }
 
 .calcValueEmpty {
-    color: rgba(255, 255, 255, 0.22);
+    color: var(--text-faint);
     font-weight: 500;
 }
 
 .error {
-    color: #ff8a80;
+    color: var(--danger);
     font-size: 11px;
 }
 

@@ -14,7 +14,7 @@
 }
 
 ::-webkit-scrollbar-track {
-    background: #1E1E1E;
+    background: var(--surface-2);
     border-radius: 4px;
 }
 
@@ -45,7 +45,7 @@ body {
 .app {
     //min-height: 100vh;
     height: 100%;
-    background-color: #A8D0E6;
+    background-color: var(--bg);
 }
       
 .container {

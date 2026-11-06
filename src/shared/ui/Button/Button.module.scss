@@ -1,11 +1,16 @@
 .button {
     width: fit-content;
-    padding: 0 5px 0 5px;
-    height: 30px;
-    //border-radius: 7px;
-    background-color:  transparent ;
+    height: var(--control-height);
+    padding: 0 10px;
+    margin: 0 4px;
     border: none;
-    color: white;
-    margin: 0 5px 0 5px;
+    border-radius: var(--radius-control);
+    background: transparent;
+    color: var(--text-secondary);
+    font: inherit;
     cursor: pointer;
+
+    &:hover {
+        color: var(--text);
+    }
 }

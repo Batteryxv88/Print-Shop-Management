@@ -1,13 +1,74 @@
 @import '../../../app/styles/breakpoints/breakpoints';
 @import '../../../shared/styles/compactNotice';
 
-.adminPage {
-    min-height: 100%;
+.page {
+    height: 100%;
+    min-height: 0;
+    padding: 16px 18px 18px;
+    display: flex;
+    flex-direction: column;
     box-sizing: border-box;
 }
 
-.adminSurface {
+.browser {
+    flex: 1;
     min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+}
+
+.browserTop {
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+}
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px 16px;
+    min-height: 40px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.crumbHome {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.crumbSep {
+    color: var(--text-faint);
+    font-size: 12px;
+    user-select: none;
+}
+
+.crumb {
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.crumbCurrent {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.content {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
 }
 
 .mobileEditorStub {
@@ -15,8 +76,8 @@
     padding-top: 24px;
 }
 
-@include down(md) {
-    .adminPage {
-        padding: 0 4px;
+@include down(sm) {
+    .page {
+        padding: 8px 8px 12px;
     }
 }
