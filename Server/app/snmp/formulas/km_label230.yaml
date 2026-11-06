@@ -1,0 +1,53 @@
+# AccurioLabel 230
+# Снято с 192.168.1.155, community public, sysDescr «KONICA MINOLTA AccurioLabel 230»
+# (2026-11-06). Панель: Всего 3344, Цвет 2956, Ч/Б 388.
+# Таблица mltSysPrintFunctionCounterTable, значение .2.1.5.<цвет>.<функция>
+#   цвет 1 = Ч/Б, 2 = полный цвет (4C)
+#   функция 1 = копия, 2 = печать
+# Входа, факса и отчёта на этой модели нет.
+# Ч/Б  = 12 + 376 = 388
+# Цвет = 90 + 2866 = 2956
+# Всего = mltSysTotalCount .2.1.1.0 (тот же 3344 в Printer-MIB .43.10.2.1.4.1.1).
+id: km_label230
+title: AccurioLabel 230
+order: 3
+profile: konica_minolta
+detect:
+  - Label\s*230
+
+snmp:
+  total:
+    oid: 1.3.6.1.4.1.18334.1.1.1.5.7.2.1.1.0
+    name: mltSysTotalCount
+  black:
+    name: Ч/Б, копия + печать
+    sum:
+      - oid: 1.3.6.1.4.1.18334.1.1.1.5.7.2.2.1.5.1.1
+        name: Ч/Б, копия
+      - oid: 1.3.6.1.4.1.18334.1.1.1.5.7.2.2.1.5.1.2
+        name: Ч/Б, печать
+  color:
+    name: Цвет, копия + печать
+    sum:
+      - oid: 1.3.6.1.4.1.18334.1.1.1.5.7.2.2.1.5.2.1
+        name: Полный цвет, копия
+      - oid: 1.3.6.1.4.1.18334.1.1.1.5.7.2.2.1.5.2.2
+        name: Полный цвет, печать
+
+billing:
+  - key: total
+    label: Всего
+    rule: label
+    match: Всего
+  - key: color
+    label: Цвет
+    rule: sum_labels
+    match:
+      - Полный цвет, копия
+      - Полный цвет, печать
+  - key: black
+    label: Ч/Б
+    rule: sum_labels
+    match:
+      - Ч/Б, копия
+      - Ч/Б, печать

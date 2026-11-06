@@ -1,5 +1,7 @@
 # AccurioPress C6100 / C14000, AccurioPrint C3070L / C2060L,
-# AccurioLabel 190 / 230 / 400 — одно дерево Konica 18334
+# AccurioLabel 190 / 230 / 400 — одно дерево Konica 18334.
+# Label 230 сверен с панелью: Всего .2.1.1.0, Ч/Б цвет 1, Цвет цвет 2
+# (только копия + печать). Коды — в formulas/km_label230.yaml.
 # (старые Minolta — то же дерево под 2590, второй набор колонок ниже).
 # Отдельные профили не нужны: цветовой индекс задаёт enum, а не «магический» лист.
 # MIB mltSysPrintFunctionCounterTable (MC2350 / enterprise 2590 = 18334.1.1.1.5.7.2.2):

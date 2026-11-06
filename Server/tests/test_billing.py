@@ -34,6 +34,10 @@ class TestGuessPreset(unittest.TestCase):
         self.assertEqual(guess_counter_preset("Ricoh Pro 8210S", ""), "ricoh_8210")
         self.assertEqual(guess_counter_preset("Ricoh C7210X", "192.168.88.119"), "ricoh_c7210x")
         self.assertEqual(
+            guess_counter_preset("KONICA MINOLTA AccurioLabel 230", "192.168.1.155"),
+            "km_label230",
+        )
+        self.assertEqual(
             guess_counter_preset("AccurioPress C14000", "", "konica_minolta"),
             "km_generic",
         )
@@ -78,6 +82,29 @@ class TestInterpret(unittest.TestCase):
         self.assertEqual(bill["color"], 7)
         self.assertNotEqual(bill["black"], 999)
         self.assertNotEqual(bill["color"], 5)
+
+    def test_label230_sums_copy_and_print(self) -> None:
+        # Панель 192.168.1.155: Всего 3344, Цвет 2956, Ч/Б 388.
+        metrics = {
+            "total": 3344,
+            "_label_total": "Всего",
+            "black": 999,
+            "_label_black": "Ч/Б",
+            "color": 5,
+            "_label_color": "Цвет",
+            "km_bw_copy": 12,
+            "_label_km_bw_copy": "Ч/Б, копия",
+            "km_bw_print": 376,
+            "_label_km_bw_print": "Ч/Б, печать",
+            "km_full_copy": 90,
+            "_label_km_full_copy": "Полный цвет, копия",
+            "km_full_print": 2866,
+            "_label_km_full_print": "Полный цвет, печать",
+        }
+        bill = interpret_billing("km_label230", metrics)
+        self.assertEqual(bill["total"], 3344)
+        self.assertEqual(bill["color"], 2956)
+        self.assertEqual(bill["black"], 388)
 
     def test_generic_does_not_apply_c6100_math(self) -> None:
         metrics = _km(total=100, black=999, color=5, color_full=7, print_bw=10, copy_part=20)
