@@ -1,57 +1,272 @@
 @import '../../../app/styles/breakpoints/breakpoints';
 
-.CalculatorPage {
-    padding: 38px;
-    height: 100%;
-    display: flex;
-    flex-direction: row;
-    gap: 24px;
-    align-items: start;
-    opacity: 0;
-    animation: fadeIn 0.15s ease-in forwards;
+@property --chart-row-soft {
+    syntax: '<color>';
+    inherits: false;
+    initial-value: #1e1e1e;
 }
 
-@keyframes fadeIn {
-    to {
-        opacity: 1;
+@property --chart-row-strong {
+    syntax: '<color>';
+    inherits: false;
+    initial-value: #1e1e1e;
+}
+
+@property --chart-col-soft {
+    syntax: '<color>';
+    inherits: false;
+    initial-value: #1e1e1e;
+}
+
+@property --chart-col-strong {
+    syntax: '<color>';
+    inherits: false;
+    initial-value: #1e1e1e;
+}
+
+.page {
+    height: 100%;
+    min-height: 0;
+    padding: 16px 18px 18px;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.browser {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: #1a1a1a;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.browserTop {
+    flex-shrink: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: #1e1e1e;
+}
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px 16px;
+    min-height: 40px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.crumbHome {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 13px;
+}
+
+.crumbSep {
+    color: rgba(255, 255, 255, 0.22);
+    font-size: 12px;
+    user-select: none;
+}
+
+.crumbCurrent {
+    color: rgba(255, 255, 255, 0.92);
+    font-weight: 600;
+}
+
+.content {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 12px 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.charts {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    grid-template-areas:
+        "paperChart lamChart"
+        "paperCalc lamCalc";
+    column-gap: 10px;
+    row-gap: 8px;
+    align-items: start;
+
+    > * { min-width: 0; }
+    > :nth-child(1) { grid-area: paperChart; }
+    > :nth-child(2) { grid-area: lamChart; }
+    > :nth-child(3) { grid-area: paperCalc; }
+    > :nth-child(4) { grid-area: lamCalc; }
+}
+
+.chartTitle {
+    margin: 0 0 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.tableWrap {
+    overflow-x: auto;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+}
+
+.table {
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 100%;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+
+    th,
+    td {
+        padding: 3px 6px;
+        text-align: right;
+        white-space: nowrap;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        --chart-row-soft: #1e1e1e;
+        --chart-row-strong: #1e1e1e;
+        --chart-col-soft: #1e1e1e;
+        --chart-col-strong: #1e1e1e;
+        color: rgba(255, 255, 255, 0.82);
+        background-image:
+            linear-gradient(to bottom, var(--chart-row-soft), var(--chart-row-strong)),
+            linear-gradient(to right, var(--chart-col-soft), var(--chart-col-strong));
+        background-blend-mode: lighten;
+        transition:
+            --chart-row-soft 420ms cubic-bezier(0.22, 1, 0.36, 1),
+            --chart-row-strong 420ms cubic-bezier(0.22, 1, 0.36, 1),
+            --chart-col-soft 420ms cubic-bezier(0.22, 1, 0.36, 1),
+            --chart-col-strong 420ms cubic-bezier(0.22, 1, 0.36, 1),
+            color 420ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    thead th {
+        position: sticky;
+        top: 0;
+        color: rgba(255, 255, 255, 0.4);
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        z-index: 1;
+    }
+
+    th:first-child {
+        position: sticky;
+        left: 0;
+        text-align: left;
+        z-index: 2;
+        min-width: 84px;
+    }
+
+    tbody th {
+        color: rgba(255, 255, 255, 0.92);
+        font-weight: 600;
+        font-size: 11px;
+        letter-spacing: 0;
+        text-transform: none;
+    }
+
+    tbody tr:last-child th,
+    tbody tr:last-child td {
+        border-bottom: none;
     }
 }
-.calculator {
-    background: #1E1E1E;
-    padding: 32px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 1px 3px 1px rgba(0, 0, 0, 0.15);
-    max-width: 600px;
-    min-height: 550px;
-    width: 100%;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+
+.table thead th.cellRow,
+.table th.cellRow,
+.table td.cellRow {
+    --chart-row-soft: #1e1e1e;
+    --chart-row-strong: #3d5c48;
+    color: #cfe8db;
 }
 
-.title {
-    margin-bottom: 24px;
-    color: rgba(255, 255, 255, 0.87);
-    font-size: 24px;
-    text-align: center;
-    font-weight: 500;
-    letter-spacing: 0.15px;
+.table thead th.cellCol,
+.table th.cellCol,
+.table td.cellCol {
+    --chart-col-soft: #1e1e1e;
+    --chart-col-strong: #3d5c48;
+    color: #cfe8db;
 }
 
-.inputWrapper {
-    margin-bottom: 24px;
+.table thead th.cellCross,
+.table th.cellCross,
+.table td.cellCross {
+    --chart-row-soft: #1e1e1e;
+    --chart-row-strong: #3d5c48;
+    --chart-col-soft: #1e1e1e;
+    --chart-col-strong: #3d5c48;
+    color: #e9fff4;
+}
+
+.chartNote {
+    margin: 4px 0 0;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.calc {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.calcRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.chip {
+    padding: 3px 8px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 11px;
+    cursor: pointer;
+
+    &:hover {
+        color: rgba(255, 255, 255, 0.82);
+    }
+
+    &.active {
+        color: #bb86fc;
+    }
+}
+
+.calcLine {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .input {
-    width: 100%;
-    padding: 12px 16px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 4px;
-    font-size: 16px;
+    flex: 1;
+    min-width: 0;
+    height: 30px;
+    padding: 0 10px;
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    font-size: 12px;
     outline: none;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    background: rgba(255, 255, 255, 0.05);
-    color: rgba(255, 255, 255, 0.87);
+    background: #1e1e1e;
+    color: rgba(255, 255, 255, 0.9);
 
-    &[type="number"] {
+    &[type='number'] {
         -moz-appearance: textfield;
 
         &::-webkit-inner-spin-button,
@@ -61,133 +276,53 @@
         }
     }
 
-    &:focus {
-        border-color: #BB86FC;
-        background: rgba(255, 255, 255, 0.08);
-    }
-
     &::placeholder {
-        color: rgba(255, 255, 255, 0.38);
+        color: rgba(255, 255, 255, 0.32);
     }
 }
 
-.buttonsWrapper {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-bottom: 24px;
+.calcValue {
+    flex-shrink: 0;
+    min-width: 72px;
+    text-align: right;
+    font-size: 13px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: #bb86fc;
 }
 
-.button {
-    flex: 1;
-    min-width: 120px;
-    padding: 12px 16px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 4px;
-    background-color: rgba(255, 255, 255, 0.05);
-    color: rgba(255, 255, 255, 0.87);
-    font-size: 16px;
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-
-    &:hover {
-        background-color: rgba(255, 255, 255, 0.08);
-        border-color: rgba(255, 255, 255, 0.24);
-    }
-
-    &.active {
-        background-color: rgba(187, 134, 252, 0.12);
-        border-color: #BB86FC;
-        color: #BB86FC;
-    }
-}
-
-.calculateButton {
-    width: 100%;
-    padding: 14px;
-    border: none;
-    border-radius: 4px;
-    background-color: #BB86FC;
-    color: rgba(0, 0, 0, 0.87);
-    font-size: 16px;
+.calcValueEmpty {
+    color: rgba(255, 255, 255, 0.22);
     font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    margin-bottom: 24px;
-    text-transform: uppercase;
-    letter-spacing: 1.25px;
-
-    &:hover {
-        background-color: #C397FC;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
-
-    &:active {
-        background-color: #B77EFC;
-    }
 }
 
 .error {
-    background-color: rgba(244, 67, 54, 0.12);
-    color: #FF8A80;
-    padding: 12px 16px;
-    border-radius: 4px;
-    margin-bottom: 24px;
-    text-align: center;
-    font-size: 14px;
-    border: 1px solid rgba(244, 67, 54, 0.24);
-}
-
-.result {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px;
-    background-color: rgba(187, 134, 252, 0.08);
-    border-radius: 4px;
-    font-size: 16px;
-    color: rgba(255, 255, 255, 0.87);
-    border: 1px solid rgba(187, 134, 252, 0.12);
-
-    span:last-child {
-        font-weight: 500;
-        color: #BB86FC;
-    }
+    color: #ff8a80;
+    font-size: 11px;
 }
 
 @include down(md) {
-    .CalculatorPage {
-        flex-direction: column;
-        padding: 16px;
-        gap: 16px;
-        align-items: stretch;
-    }
-
-    .calculator {
-        padding: 20px 16px;
-        min-height: 0;
-        max-width: none;
-    }
-
-    .title {
-        font-size: 20px;
-    }
-
-    .button {
-        min-width: calc(50% - 6px);
+    .charts {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "paperChart"
+            "paperCalc"
+            "lamChart"
+            "lamCalc";
     }
 }
 
 @include down(sm) {
-    .CalculatorPage {
-        padding: 12px;
+    .page {
+        padding: 8px 8px 12px;
     }
 
-    .buttonsWrapper {
-        gap: 8px;
+    .content {
+        padding: 10px 10px 16px;
     }
 
-    .button {
-        min-width: 100%;
+    .breadcrumb {
+        padding: 8px 12px;
+        font-size: 11px;
     }
 }
