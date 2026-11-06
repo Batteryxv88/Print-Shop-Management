@@ -4,6 +4,14 @@ import { RootState } from '../../../app/providers/StoreProvider/Store';
 import { useSelector } from 'react-redux';
 import { useAppDispatch } from '../../../app/providers/StoreProvider/Store/hooks';
 import { setSelectedFormId } from '../../../app/providers/StoreProvider/Store/SelectedFormSlice';
+import {
+    FIGURED_DOG_FACE,
+    FIGURED_DOG_MOUTH,
+    FIGURED_LABEL_PATH,
+    previewBorderRadius,
+    previewOutline,
+} from '../../../shared/lib/rotation/previewOutline';
+import { streamLayout } from '../../../shared/lib/rotation/streamLayout';
 
 const RotationFormPreview = () => {
     const dispatch = useAppDispatch();
@@ -58,9 +66,15 @@ const RotationFormPreview = () => {
     // Междуэтикеточное расстояние в мм
     const GAP_SIZE_MM = 3;
     
-    // Вычисляем полную ширину и высоту всей сетки в мм, с учетом междуэтикеточных расстояний
-    const gridFullWidthMM = (selectedItem.columns * selectedItem.width) + (GAP_SIZE_MM * (selectedItem.columns - 1));
-    const gridFullHeightMM = (selectedItem.rows * selectedItem.height) + (GAP_SIZE_MM * (selectedItem.rows - 1));
+    const { across, along } = streamLayout(
+        Number(selectedItem.width),
+        Number(selectedItem.height),
+        Number(selectedItem.size_for_column)
+    );
+
+    // Ширина ручья = «W к ручью», высота ряда = другая сторона этикетки
+    const gridFullWidthMM = (selectedItem.columns * across) + (GAP_SIZE_MM * (selectedItem.columns - 1));
+    const gridFullHeightMM = (selectedItem.rows * along) + (GAP_SIZE_MM * (selectedItem.rows - 1));
     
     // Проверяем, превышает ли сетка доступный размер формы
     const isOverflowWidth = gridFullWidthMM > FORM_WIDTH_MM;
@@ -96,29 +110,77 @@ const RotationFormPreview = () => {
         justifyContent: 'center',
     };
     
+    const labelOutline = previewOutline(
+        String(selectedItem.shape ?? ''),
+        Number(selectedItem.width),
+        Number(selectedItem.height)
+    );
+    const labelRadius = previewBorderRadius(labelOutline);
+
     // Функция для отображения ячейки с информацией с точным отражением междуэтикеточных расстояний
     const calculateWidthAndHeight = (content?: string | number, isSmallText = false) => {
+        const textStyle = {
+            display: 'flex',
+            flexDirection: 'column' as const,
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
+            height: '100%',
+            color: 'rgba(255, 255, 255, 0.87)',
+            fontSize: isSmallText ? '10px' : '14px',
+            lineHeight: isSmallText ? '10px' : '14px',
+            fontWeight: 'bold' as const,
+            textAlign: 'center' as const,
+            whiteSpace: 'pre-wrap' as const,
+            wordBreak: 'break-word' as const,
+            padding: isSmallText ? '2px' : '0',
+            boxSizing: 'border-box' as const,
+        };
+
+        if (labelOutline === 'figured') {
+            return (
+                <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                    <svg
+                        viewBox="0 0 100 100"
+                        preserveAspectRatio="none"
+                        aria-hidden="true"
+                        style={{
+                            position: 'absolute',
+                            inset: 0,
+                            width: '100%',
+                            height: '100%',
+                        }}
+                    >
+                        <path
+                            d={FIGURED_LABEL_PATH}
+                            fill="#2A2A2A"
+                            stroke="#BB86FC"
+                            strokeWidth="2"
+                            strokeLinejoin="round"
+                            vectorEffect="non-scaling-stroke"
+                        />
+                        <path d={FIGURED_DOG_FACE} fill="#BB86FC" />
+                        <path
+                            d={FIGURED_DOG_MOUTH}
+                            fill="none"
+                            stroke="#BB86FC"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                            vectorEffect="non-scaling-stroke"
+                        />
+                    </svg>
+                    <div style={{ ...textStyle, position: 'relative' }}>{content}</div>
+                </div>
+            );
+        }
+
         return (
             <div
                 style={{
-                    width: '100%',
-                    height: '100%',
+                    ...textStyle,
                     border: '2px solid #BB86FC',
-                    borderRadius: '3px',
+                    borderRadius: labelRadius,
                     background: '#2A2A2A',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'rgba(255, 255, 255, 0.87)',
-                    fontSize: isSmallText ? '10px' : '14px',
-                    lineHeight: isSmallText ? '10px' : '14px',
-                    fontWeight: 'bold',
-                    textAlign: 'center',
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-word',
-                    padding: isSmallText ? '2px' : '0',
-                    boxSizing: 'border-box',
                 }}
             >
                 {content}
@@ -128,8 +190,6 @@ const RotationFormPreview = () => {
     
     return (
         <div className={cls.gridContainer} data-testid="rotation-preview-root">
-            <h2 className={cls.title}>Предварительный вид формы</h2>
-            
             <div className={cls.content}>
                 <div className={cls.leftColumn}>
                     <div className={`${cls.selectContainer} ${cls.navControls}`}>
@@ -194,7 +254,7 @@ const RotationFormPreview = () => {
                                             style={{ 
                                                 width: '100%', 
                                                 height: '100%',
-                                                aspectRatio: `${selectedItem.width} / ${selectedItem.height}`
+                                                aspectRatio: `${across} / ${along}`
                                             }}
                                         >
                                             {isTopRow

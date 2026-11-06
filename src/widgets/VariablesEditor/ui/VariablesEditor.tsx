@@ -459,7 +459,7 @@ const VariablesEditor = () => {
                                     const r = await seedTestCounterReadings();
                                     await dispatch(loadLastCounterReading());
                                     setSeedStatus(
-                                        `Ок: ${r.periods.join(', ')}. ` +
+                                        `Ок: ${r.dateKeys.join(', ')}. ` +
                                             `Найдено: ${r.matched.join('; ') || '—'}` +
                                             (r.missing.length
                                                 ? `. Не найдены: ${r.missing.join(', ')}. В базе: ${r.printersInDb.join(', ')}`

@@ -14,7 +14,6 @@ import Stock from '../../../widgets/Stock/ui/Stock';
 import TonersStorage from '../../../widgets/TonersStorage/ui/TonersStorage';
 import PaperStockPage from '../../PaperStockPage/ui/PaperStockPage';
 import LaminationStockPage from '../../LaminationStockPage/ui/LaminationStockPage';
-import HoldersAndKnifesStockPage from '../../HoldersAndKnifesStockPage/ui/HoldersAndKnifesStockPage';
 import StockInventorization from '../../PartsInventorization/ui/StockInventorization';
 import PrinterModelTabs from '../../../shared/ui/PrinterModelTabs/PrinterModelTabs';
 import LoadingPlug from '../../../shared/ui/LoadingPlug/LoadingPlug';
@@ -60,7 +59,7 @@ const MainPage = () => {
             if (userData.role === 'дизайнер') {
                 dispatch(changeStorage('Бумага'));
             } else if (userData.role === 'резчик') {
-                dispatch(changeStorage('Держатели / Лезвия'));
+                dispatch(changeStorage('Бумага'));
             } else if (userData.role === 'менеджер') {
                 dispatch(changeStorage('Бумага'));
             } else {
@@ -76,6 +75,12 @@ const MainPage = () => {
             dispatch(changeStorageModel(models[0]));
         }
     }, [storageState, storageModel, models, dispatch]);
+
+    useEffect(() => {
+        if (storageState === 'Держатели / Лезвия') {
+            dispatch(changeStorage('Детали'));
+        }
+    }, [storageState, dispatch]);
 
     dispatch(changePage('main'));
 
@@ -93,9 +98,6 @@ const MainPage = () => {
         if (storageState === 'Тонеры') return <TonersStorage />;
         if (storageState === 'Бумага') return <PaperStockPage />;
         if (storageState === 'Ламинация') return <LaminationStockPage />;
-        if (storageState === 'Держатели / Лезвия') {
-            return <HoldersAndKnifesStockPage />;
-        }
         return null;
     };
 

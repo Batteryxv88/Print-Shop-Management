@@ -37,8 +37,6 @@ const storageSectionTestId = (name: string): string | undefined => {
             return 'storage-paper';
         case 'Ламинация':
             return 'storage-lamination';
-        case 'Держатели / Лезвия':
-            return 'storage-holders';
         default:
             return undefined;
     }
@@ -88,7 +86,6 @@ const SidebarStock = () => {
         if (laminationStockEnabled) {
             list.push({ name: 'Ламинация', hint: 'Плёнка' });
         }
-        list.push({ name: 'Держатели / Лезвия', hint: 'Оснастка' });
         return list;
     }, [paperStockEnabled, laminationStockEnabled]);
 
@@ -114,6 +111,9 @@ const SidebarStock = () => {
             dispatch(changeStorage('Детали'));
         }
         if (storage === 'Ламинация' && !laminationStockEnabled) {
+            dispatch(changeStorage('Детали'));
+        }
+        if (storage === 'Держатели / Лезвия') {
             dispatch(changeStorage('Детали'));
         }
     }, [

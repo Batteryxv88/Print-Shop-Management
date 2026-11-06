@@ -5,10 +5,11 @@
  * Ежедневный запуск (Планировщик заданий Windows):
  *   node src/index.js
  *
- * Принудительно сейчас:
+ * Принудительно перезаписать снимок за сегодня:
  *   node src/index.js --force
  *
  * Только опрос, без записи в Firestore:
+ *   node src/index.js --dry-run
  *   node src/index.js --force --dry-run
  */
 
@@ -16,8 +17,8 @@ const { loadConfig, resolveProfile } = require('./config');
 const {
     initFirestore,
     fetchPrinters,
-    resolvePeriodToCollect,
-    createCounterReading,
+    resolveDateToCollect,
+    upsertDailyCounterReading,
 } = require('./firestore');
 const { pollPrinter } = require('./snmp');
 const { log } = require('./log');
@@ -39,7 +40,6 @@ const buildEntry = (printer, values) => {
     if (colorMode === 'color') {
         if (values.mono != null) entry.values.mono = Number(values.mono) || 0;
         if (values.color != null) entry.values.color = Number(values.color) || 0;
-        // Спец. цвета (W и т.п.) — если появятся OID в профиле special:<code>
         if (values.special && typeof values.special === 'object') {
             entry.values.special = { ...values.special };
         }
@@ -52,9 +52,9 @@ const main = async () => {
     if (args.help) {
         // eslint-disable-next-line no-console
         console.log(`Usage:
-  node src/index.js              # снять, если наступил день из AppSettings
-  node src/index.js --force      # снять за текущий месяц сейчас
-  node src/index.js --force --dry-run
+  node src/index.js              # снять и записать за сегодня (обновит день при повторе)
+  node src/index.js --force      # то же явно
+  node src/index.js --dry-run    # только SNMP, без Firestore
 `);
         process.exit(0);
     }
@@ -67,40 +67,12 @@ const main = async () => {
     const config = loadConfig();
     initFirestore(config.serviceAccountPath);
 
-    const plan = await resolvePeriodToCollect(args.force);
+    const plan = await resolveDateToCollect(args.force);
     log.info('План снятия', {
-        periodKey: plan.periodKey,
-        counterReadingDay: plan.counterReadingDay,
+        dateKey: plan.dateKey,
         reason: plan.reason,
+        hadExisting: Boolean(plan.existing),
     });
-
-    if (plan.reason === 'no-day') {
-        log.warn(
-            'В AppSettings не задан counterReadingDay — агент ничего не делает. Укажите день в админке.'
-        );
-        process.exit(0);
-    }
-
-    if (plan.reason === 'too-early') {
-        log.info(
-            `Ещё рано: день снятия ${plan.counterReadingDay}, активный период пока не наступил.`
-        );
-        process.exit(0);
-    }
-
-    if (plan.reason === 'already-done' && !args.force) {
-        log.info(
-            `Показания за ${plan.periodKey} уже внесены — повторный опрос не нужен.`
-        );
-        process.exit(0);
-    }
-
-    if (plan.reason === 'already-done' && args.force) {
-        log.warn(
-            `За ${plan.periodKey} запись уже есть. --force не перезаписывает (откройте правку в журнале учёта). Продолжаю только dry-run опрос.`
-        );
-        args.dryRun = true;
-    }
 
     const printers = await fetchPrinters();
     const withIp = printers.filter((p) => p.ip);
@@ -172,7 +144,7 @@ const main = async () => {
 
     if (args.dryRun) {
         log.info('DRY-RUN: запись в Firestore пропущена', {
-            periodKey: plan.periodKey,
+            dateKey: plan.dateKey,
             printers: entries.map((e) => ({
                 name: e.printerName,
                 values: e.values,
@@ -188,8 +160,8 @@ const main = async () => {
             : null,
     ].filter(Boolean);
 
-    await createCounterReading({
-        periodKey: plan.periodKey,
+    await upsertDailyCounterReading({
+        dateKey: plan.dateKey,
         printers: entries,
         userId: config.agent.userId,
         userName: config.agent.userName,
@@ -197,7 +169,7 @@ const main = async () => {
     });
 
     log.info(
-        `Записано в CounterReadings/${plan.periodKey}: ${entries.length} принтер(ов).`
+        `Записано в CounterReadings/${plan.dateKey}: ${entries.length} принтер(ов).`
     );
     process.exit(failures.length ? 2 : 0);
 };

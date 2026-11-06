@@ -1,6 +1,7 @@
-import cls from './SidebarRotation.module.scss'
-import { useState, useEffect, useRef } from 'react';
+import cls from './SidebarRotation.module.scss';
+import { useState, useEffect } from 'react';
 import AddRotationForm from '../../../features/ui/AddRotationForm/AddRotationForm';
+import ImportRotationExcel from './ImportRotationExcel';
 import { useAppSelector, useAppDispatch } from '../../../app/providers/StoreProvider/Store/hooks';
 import { RootState } from '../../../app/providers/StoreProvider/Store';
 import { fetchForms } from '../../../app/providers/StoreProvider/Store/RotationFormsSlice';
@@ -11,139 +12,128 @@ import SidebarRotationSkeleton from './SidebarRotationSkeleton';
 const SidebarRotation = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
-    const inputRef = useRef<HTMLInputElement>(null);
-    
+
     const dispatch = useAppDispatch();
-    
     const { rotationForms, loading } = useAppSelector((state: RootState) => state.rotationForms);
+    const rotationModule = useAppSelector((state: RootState) => state.rotationModule.rotationModule);
 
     useEffect(() => {
-        // Загружаем данные только если их еще нет в хранилище
         if (rotationForms.length === 0 && !loading) {
             dispatch(fetchForms());
         }
     }, [dispatch, rotationForms.length, loading]);
 
-    // Фильтруем формы на основе запроса поиска (по ширине или высоте)
     const filteredForms = rotationForms
         .filter(form => {
             const query = searchQuery.trim();
             if (!query) return false;
-            
-            const searchNumber = parseInt(query);
+
+            const searchNumber = parseInt(query, 10);
             if (isNaN(searchNumber)) return false;
 
             return form.width === searchNumber || form.height === searchNumber;
         })
         .sort((a, b) => {
-            // Если ширина разная, сортируем по ширине
             if (a.width !== b.width) {
                 return a.width - b.width;
             }
-            // Если ширина одинаковая, сортируем по высоте
             return a.height - b.height;
         });
 
-    // Обработчик ввода в поле поиска
-    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchQuery(e.target.value);
-        if (e.target.value.trim()) {
-            setIsDropdownOpen(true);
-        } else {
-            setIsDropdownOpen(false);
-        }
-    };
-
-    // Обработчик выбора формы из списка
     const handleSelectForm = (formId: string) => {
-        // Переключаемся на вид предпросмотра и устанавливаем выбранную форму
         dispatch(changeRotationModule('preview'));
         dispatch(setSelectedFormId(formId));
-        setIsDropdownOpen(false);
-        setSearchQuery(''); // Очищаем поле поиска
+        setSearchQuery('');
     };
 
-    // Переключение на вид таблицы
-    const handleTableView = () => {
-        dispatch(changeRotationModule('table'));
-    };
-
-    // Обработчик клика вне выпадающего списка для его закрытия
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (
-                dropdownRef.current && 
-                !dropdownRef.current.contains(e.target as Node) &&
-                inputRef.current &&
-                !inputRef.current.contains(e.target as Node)
-            ) {
-                setIsDropdownOpen(false);
-            }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, []);
+    const query = searchQuery.trim();
 
     return (
-        <div className={cls.sidebarRotation}>
-            <button 
-                className={cls.tableButton}
-                onClick={handleTableView}
-            >
-                Таблица
-            </button>
-            <button 
-                className={cls.addFormButton}
-                onClick={() => setIsModalOpen(true)}
-            >
-                Добавить форму
-            </button>
-            <AddRotationForm 
-                isOpen={isModalOpen} 
-                onClose={() => setIsModalOpen(false)} 
-            />
-            <div className={cls.searchContainer}>
-                <span className={cls.searchTitle}>Введите размер для поиска формы</span>
-                <div className={cls.searchInputContainer}>
-                    <input 
-                        type="text" 
-                        placeholder="Поиск по размеру" 
-                        value={searchQuery}
-                        onChange={handleSearchChange}
-                        onFocus={() => searchQuery.trim() && setIsDropdownOpen(true)}
-                        ref={inputRef}
-                        className={cls.searchInput}
-                    />
-                    
-                    {isDropdownOpen && (
-                        <div className={cls.searchDropdown} ref={dropdownRef}>
-                            {loading ? (
-                                <SidebarRotationSkeleton />
-                            ) : filteredForms.length > 0 ? (
-                                filteredForms.map(form => (
-                                    <div 
-                                        key={form.id} 
-                                        className={cls.searchDropdownItem}
-                                        onClick={() => handleSelectForm(form.id)}
-                                    >
-                                        {form.width}×{form.height}, ручьи: {form.columns}, ряды: {form.rows}
-                                    </div>
-                                ))
-                            ) : searchQuery.trim() ? (
-                                <div className={cls.searchDropdownItem}>Формы не найдены</div>
-                            ) : null}
-                        </div>
-                    )}
-                </div>
+        <div className={cls.panel}>
+            <header className={cls.header}>
+                <h2 className={cls.headerTitle}>Ротация</h2>
+                <span className={cls.headerMeta}>{rotationForms.length}</span>
+            </header>
+
+            <div className={cls.list}>
+                <p className={cls.groupLabel}>Вид</p>
+                <button
+                    type="button"
+                    className={`${cls.item} ${rotationModule === 'table' ? cls.itemActive : ''}`}
+                    onClick={() => dispatch(changeRotationModule('table'))}
+                >
+                    <span className={cls.itemText}>
+                        <span className={cls.itemName}>Таблица</span>
+                        <span className={cls.itemHint}>Все формы списком</span>
+                    </span>
+                    <span className={cls.chevron} aria-hidden>›</span>
+                </button>
+                <button
+                    type="button"
+                    className={`${cls.item} ${rotationModule === 'preview' ? cls.itemActive : ''}`}
+                    onClick={() => dispatch(changeRotationModule('preview'))}
+                >
+                    <span className={cls.itemText}>
+                        <span className={cls.itemName}>Предпросмотр</span>
+                        <span className={cls.itemHint}>Раскладка на форме</span>
+                    </span>
+                    <span className={cls.chevron} aria-hidden>›</span>
+                </button>
+
+                <p className={cls.groupLabel}>Найти</p>
+                <input
+                    type="text"
+                    placeholder="Размер, мм"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className={cls.search}
+                />
+                {query && (
+                    loading ? (
+                        <SidebarRotationSkeleton />
+                    ) : filteredForms.length > 0 ? (
+                        filteredForms.map(form => (
+                            <button
+                                key={form.id}
+                                type="button"
+                                className={cls.item}
+                                onClick={() => handleSelectForm(form.id)}
+                            >
+                                <span className={cls.itemText}>
+                                    <span className={cls.itemName}>{form.width}×{form.height}</span>
+                                    <span className={cls.itemHint}>
+                                        ручьи: {form.columns}, ряды: {form.rows}
+                                    </span>
+                                </span>
+                                <span className={cls.chevron} aria-hidden>›</span>
+                            </button>
+                        ))
+                    ) : (
+                        <p className={cls.empty}>Формы не найдены</p>
+                    )
+                )}
+
+                <p className={cls.groupLabel}>Действия</p>
+                <button
+                    type="button"
+                    className={cls.item}
+                    onClick={() => setIsModalOpen(true)}
+                >
+                    <span className={cls.itemText}>
+                        <span className={cls.itemName}>Добавить форму</span>
+                        <span className={cls.itemHint}>Новая вырубка вручную</span>
+                    </span>
+                    <span className={cls.chevron} aria-hidden>›</span>
+                </button>
+                <ImportRotationExcel />
             </div>
-            
+
+            <AddRotationForm
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+            />
         </div>
-    )
-}   
+    );
+};
 
 export default SidebarRotation;

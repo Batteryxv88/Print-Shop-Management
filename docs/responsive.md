@@ -12,7 +12,7 @@ Foundation (Phase 0) defines shared breakpoints for SCSS and TypeScript.
 
 **Phase 5 (done):** Analytics / Rotation / Admin — phone KPI-only analytics + stubs for heavy admin/rotation editors; tablet layouts for charts and rotation; `e2e/mobile/analytics.spec.ts`, `e2e/tablet/analytics.spec.ts`.
 
-**Phase 6 (done):** Hardening — global `prefers-reduced-motion` (`_accessibility.scss`), Playwright `reducedMotion: 'reduce'` + CI retries (2), light responsive for Calculator / Manuals / Holders stock, route layout E2E (`e2e/mobile/routes.spec.ts`, `e2e/tablet/routes.spec.ts`), `npm run test:e2e:responsive` / `test:e2e:routes`. PWA/offline — out of v1 scope.
+**Phase 6 (done):** Hardening — global `prefers-reduced-motion` (`_accessibility.scss`), Playwright `reducedMotion: 'reduce'` + CI retries (2), light responsive for Calculator / Manuals, route layout E2E (`e2e/mobile/routes.spec.ts`, `e2e/tablet/routes.spec.ts`), `npm run test:e2e:responsive` / `test:e2e:routes`. PWA/offline — out of v1 scope.
 
 **Phase 7 (done):** Field P0 closure — вкладка **Инвентаризация** в сайдбаре склада (не navbar), проведение расхождений через FIFO/adjustment, черновики `InventorySessions`, редирект `/inventorization` → склад, tablet journal E2E, optional workflow `.github/workflows/e2e-responsive.yml`.
 
@@ -56,7 +56,7 @@ Mixins: `down(xs|sm|md)`, `up(xs|sm|md|lg)`, `between(from, to)`.
 | Journal / counter | P3 | P0 | Full |
 | Parts inventorization | P7 | P7 | Full |
 | Analytics / Admin / Rotation | P5 stub (phone) | P5 layout | Full |
-| Calculator / Manuals / Holders | P6 layout | P6 layout | Full |
+| Calculator / Manuals | P6 layout | P6 layout | Full |
 
 See chat roadmap for phase order.
 

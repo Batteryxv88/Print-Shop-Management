@@ -28,6 +28,58 @@
     gap: 12px;
 }
 
+.tabBar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 4px 0 8px;
+    padding: 0;
+    list-style: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 12px;
+}
+
+.tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    padding: 0 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
+
+    &:hover {
+        border-color: rgba(187, 134, 252, 0.35);
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    &:focus-visible {
+        outline: 2px solid rgba(187, 134, 252, 0.6);
+        outline-offset: 2px;
+    }
+}
+
+.tabActive {
+    border-color: color-mix(in srgb, #bb86fc 45%, transparent);
+    background: color-mix(in srgb, #bb86fc 14%, #1e1e1e);
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.tabPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
 .title {
     margin: 0;
     color: rgba(255, 255, 255, 0.87);

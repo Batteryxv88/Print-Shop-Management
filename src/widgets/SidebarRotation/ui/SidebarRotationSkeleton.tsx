@@ -1,12 +1,11 @@
 import cls from './SidebarRotationSkeleton.module.scss';
 
-const SidebarRotationSkeleton = () => {
-    // Генерируем несколько строк скелетонов для выпадающего списка
-    const items = Array.from({ length: 3 }, (_, index) => (
-        <div key={index} className={cls.skeletonDropdownItem}></div>
-    ));
+const SidebarRotationSkeleton = () => (
+    <>
+        {Array.from({ length: 3 }, (_, index) => (
+            <div key={index} className={cls.skeletonItem} />
+        ))}
+    </>
+);
 
-    return <>{items}</>;
-};
-
-export default SidebarRotationSkeleton; 
+export default SidebarRotationSkeleton;

@@ -39,7 +39,6 @@ const findPrinter = (printers: PrinterDoc[], ...aliases: string[]) => {
                 if (/^\d+$/.test(a) && n.replace(/\D/g, '').includes(a)) {
                     return true;
                 }
-                // «400» + лю/label
                 if (a.includes('400') && n.includes('400')) return true;
                 return false;
             });
@@ -51,7 +50,11 @@ const findPrinter = (printers: PrinterDoc[], ...aliases: string[]) => {
 /** Октябрь 2026 — точные значения пользователя */
 const OCT: Record<
     string,
-    { aliases: string[]; values: PrinterCounterValues; colorMode: 'bw' | 'color' }
+    {
+        aliases: string[];
+        values: PrinterCounterValues;
+        colorMode: 'bw' | 'color';
+    }
 > = {
     p6136: {
         aliases: ['6136'],
@@ -120,7 +123,6 @@ const bumpAbsolute = (
         }
         out.mono = (prev.mono || 0) + addMono;
         out.color = (prev.color || 0) + addColor;
-        // выровнять total под сумму частей, если они есть
         out.total =
             out.mono +
             out.color +
@@ -129,8 +131,6 @@ const bumpAbsolute = (
 
     return out;
 };
-
-const OLD_SEED_PERIODS = ['2026-07', '2026-08', '2026-09'];
 
 const scaleDown = (
     base: PrinterCounterValues,
@@ -149,14 +149,25 @@ const scaleDown = (
     return out;
 };
 
+/** Удалить устаревшие месячные документы и прежние ключи тестового сида */
+const OLD_IDS = [
+    '2026-07',
+    '2026-08',
+    '2026-09',
+    '2026-10',
+    '2026-11',
+    '2026-12',
+    '2027-01',
+];
+
 /**
- * Сентябрь (база для дельты октября) + октябрь (точные) +
- * нояб / дек / янв 2027 (рандом вперёд).
+ * Ежедневные документы `CounterReadings/{YYYY-MM-DD}` (как в продукте).
+ * Серия дат с шагом ~месяц даёт дельты для графика объёма.
  */
 export const seedTestCounterReadings = async (): Promise<{
     matched: string[];
     missing: string[];
-    periods: string[];
+    dateKeys: string[];
     printersInDb: string[];
 }> => {
     const auth = getAuth();
@@ -204,37 +215,36 @@ export const seedTestCounterReadings = async (): Promise<{
         );
     }
 
-    // убрать совсем старый seed
     await Promise.all(
-        OLD_SEED_PERIODS.map((pk) =>
-            deleteDoc(doc(db, 'CounterReadings', pk)).catch(() => undefined)
+        OLD_IDS.map((id) =>
+            deleteDoc(doc(db, 'CounterReadings', id)).catch(() => undefined)
         )
     );
 
-    // сен — скрытая база, чтобы октябрь попал на график как объём
-    const periods = [
-        '2026-09',
-        '2026-10',
-        '2026-11',
-        '2026-12',
-        '2027-01',
+    const dateKeys = [
+        '2026-09-15',
+        '2026-10-15',
+        '2026-11-15',
+        '2026-12-15',
+        '2027-01-15',
     ];
     const prevValues: Record<string, PrinterCounterValues> = {};
 
-    for (let mi = 0; mi < periods.length; mi++) {
-        const periodKey = periods[mi];
-        const [y, m] = periodKey.split('-').map(Number);
+    for (let i = 0; i < dateKeys.length; i++) {
+        const dateKey = dateKeys[i];
+        const periodKey = dateKey.slice(0, 7);
+        const completedAt = new Date(`${dateKey}T12:00:00`).toISOString();
 
         const entries: CounterReadingPrinterEntry[] = resolved.map((r, idx) => {
             let values: PrinterCounterValues;
-            if (periodKey === '2026-09') {
-                values = scaleDown(r.oct, 0.88);
-            } else if (periodKey === '2026-10') {
+            if (dateKey === '2026-10-15') {
                 values = { ...r.oct, special: { ...(r.oct.special || {}) } };
+            } else if (dateKey === '2026-09-15') {
+                values = scaleDown(r.oct, 0.88);
             } else {
                 values = bumpAbsolute(
                     prevValues[r.key],
-                    4200 + mi * 97 + idx * 31
+                    4200 + i * 97 + idx * 31
                 );
             }
             prevValues[r.key] = values;
@@ -247,13 +257,15 @@ export const seedTestCounterReadings = async (): Promise<{
         });
 
         await setDoc(
-            doc(db, 'CounterReadings', periodKey),
+            doc(db, 'CounterReadings', dateKey),
             {
+                dateKey,
                 periodKey,
-                completedAt: new Date(y, m - 1, 15, 12, 0, 0).toISOString(),
+                completedAt,
                 userId: user.uid,
                 userName: user.displayName || user.email || 'seed',
                 note: 'test-seed',
+                source: 'manual',
                 printers: entries,
             },
             { merge: true }
@@ -263,7 +275,7 @@ export const seedTestCounterReadings = async (): Promise<{
     return {
         matched,
         missing,
-        periods,
+        dateKeys,
         printersInDb: printers.map((p) => p.name),
     };
 };

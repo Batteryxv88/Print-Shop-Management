@@ -22,19 +22,4 @@ test.describe('@tablet Primary routes layout', () => {
         });
         await expectNoHorizontalDocumentScroll(page);
     });
-
-    test('holders section — no horizontal scroll', async ({ page }) => {
-        await page.goto('/');
-
-        const holdersTab = page.getByTestId('storage-holders');
-        if (!(await holdersTab.isVisible({ timeout: 30_000 }))) {
-            test.skip(true, 'Holders section not available for this role');
-        }
-
-        await holdersTab.click();
-        await expect(page.getByTestId('holders-stock-root')).toBeVisible({
-            timeout: 15_000,
-        });
-        await expectNoHorizontalDocumentScroll(page);
-    });
 });

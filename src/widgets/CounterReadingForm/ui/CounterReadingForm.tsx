@@ -23,7 +23,6 @@ import {
     parseLifeExact,
 } from '../../../shared/lib/formatLifeInput';
 import {
-    formatPeriodLabel,
     getActivePeriodKey,
     getOverdueDays,
     pad2,
@@ -33,10 +32,18 @@ import cls from './CounterReadingForm.module.scss';
 
 type DraftMap = Record<string, PrinterCounterValues>;
 
-const currentPeriodKey = () => {
+const currentDateKey = () => {
     const d = new Date();
-    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 };
+
+const isMonthPeriodKey = (key: string) => /^\d{4}-\d{2}$/.test(key);
+
+const toDateKey = (key: string) =>
+    key.length >= 10 ? key.slice(0, 10) : `${key}-01`;
+
+const formatDateKeyRu = (dateKey: string) =>
+    new Date(`${toDateKey(dateKey)}T12:00:00`).toLocaleDateString('ru-RU');
 
 const formatDateTime = (iso: string) => {
     const d = new Date(iso);
@@ -64,10 +71,13 @@ const CounterReadingForm = () => {
         (state) => state.counterReading
     );
 
-    const activePeriod = getActivePeriodKey(counterReadingDay);
-    const maxPeriod = currentPeriodKey();
+    const activeMonth = getActivePeriodKey(counterReadingDay);
+    const maxDate = currentDateKey();
 
-    const [periodKey, setPeriodKey] = useState(activePeriod || maxPeriod);
+    const [periodKey, setPeriodKey] = useState(() => {
+        if (activeMonth) return `${activeMonth}-01`;
+        return maxDate;
+    });
     const [records, setRecords] = useState<CounterReadingRecord[]>([]);
     const [recordsLoading, setRecordsLoading] = useState(true);
     const [drafts, setDrafts] = useState<DraftMap>({});
@@ -76,6 +86,10 @@ const CounterReadingForm = () => {
     const [okMessage, setOkMessage] = useState('');
     /** Правка уже внесённых показаний (по кнопке «Изменить») */
     const [editing, setEditing] = useState(false);
+
+    useEffect(() => {
+        setPeriodKey((p) => (isMonthPeriodKey(p) ? `${p}-01` : p));
+    }, []);
 
     const sortedPrinters = useMemo(
         () => [...printers].sort((a, b) => a.name.localeCompare(b.name, 'ru')),
@@ -101,17 +115,26 @@ const CounterReadingForm = () => {
         loadRecords();
     }, [loadRecords]);
 
+    const sortKey = (r: CounterReadingRecord) =>
+        r.dateKey || `${r.periodKey}-01`;
+
+    const dateKeyNorm = toDateKey(periodKey);
+
     const current = useMemo(
-        () => records.find((r) => r.periodKey === periodKey),
-        [records, periodKey]
+        () =>
+            records.find((r) => sortKey(r) === dateKeyNorm) ||
+            (!isMonthPeriodKey(periodKey)
+                ? undefined
+                : records.find((r) => r.periodKey === periodKey)),
+        [records, periodKey, dateKeyNorm]
     );
     const previous = useMemo(() => {
-        const before = records.filter((r) => r.periodKey < periodKey);
+        const before = records.filter((r) => sortKey(r) < dateKeyNorm);
         return before[before.length - 1];
-    }, [records, periodKey]);
+    }, [records, dateKeyNorm]);
     const next = useMemo(
-        () => records.find((r) => r.periodKey > periodKey),
-        [records, periodKey]
+        () => records.find((r) => sortKey(r) > dateKeyNorm),
+        [records, dateKeyNorm]
     );
 
     const buildDrafts = useCallback(
@@ -188,14 +211,14 @@ const CounterReadingForm = () => {
                 const prevV = getFieldValue(prevValues, f.key);
                 if (prevV > 0 && v < prevV) {
                     setError(
-                        `«${p.name}»: ${f.label} (${formatLifeWithCommas(v)}) меньше, чем в ${formatPeriodLabel(previous!.periodKey)} (${formatLifeWithCommas(prevV)})`
+                        `«${p.name}»: ${f.label} (${formatLifeWithCommas(v)}) меньше, чем ${formatDateKeyRu(sortKey(previous!))} (${formatLifeWithCommas(prevV)})`
                     );
                     return;
                 }
                 const nextV = getFieldValue(nextValues, f.key);
                 if (nextV > 0 && v > nextV) {
                     setError(
-                        `«${p.name}»: ${f.label} (${formatLifeWithCommas(v)}) больше, чем в ${formatPeriodLabel(next!.periodKey)} (${formatLifeWithCommas(nextV)})`
+                        `«${p.name}»: ${f.label} (${formatLifeWithCommas(v)}) больше, чем ${formatDateKeyRu(sortKey(next!))} (${formatLifeWithCommas(nextV)})`
                     );
                     return;
                 }
@@ -212,15 +235,19 @@ const CounterReadingForm = () => {
         const mode = current ? 'update' : 'create';
         try {
             await dispatch(
-                completeCounterReading({ periodKey, mode, printers: entries })
+                completeCounterReading({
+                    dateKey: dateKeyNorm,
+                    mode,
+                    printers: entries,
+                })
             ).unwrap();
             // Сразу закрываем режим правки: пока грузится история,
             // поля не должны быть доступны для повторного ввода
             setEditing(false);
             setOkMessage(
                 mode === 'update'
-                    ? `Показания за ${formatPeriodLabel(periodKey)} обновлены.`
-                    : `Счётчики за ${formatPeriodLabel(periodKey)} записаны. Повторный ввод за этот период закрыт — доступна только правка.`
+                    ? `Показания за ${formatDateKeyRu(dateKeyNorm)} обновлены.`
+                    : `Счётчики за ${formatDateKeyRu(dateKeyNorm)} записаны. Повторный ввод за этот день закрыт — доступна только правка.`
             );
             await loadRecords();
             setOkOpen(true);
@@ -234,8 +261,11 @@ const CounterReadingForm = () => {
     };
 
     const overdue =
-        counterReadingDay && periodKey === activePeriod && !current
-            ? getOverdueDays(counterReadingDay, periodKey)
+        counterReadingDay &&
+        activeMonth &&
+        dateKeyNorm.slice(0, 7) === activeMonth &&
+        !current
+            ? getOverdueDays(counterReadingDay, activeMonth)
             : 0;
 
     const history = useMemo(() => [...records].reverse(), [records]);
@@ -247,11 +277,11 @@ const CounterReadingForm = () => {
         <div className={cls.wrap} data-testid="counter-reading-form">
             <div className={cls.bar}>
                 <label className={cls.periodField}>
-                    <span>Период</span>
+                    <span>Дата снятия</span>
                     <input
-                        type="month"
-                        value={periodKey}
-                        max={maxPeriod}
+                        type="date"
+                        value={dateKeyNorm}
+                        max={maxDate}
                         onChange={(e) =>
                             e.target.value && setPeriodKey(e.target.value)
                         }
@@ -318,7 +348,9 @@ const CounterReadingForm = () => {
             <p className={cls.hint}>
                 {locked ? (
                     <>
-                        Показания за <b>{formatPeriodLabel(periodKey)}</b> уже
+                        Показания за{' '}
+                        <b>{formatDateKeyRu(dateKeyNorm)}</b>{' '}
+                        уже
                         внесены
                         {current?.updatedAt
                             ? ` (изменены ${formatDateTime(current.updatedAt)}${
@@ -333,9 +365,9 @@ const CounterReadingForm = () => {
                 ) : (
                     <>
                         {editing ? 'Правка показаний за ' : 'Абсолютные показания с панели машины за '}
-                        <b>{formatPeriodLabel(periodKey)}</b>.
+                        <b>{formatDateKeyRu(dateKeyNorm)}</b>.
                         {previous
-                            ? ` Под полем — значение за ${formatPeriodLabel(previous.periodKey)}.`
+                            ? ` Под полем — значение за ${formatDateKeyRu(sortKey(previous))}.`
                             : ''}
                     </>
                 )}
@@ -449,15 +481,15 @@ const CounterReadingForm = () => {
                             key={r.id}
                             type="button"
                             className={`${cls.historyRow} ${
-                                r.periodKey === periodKey
+                                sortKey(r) === dateKeyNorm
                                     ? cls.historyRowActive
                                     : ''
                             }`}
-                            onClick={() => setPeriodKey(r.periodKey)}
-                            title="Открыть показания этого периода"
+                            onClick={() => setPeriodKey(sortKey(r))}
+                            title="Открыть показания этой даты"
                         >
                             <span className={cls.colPeriod}>
-                                {formatPeriodLabel(r.periodKey)}
+                                {formatDateKeyRu(sortKey(r))}
                                 {r.updatedAt ? (
                                     <span className={cls.editedMark}>
                                         изменено

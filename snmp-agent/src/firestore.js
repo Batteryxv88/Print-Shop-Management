@@ -1,5 +1,4 @@
 const admin = require('firebase-admin');
-const { getActivePeriodKey } = require('./period');
 
 let db = null;
 
@@ -12,19 +11,6 @@ const initFirestore = (serviceAccountPath) => {
     });
     db = admin.firestore();
     return db;
-};
-
-const fetchAppSettings = async () => {
-    const snap = await db.collection('AppSettings').doc('main').get();
-    if (!snap.exists) {
-        return { counterReadingDay: null };
-    }
-    const data = snap.data() || {};
-    const day = Number(data.counterReadingDay);
-    return {
-        counterReadingDay:
-            Number.isFinite(day) && day >= 1 && day <= 31 ? day : null,
-    };
 };
 
 const fetchPrinters = async () => {
@@ -46,100 +32,83 @@ const fetchPrinters = async () => {
         .sort((a, b) => a.name.localeCompare(b.name, 'ru'));
 };
 
-const fetchCounterReadingByPeriod = async (periodKey) => {
-    const snap = await db.collection('CounterReadings').doc(periodKey).get();
+const pad2 = (n) => String(n).padStart(2, '0');
+
+/** Сегодня по локальной дате агента — YYYY-MM-DD */
+const todayDateKey = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
+};
+
+const fetchCounterReadingByDateKey = async (dateKey) => {
+    const snap = await db.collection('CounterReadings').doc(dateKey).get();
     if (!snap.exists) return null;
     return { id: snap.id, ...(snap.data() || {}) };
 };
 
 /**
- * Создаёт запись счётчиков за период (без перезаписи существующей).
- * Формат совместим с web-приложением.
+ * Ежедневный снимок. При повторном запуске за тот же день — обновление (идемпотентность SNMP).
+ * Формат совместим с веб-приложением: dateKey, periodKey (YYYY-MM), printers[].
  */
-const createCounterReading = async ({
-    periodKey,
+const upsertDailyCounterReading = async ({
+    dateKey,
     printers,
     userId,
     userName,
     note,
 }) => {
-    const ref = db.collection('CounterReadings').doc(periodKey);
+    const ref = db.collection('CounterReadings').doc(dateKey);
     const now = new Date().toISOString();
+    const periodKey = dateKey.slice(0, 7);
 
     await db.runTransaction(async (tx) => {
         const snap = await tx.get(ref);
-        if (snap.exists) {
-            throw new Error(
-                `Показания за ${periodKey} уже есть в Firestore — повторная запись пропущена.`
-            );
+        if (!snap.exists) {
+            tx.set(ref, {
+                dateKey,
+                periodKey,
+                completedAt: now,
+                userId,
+                userName,
+                note: note || '',
+                printers,
+                source: 'snmp-agent',
+            });
+            return;
         }
-        tx.set(ref, {
-            periodKey,
+        const existing = snap.data() || {};
+        tx.update(ref, {
+            printers,
+            note: note !== undefined ? note : existing.note || '',
             completedAt: now,
             userId,
             userName,
-            note: note || '',
-            printers,
+            periodKey,
+            dateKey,
             source: 'snmp-agent',
         });
     });
 
-    return periodKey;
+    return dateKey;
 };
 
-const resolvePeriodToCollect = async (force) => {
-    const settings = await fetchAppSettings();
-    const day = settings.counterReadingDay;
-
-    if (force) {
-        const now = new Date();
-        const periodKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-        return {
-            periodKey,
-            counterReadingDay: day,
-            reason: 'force',
-        };
-    }
-
-    if (!day) {
-        return {
-            periodKey: null,
-            counterReadingDay: null,
-            reason: 'no-day',
-        };
-    }
-
-    const periodKey = getActivePeriodKey(day);
-    if (!periodKey) {
-        return {
-            periodKey: null,
-            counterReadingDay: day,
-            reason: 'too-early',
-        };
-    }
-
-    const existing = await fetchCounterReadingByPeriod(periodKey);
-    if (existing) {
-        return {
-            periodKey,
-            counterReadingDay: day,
-            reason: 'already-done',
-            existing,
-        };
-    }
-
+/**
+ * План снятия на сегодня (или указанную дату при --force).
+ */
+const resolveDateToCollect = async (force) => {
+    const dateKey = force ? todayDateKey() : todayDateKey();
+    const existing = await fetchCounterReadingByDateKey(dateKey);
     return {
-        periodKey,
-        counterReadingDay: day,
-        reason: 'due',
+        dateKey,
+        reason: existing ? 'update-existing' : 'due',
+        existing,
     };
 };
 
 module.exports = {
     initFirestore,
-    fetchAppSettings,
     fetchPrinters,
-    fetchCounterReadingByPeriod,
-    createCounterReading,
-    resolvePeriodToCollect,
+    fetchCounterReadingByDateKey,
+    upsertDailyCounterReading,
+    resolveDateToCollect,
 };

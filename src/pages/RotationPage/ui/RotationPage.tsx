@@ -17,28 +17,44 @@ const RotationPage = ({ className }: RotationPageProps) => {
 
     const rotationModule = useSelector((state: RootState) => state.rotationModule.rotationModule);
     const isMobile = useIsMobile();
-
-    if (isMobile) {
-        return (
-            <div
-                className={cls.rotationStub}
-                data-testid="rotation-mobile-stub"
-            >
-                <h2>Ротация форм</h2>
-                <p>
-                    Таблица и превью ротации рассчитаны на планшет и компьютер.
-                    Откройте раздел на большем экране.
-                </p>
-            </div>
-        );
-    }
+    const viewLabel = rotationModule === 'preview' ? 'Предпросмотр' : 'Таблица';
 
     return (
-        <>
-            {rotationModule === 'table' && <RotationFormTable />}
-            {rotationModule === 'preview' && <RotationFormPreview />}
-        </>
-    )
+        <div className={`${cls.page} ${className ?? ''}`}>
+            <div className={cls.browser}>
+                <div className={cls.browserTop}>
+                    <nav className={cls.breadcrumb} aria-label="Путь">
+                        <span className={cls.crumbHome} aria-hidden>
+                            ⌂
+                        </span>
+                        <span className={cls.crumbSep}>›</span>
+                        <span className={cls.crumb}>Ротация</span>
+                        <span className={cls.crumbSep}>›</span>
+                        <span className={cls.crumbCurrent}>{viewLabel}</span>
+                    </nav>
+                </div>
+                <div className={cls.content}>
+                    {isMobile ? (
+                        <div
+                            className={cls.rotationStub}
+                            data-testid="rotation-mobile-stub"
+                        >
+                            <h2>Ротация форм</h2>
+                            <p>
+                                Таблица и превью ротации рассчитаны на планшет и компьютер.
+                                Откройте раздел на большем экране.
+                            </p>
+                        </div>
+                    ) : (
+                        <>
+                            {rotationModule === 'table' && <RotationFormTable />}
+                            {rotationModule === 'preview' && <RotationFormPreview />}
+                        </>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
 };
 
 export default RotationPage;

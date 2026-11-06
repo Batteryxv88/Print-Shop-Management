@@ -29,7 +29,7 @@ type RotationSizePartProps = {
     material: string;
     columns: number;
     comment: string;
-    number: number;
+    number: number | string;
 }
 
 const RotationSizePart = (props: RotationSizePartProps) => {
@@ -70,7 +70,7 @@ const RotationSizePart = (props: RotationSizePartProps) => {
     const [editedMaterial, setEditedMaterial] = useState(material);
     const [editedColumns, setEditedColumns] = useState(columns);
     const [editedComment, setEditedComment] = useState(comment);
-    const [editedNumber, setEditedNumber] = useState(number);
+    const [editedNumber, setEditedNumber] = useState(String(number ?? ''));
 
     // Добавляем рефы для проверки обрезания текста
     const commentRef = useRef<HTMLParagraphElement>(null);
@@ -133,7 +133,7 @@ const RotationSizePart = (props: RotationSizePartProps) => {
         setEditedMaterial(material);
         setEditedColumns(columns);
         setEditedComment(comment);
-        setEditedNumber(number);
+        setEditedNumber(String(number ?? ''));
     }, [height, width, rows, shape, size_for_column, mark, height_without1, material, columns, comment, number]);
     
     // Проверяем, обрезан ли текст при монтировании и изменении comment
@@ -291,7 +291,7 @@ const RotationSizePart = (props: RotationSizePartProps) => {
 
     const getOrderInputStyle = useCallback((): CSSProperties => ({
         ...inputStyle,
-        width: '40px'
+        width: '88px'
     }), []);
 
     const getSelectMaterialStyle = useCallback((): CSSProperties => ({
@@ -512,9 +512,9 @@ const RotationSizePart = (props: RotationSizePartProps) => {
             {isEditing ? (
                 <div className={cls.namesOrder}>
                     <input
-                        type="number"
+                        type="text"
                         value={editedNumber}
-                        onChange={(e) => setEditedNumber(Number(e.target.value))}
+                        onChange={(e) => setEditedNumber(e.target.value)}
                         style={getOrderInputStyle()}
                         onKeyPress={handleKeyPress}
                     />

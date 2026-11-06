@@ -12,6 +12,7 @@ import {
     getActivePeriodKey,
     isCounterReadingDoneForPeriod,
 } from '../../../../shared/lib/utils/counterReading';
+import { sortKeyForReading } from '../../../../shared/lib/counterReading/sortKey';
 
 export type CounterReadingState = {
     counterReadingDay: number | null;
@@ -53,7 +54,7 @@ export const loadLastCounterReading = createAsyncThunk(
 export const completeCounterReading = createAsyncThunk(
     'counterReading/complete',
     async (input: {
-        periodKey: string;
+        dateKey: string;
         mode: CounterReadingSaveMode;
         printers: CounterReadingPrinterEntry[];
     }) => {
@@ -61,7 +62,7 @@ export const completeCounterReading = createAsyncThunk(
         const user = auth.currentUser;
         if (!user) throw new Error('Нужна авторизация');
         return markCounterReadingDone({
-            periodKey: input.periodKey,
+            dateKey: input.dateKey,
             mode: input.mode,
             printers: input.printers,
             userId: user.uid,
@@ -104,7 +105,9 @@ const counterReadingSlice = createSlice({
                 state.error = action.error.message || 'Не удалось сохранить';
             })
             .addCase(loadLastCounterReading.fulfilled, (state, action) => {
-                state.lastPeriodKey = action.payload?.periodKey || null;
+                state.lastPeriodKey = action.payload
+                    ? sortKeyForReading(action.payload)
+                    : null;
                 state.readingLoaded = true;
                 recomputeShow(state);
             })
@@ -118,8 +121,8 @@ const counterReadingSlice = createSlice({
             })
             .addCase(completeCounterReading.fulfilled, (state, action) => {
                 state.saving = false;
-                // Правка прошлого месяца не должна «откатывать» последний период
-                const saved = action.payload.periodKey;
+                // Правка старой даты не должна «откатывать» последнее снятие
+                const saved = sortKeyForReading(action.payload);
                 if (!state.lastPeriodKey || saved > state.lastPeriodKey) {
                     state.lastPeriodKey = saved;
                 }
