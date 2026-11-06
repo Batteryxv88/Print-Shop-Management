@@ -9,14 +9,15 @@ import {
     useToners,
 } from '../../../app/providers/StoreProvider/Store/hooks';
 import { useAuth } from '../../../contexts/AuthContext';
+import { findTonerStock } from '../../../shared/lib/printers/printerUtils';
 import {
-    findTonerStock,
-    getModelByPrinterName,
-} from '../../../shared/lib/printers/printerUtils';
-import {
-    getColorsForPrinterName,
+    getColorsForPrinterId,
     getTonerSwatchColor,
 } from '../../../shared/lib/printers/tonerColors';
+import {
+    getModelByPrinterId,
+    getPrinterNameById,
+} from '../../../shared/lib/printers/printerIdentity';
 import { writeOffFifo } from '../../../services/stockAccounting';
 import NotificationModal from '../../../shared/ui/NotificationModal/NotificationModal';
 import FifoBreakdownModal from '../../../shared/ui/FifoBreakdownModal/FifoBreakdownModal';
@@ -45,14 +46,13 @@ const AddToner = () => {
     const dispatch = useDispatch<any>();
     const { tonersArr } = useToners();
     const { printers } = usePrinters();
-    const machineTonerState = useAppSelector(
-        (state) => state.machines.tonerMachine
-    );
+    const printerId = useAppSelector((state) => state.machines.tonerMachine);
+    const machineName = getPrinterNameById(printers, printerId);
 
-    const printerModel = getModelByPrinterName(printers, machineTonerState);
+    const printerModel = getModelByPrinterId(printers, printerId);
     const availableColors = useMemo(
-        () => getColorsForPrinterName(printers, machineTonerState),
-        [printers, machineTonerState]
+        () => getColorsForPrinterId(printers, printerId),
+        [printers, printerId]
     );
 
     const isSingleColor = availableColors.length <= 1;
@@ -68,7 +68,7 @@ const AddToner = () => {
 
     useEffect(() => {
         setSelectedColor(availableColors[0] || 'K');
-    }, [availableColors, machineTonerState]);
+    }, [availableColors, printerId]);
 
     const colorToReplace = isSingleColor
         ? availableColors[0] || 'K'
@@ -103,7 +103,8 @@ const AddToner = () => {
                 costCategory: 'toner',
                 qty: 1,
                 date: formattedDate,
-                machine: machineTonerState,
+                machine: machineName,
+                printerId,
                 man: manName,
                 currentStockQty: Number(stockToner.toner.qty) || 0,
             });
@@ -114,7 +115,8 @@ const AddToner = () => {
                     man: manName,
                     counter: '',
                     date: formattedDate,
-                    machine: machineTonerState,
+                    machine: machineName,
+                    printerId,
                     totalCost: writeOff.totalCost,
                     unitPriceAvg: writeOff.unitPriceAvg,
                     movementId: writeOff.movementId,
@@ -123,7 +125,7 @@ const AddToner = () => {
 
             openBreakdown({
                 title: 'Списание тонера (FIFO)',
-                subtitle: `${colorToReplace} · ${machineTonerState}`,
+                subtitle: `${colorToReplace} · ${machineName}`,
                 qty: 1,
                 totalCost: writeOff.totalCost,
                 unitPriceAvg: writeOff.unitPriceAvg,

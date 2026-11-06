@@ -3,12 +3,18 @@ import {
     StockMovement,
 } from '../../../services/stockAccounting';
 import { normalizeColorList, normalizeColorCode } from '../printers/tonerColors';
+import {
+    resolveMovementPrinterId,
+    resolveUsagePrinterId,
+    type PrinterRef,
+} from '../printers/printerIdentity';
 
 type TonerHistoryLike = {
     id: string;
     toner: {
         date?: string;
         machine?: string;
+        printerId?: string;
         color?: string;
         movementId?: string;
     };
@@ -25,26 +31,26 @@ const inRange = (raw: string | undefined, fromIso: string, toIso: string) => {
 };
 
 /**
- * Сколько тонеров (в штуках, по цветам) потратил каждый аппарат за период.
- * Источник — списания склада (type toner) + история замен без movementId
- * (или с movementId, которого нет среди движений).
+ * Сколько тонеров (в штуках, по цветам) потратил каждый аппарат за период (ключ — printerId).
  */
 export const buildTonerUnits = (
     movements: StockMovement[],
     tonerHistory: TonerHistoryLike[],
     fromIso: string,
-    toIso: string
+    toIso: string,
+    printers: PrinterRef[]
 ): Map<string, TonerUnits> => {
     const out = new Map<string, TonerUnits>();
     const seenMovementIds = new Set<string>();
+    const catalog = printers.map((p) => ({ id: p.id, name: p.name }));
 
-    const add = (machine: string, color: string, qty: number) => {
-        const name = machine.trim();
+    const add = (printerId: string, color: string, qty: number) => {
+        const id = printerId.trim();
         const code = normalizeColorCode(color || '');
-        if (!name || !code || !(qty > 0)) return;
-        const units = out.get(name) || {};
+        if (!id || !code || !(qty > 0)) return;
+        const units = out.get(id) || {};
         units[code] = (units[code] || 0) + qty;
-        out.set(name, units);
+        out.set(id, units);
     };
 
     movements.forEach((m) => {
@@ -52,14 +58,18 @@ export const buildTonerUnits = (
         if (m.kind !== 'writeoff' || m.type !== 'toner') return;
         if (!inRange(m.date, fromIso, toIso)) return;
         if (m.id) seenMovementIds.add(m.id);
-        add(m.machine || '', m.color || '', Number(m.qty) || 1);
+        const printerId = resolveMovementPrinterId(m, catalog);
+        if (!printerId) return;
+        add(printerId, m.color || '', Number(m.qty) || 1);
     });
 
     tonerHistory.forEach(({ toner }) => {
         const mid = (toner.movementId || '').trim();
         if (mid && seenMovementIds.has(mid)) return;
         if (!inRange(toner.date, fromIso, toIso)) return;
-        add(toner.machine || '', toner.color || '', 1);
+        const printerId = resolveUsagePrinterId(toner, catalog);
+        if (!printerId) return;
+        add(printerId, toner.color || '', 1);
     });
 
     return out;

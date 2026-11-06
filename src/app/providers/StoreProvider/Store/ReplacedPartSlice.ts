@@ -13,6 +13,7 @@ export type UsedParts = {
     serviceLife?: number;
     percent: number
     machine?: string;
+    printerId?: string;
     totalCost?: number;
     unitPriceAvg?: number;
     movementId?: string;

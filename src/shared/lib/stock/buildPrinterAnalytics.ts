@@ -9,10 +9,13 @@ import {
     isProductionWriteoff,
     StockMovement,
 } from '../../../services/stockAccounting';
+import type { PrinterRef } from '../printers/printerIdentity';
+import { resolveMovementPrinterId } from '../printers/printerIdentity';
 
 export type CategoryBreakdown = Record<CostCategory, number>;
 
 export type PrinterAnalyticsRow = {
+    printerId: string;
     name: string;
     model: string;
     purchased: CategoryBreakdown;
@@ -23,8 +26,6 @@ export type PrinterAnalyticsRow = {
     replacements: number;
     economy: number;
 };
-
-type PrinterRef = { name: string; model: string };
 
 /** Бумага и ламинация — не затраты принтера */
 export const isMaterialMovement = (
@@ -48,10 +49,8 @@ const addTo = (
 };
 
 /**
- * Собирает метрики по каждому принтеру за период.
- * Закупки без machine делятся поровну между принтерами той же модели.
- * Engineer / writeoff с machine — целиком на аппарат.
- * Бумага/ламинация не учитываются.
+ * Собирает метрики по каждому принтеру за период (ключ — printerId).
+ * Учитываются только движения с явным printerId (нет распределения «на модель»).
  */
 export const buildPrinterAnalytics = (
     printers: PrinterRef[],
@@ -59,9 +58,10 @@ export const buildPrinterAnalytics = (
 ): PrinterAnalyticsRow[] => {
     const rows = new Map<string, PrinterAnalyticsRow>();
 
-    const emptyRow = (name: string, model: string): PrinterAnalyticsRow => ({
-        name,
-        model,
+    const emptyRow = (p: PrinterRef): PrinterAnalyticsRow => ({
+        printerId: p.id,
+        name: p.name,
+        model: p.model || '',
         purchased: emptyCategoryBreakdown(),
         purchasedTotal: 0,
         used: emptyCategoryBreakdown(),
@@ -71,22 +71,14 @@ export const buildPrinterAnalytics = (
     });
 
     printers.forEach((p) => {
-        if (!p.name) return;
-        rows.set(p.name, emptyRow(p.name, p.model || ''));
+        if (!p.id || !p.name) return;
+        rows.set(p.id, emptyRow(p));
     });
 
-    const printersByModel = new Map<string, string[]>();
-    printers.forEach((p) => {
-        if (!p.name || !p.model) return;
-        const list = printersByModel.get(p.model) || [];
-        list.push(p.name);
-        printersByModel.set(p.model, list);
-    });
+    const catalog = printers.map((p) => ({ id: p.id, name: p.name }));
 
-    const ensureRow = (name: string, model?: string) => {
-        if (!rows.has(name)) rows.set(name, emptyRow(name, model || ''));
-        return rows.get(name)!;
-    };
+    const rowForId = (printerId: string): PrinterAnalyticsRow | null =>
+        rows.get(printerId) || null;
 
     movements.forEach((m) => {
         if (!isActiveCostMovement(m)) return;
@@ -94,32 +86,27 @@ export const buildPrinterAnalytics = (
 
         const amount = Number(m.totalCost) || 0;
         const category = m.costCategory;
-        const machine = (m.machine || '').trim();
+        const resolvedId = resolveMovementPrinterId(m, catalog);
 
-        // Работа инженера — только «потрачено», в закупки не входит
         if (m.kind === 'engineer') {
-            if (!machine || amount <= 0) return;
-            addTo(ensureRow(machine, m.model).used, 'engineer', amount);
+            if (!resolvedId || amount <= 0) return;
+            const row = rowForId(resolvedId);
+            if (!row) return;
+            addTo(row.used, 'engineer', amount);
             return;
         }
 
         if (m.kind === 'purchase' && amount > 0) {
-            if (machine) {
-                addTo(ensureRow(machine, m.model).purchased, category, amount);
-                return;
-            }
-            const model = (m.model || '').trim();
-            const peers = model ? printersByModel.get(model) || [] : [];
-            if (peers.length === 0) return;
-            const share = amount / peers.length;
-            peers.forEach((name) => {
-                addTo(rows.get(name)!.purchased, category, share);
-            });
+            if (!resolvedId) return;
+            const row = rowForId(resolvedId);
+            if (!row) return;
+            addTo(row.purchased, category, amount);
             return;
         }
 
-        if (isProductionWriteoff(m) && machine) {
-            const row = ensureRow(machine, m.model);
+        if (isProductionWriteoff(m) && resolvedId) {
+            const row = rowForId(resolvedId);
+            if (!row) return;
             if (amount > 0) addTo(row.used, category, amount);
             if (m.type === 'part') {
                 row.replacements += Number(m.qty) || 1;
@@ -137,26 +124,21 @@ export const buildPrinterAnalytics = (
         .sort((a, b) => a.name.localeCompare(b.name, 'ru'));
 };
 
-/**
- * Движения с суммой, которые не удалось привязать к аппарату:
- * списание/инженер без machine или закупка без machine и без принтеров модели.
- */
 export const collectUnattachedMovements = (
     printers: PrinterRef[],
     movements: StockMovement[]
 ): StockMovement[] => {
-    const models = new Set(
-        printers.map((p) => (p.model || '').trim()).filter(Boolean)
-    );
+    const catalog = printers.map((p) => ({ id: p.id, name: p.name }));
     return movements.filter((m) => {
         if (!isActiveCostMovement(m)) return false;
         if (isMaterialMovement(m)) return false;
         if (!(Number(m.totalCost) > 0)) return false;
-        const machine = (m.machine || '').trim();
-        if (machine) return false;
-        if (m.kind === 'purchase') {
-            return !models.has((m.model || '').trim());
-        }
-        return m.kind === 'writeoff' || m.kind === 'engineer';
+        const resolvedId = resolveMovementPrinterId(m, catalog);
+        if (resolvedId) return false;
+        return (
+            m.kind === 'purchase' ||
+            m.kind === 'writeoff' ||
+            m.kind === 'engineer'
+        );
     });
 };

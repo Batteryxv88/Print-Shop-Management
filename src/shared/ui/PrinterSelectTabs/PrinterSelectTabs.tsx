@@ -2,8 +2,9 @@ import cls from './PrinterSelectTabs.module.scss';
 import { usePrinters } from '../../../app/providers/StoreProvider/Store/hooks';
 
 interface PrinterSelectTabsProps {
+    /** printerId */
     selected: string;
-    onSelect: (name: string) => void;
+    onSelect: (printerId: string) => void;
     /** stack — сайдбар; row — горизонтальные вкладки */
     variant?: 'stack' | 'row';
 }
@@ -23,14 +24,14 @@ const PrinterSelectTabs = ({
         return (
             <div className={cls.row} role="tablist" aria-label="Принтеры">
                 {printers.map((printer) => {
-                    const active = selected === printer.name;
+                    const active = selected === printer.id;
                     return (
                         <button
                             key={printer.id}
                             type="button"
                             role="tab"
                             aria-selected={active}
-                            onClick={() => onSelect(printer.name)}
+                            onClick={() => onSelect(printer.id)}
                             className={active ? cls.rowTabActive : cls.rowTab}
                             title={
                                 printer.model
@@ -52,9 +53,9 @@ const PrinterSelectTabs = ({
                 <button
                     key={printer.id}
                     type="button"
-                    onClick={() => onSelect(printer.name)}
+                    onClick={() => onSelect(printer.id)}
                     className={
-                        selected === printer.name
+                        selected === printer.id
                             ? cls.activeButton
                             : cls.button
                     }

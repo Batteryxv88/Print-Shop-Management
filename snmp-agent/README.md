@@ -1,5 +1,7 @@
 # SL SNMP Counter Agent (Windows)
 
+> **Устарело:** для автоматического SNMP и записи в Firestore используйте desktop-приложение **PrinterCounterCollector** (`Desktop/Server`). Этот Node-агент можно не запускать.
+
 Локальный агент для типографии: по SNMP снимает счётчики с принтеров и пишет их в Firestore в ту же коллекцию `CounterReadings`, что использует веб‑журнал учёта.
 
 Браузер SNMP не умеет — поэтому агент крутится на Windows‑ПК в той же сети, что и машины.

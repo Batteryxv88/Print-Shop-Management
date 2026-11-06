@@ -57,6 +57,7 @@ export interface StockLot {
     createdBy?: string;
     createdAt: string;
     machine?: string;
+    printerId?: string;
 }
 
 export interface FifoLotSlice {
@@ -82,6 +83,7 @@ export interface StockMovement {
     unitPriceAvg: number;
     date: string;
     machine?: string;
+    printerId?: string;
     man?: string;
     lots: FifoLotSlice[];
     relatedId?: string;
@@ -133,8 +135,9 @@ export interface PurchaseInput {
     comment?: string;
     createdBy?: string;
     currentStockQty: number;
-    /** Опционально — привязка к конкретному аппарату */
+    /** Опционально — привязка к конкретному аппарату (имя для отображения) */
     machine?: string;
+    printerId?: string;
 }
 
 export interface WriteOffInput {
@@ -148,6 +151,7 @@ export interface WriteOffInput {
     qty: number;
     date?: string;
     machine?: string;
+    printerId?: string;
     man?: string;
     currentStockQty: number;
     factoryLife?: number;
@@ -172,6 +176,7 @@ const stockQtyFieldFor = (
 
 export interface EngineerServiceInput {
     machine: string;
+    printerId?: string;
     model?: string;
     totalCost: number;
     date?: string;
@@ -233,6 +238,7 @@ export const purchaseStock = async (
         createdBy: input.createdBy || '',
         createdAt: nowIso(),
         machine: input.machine || '',
+        printerId: input.printerId || '',
     });
 
     const movementRef = doc(collection(db, MOVEMENTS));
@@ -250,6 +256,7 @@ export const purchaseStock = async (
         unitPriceAvg: unitPrice,
         date: purchasedAt,
         machine: input.machine || '',
+        printerId: input.printerId || '',
         man: input.createdBy || '',
         lots: [
             { lotId: lotRef.id, qty, unitPrice, cost: totalCost, costCategory },
@@ -404,6 +411,7 @@ export const writeOffFifo = async (
             unitPriceAvg,
             date,
             machine: input.machine || '',
+            printerId: input.printerId || '',
             man: input.man || '',
             lots: slices,
             economyAmount,
@@ -527,6 +535,7 @@ export const reverseStockMovement = async (
             unitPriceAvg: Number(data.unitPriceAvg) || 0,
             date: now,
             machine: data.machine || '',
+            printerId: data.printerId || '',
             man: opts?.man || '',
             lots,
             relatedId: id,
@@ -584,6 +593,7 @@ export const recordEngineerService = async (
         unitPriceAvg: totalCost,
         date: input.date || nowIso(),
         machine: input.machine.trim(),
+        printerId: input.printerId?.trim() || '',
         man: input.man || '',
         lots: [],
         comment: input.comment || '',

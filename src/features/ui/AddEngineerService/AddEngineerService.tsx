@@ -9,7 +9,10 @@ import {
     fetchKnownSuppliers,
     recordEngineerService,
 } from '../../../services/stockAccounting';
-import { getModelByPrinterName } from '../../../shared/lib/printers/printerUtils';
+import {
+    getModelByPrinterId,
+    getPrinterNameById,
+} from '../../../shared/lib/printers/printerIdentity';
 import NotificationModal from '../../../shared/ui/NotificationModal/NotificationModal';
 
 const todayLocalDate = () => {
@@ -21,7 +24,7 @@ const todayLocalDate = () => {
 const AddEngineerService = () => {
     const { userData } = useAuth();
     const { printers } = usePrinters();
-    const machine = useAppSelector((state) => state.machines.machine);
+    const printerId = useAppSelector((state) => state.machines.machine);
 
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
@@ -71,7 +74,7 @@ const AddEngineerService = () => {
     const onSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
-        if (!machine) {
+        if (!printerId) {
             setError('Выберите принтер');
             return;
         }
@@ -83,13 +86,15 @@ const AddEngineerService = () => {
 
         setSubmitting(true);
         try {
-            const model = getModelByPrinterName(printers, machine) || '';
+            const model = getModelByPrinterId(printers, printerId) || '';
+            const machine = getPrinterNameById(printers, printerId);
             const at = date
                 ? new Date(`${date}T12:00:00`).toISOString()
                 : new Date().toISOString();
 
             await recordEngineerService({
                 machine,
+                printerId,
                 model,
                 totalCost,
                 date: at,
@@ -176,7 +181,7 @@ const AddEngineerService = () => {
                 <button
                     className={cls.btn}
                     type="submit"
-                    disabled={submitting || !machine}
+                    disabled={submitting || !printerId}
                 >
                     {submitting ? '…' : 'Добавить'}
                 </button>

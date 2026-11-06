@@ -43,7 +43,17 @@ vi.mock('../../../app/providers/StoreProvider/Store/hooks', () => ({
     ) => selector({ machines: { storageModel: 'Versant' } }),
     useParts: () => ({ partsArray }),
     useToners: () => ({ tonersArr: [] }),
-    usePrinters: () => ({ printers: [] }),
+    usePrinters: () => ({
+        printers: [
+            {
+                id: 'printer-1',
+                name: 'Versant-1',
+                model: 'Versant',
+                colorMode: 'color',
+                colors: ['K'],
+            },
+        ],
+    }),
 }));
 
 describe('PurchaseStock (parts)', () => {
@@ -93,6 +103,8 @@ describe('PurchaseStock (parts)', () => {
                     qty: 1,
                     unitPrice: 150,
                     createdBy: 'Buyer',
+                    printerId: 'printer-1',
+                    machine: 'Versant-1',
                 })
             );
         });

@@ -7,6 +7,7 @@ type UsedPartLike = {
     part: {
         date?: string;
         machine?: string;
+        printerId?: string;
         partN?: string;
         partName?: string;
         quantity?: number;
@@ -22,6 +23,7 @@ type TonerLike = {
     toner: {
         date?: string;
         machine?: string;
+        printerId?: string;
         color?: string;
         totalCost?: number;
         unitPriceAvg?: number;
@@ -109,6 +111,7 @@ export const usageEventsToMovements = (
             unitPriceAvg: unit || cost / qty,
             date: String(part.date || ''),
             machine: (part.machine || '').trim(),
+            printerId: (part.printerId || '').trim(),
             lots: [],
         });
     });
@@ -145,6 +148,7 @@ export const usageEventsToMovements = (
             unitPriceAvg: unit || cost,
             date: String(toner.date || ''),
             machine: (toner.machine || '').trim(),
+            printerId: (toner.printerId || '').trim(),
             lots: [],
         });
     });

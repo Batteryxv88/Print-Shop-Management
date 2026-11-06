@@ -66,7 +66,7 @@ See chat roadmap for phase order.
 2. `npm run test:e2e:smoke` — desktop + public mobile/tablet smoke (CI gate).
 3. With `E2E_EMAIL` / `E2E_PASSWORD`: `npm run test:e2e:responsive` or targeted `test:e2e:shell`, `stock`, `journal`, `routes`, `analytics`.
 4. Manual spot-check: phone drawer, stock FIFO bottom sheet, journal counter form, tablet sidebar + toners list.
-5. `npm run build:prod` then `npm run deploy` when ready; Firebase Auth authorized domain includes `batteryxv88.github.io`.
+5. `npm run build:pages` then `npm run deploy` (GitHub Pages) or `npm run deploy:firebase` (Firebase Hosting); Firebase Auth authorized domains include `batteryxv88.github.io`, `sl-sandbox-b84b3.web.app`, and `sl-sandbox-b84b3.firebaseapp.com`.
 6. Optional: GitHub secrets `E2E_EMAIL` / `E2E_PASSWORD` → run workflow **E2E responsive (auth)** or `npm run test:e2e:responsive` locally.
 
 ## PR checklist (responsive changes)

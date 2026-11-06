@@ -72,6 +72,14 @@ export const getColorsForPrinterName = (
     return resolvePrinterColors(printer);
 };
 
+export const getColorsForPrinterId = (
+    printers: Array<PrinterColorFields & { id?: string }>,
+    printerId: string
+): string[] => {
+    const printer = printers.find((p) => p.id === printerId);
+    return resolvePrinterColors(printer);
+};
+
 /** CSS-цвет для индикатора тонера */
 export const getTonerSwatchColor = (color: string): string => {
     switch (normalizeColorCode(color)) {

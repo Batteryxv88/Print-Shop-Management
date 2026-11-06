@@ -1,0 +1,48 @@
+@import '../../app/styles/breakpoints/breakpoints';
+
+// Shared desktop column tracks for journal lists (header + rows must match).
+$journal-parts-columns:
+    minmax(0, 1.55fr)
+    minmax(0, 1fr)
+    minmax(0, 0.95fr)
+    44px
+    60px
+    76px
+    52px;
+
+$journal-toner-columns:
+    minmax(0, 0.8fr)
+    minmax(0, 1fr)
+    minmax(72px, 0.9fr)
+    52px;
+
+@mixin journal-parts-grid-row {
+    @include up(sm) {
+        display: grid;
+        grid-template-columns: $journal-parts-columns;
+        column-gap: 10px;
+        align-items: center;
+        justify-content: stretch;
+    }
+}
+
+@mixin journal-toner-grid-row {
+    @include up(sm) {
+        display: grid;
+        grid-template-columns: $journal-toner-columns;
+        column-gap: 10px;
+        align-items: center;
+        justify-content: stretch;
+    }
+}
+
+@mixin journal-grid-cell {
+    @include up(sm) {
+        width: auto;
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}

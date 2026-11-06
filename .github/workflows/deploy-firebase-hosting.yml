@@ -1,0 +1,55 @@
+# Deploy static build to Firebase Hosting (project sl-sandbox-b84b3).
+# Requires repo secret FIREBASE_SERVICE_ACCOUNT — JSON key with Firebase Hosting Admin.
+
+name: Deploy Firebase Hosting
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: firebase-hosting-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci --legacy-peer-deps
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: E2E smoke (desktop, mobile, tablet)
+        run: npm run test:e2e:smoke
+        env:
+          CI: true
+
+      - name: Production build (Firebase)
+        run: npm run build:firebase
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          channelId: live
+          projectId: sl-sandbox-b84b3

@@ -11,12 +11,12 @@ import {
 import { useAuth } from '../../../contexts/AuthContext';
 import { writeOffFifo } from '../../../services/stockAccounting';
 import { inferPartCostCategory } from '../../../shared/lib/stock/costCategory';
+import { findTonerStock, matchesModel } from '../../../shared/lib/printers/printerUtils';
+import { getColorsForPrinterId } from '../../../shared/lib/printers/tonerColors';
 import {
-    findTonerStock,
-    getModelByPrinterName,
-    matchesModel,
-} from '../../../shared/lib/printers/printerUtils';
-import { getColorsForPrinterName } from '../../../shared/lib/printers/tonerColors';
+    getModelByPrinterId,
+    getPrinterNameById,
+} from '../../../shared/lib/printers/printerIdentity';
 import type { ScrapItemType } from '../../../shared/lib/stock/scrapLabels';
 import { SCRAP_TYPE_LABELS } from '../../../shared/lib/stock/scrapLabels';
 import PartPicker, {
@@ -31,14 +31,15 @@ const AddScrap = () => {
     const { paperStockEnabled, laminationStockEnabled } = useAppSelector(
         (s) => s.appSettings
     );
-    const machine = useAppSelector((state) => state.machines.machine);
+    const printerId = useAppSelector((state) => state.machines.machine);
     const { printers } = usePrinters();
+    const machineName = getPrinterNameById(printers, printerId);
     const { partsArray } = useParts();
     const { tonersArr } = useToners();
     const { materials } = useMaterials();
     const { laminations } = useLaminations();
 
-    const printerModel = getModelByPrinterName(printers, machine);
+    const printerModel = getModelByPrinterId(printers, printerId);
 
     const allowedTypes = useMemo(() => {
         const list: ScrapItemType[] = ['part', 'toner'];
@@ -81,8 +82,8 @@ const AddScrap = () => {
     );
 
     const tonerColors = useMemo(
-        () => getColorsForPrinterName(printers, machine),
-        [printers, machine]
+        () => getColorsForPrinterId(printers, printerId),
+        [printers, printerId]
     );
 
     const materialOptions = useMemo(() => {
@@ -132,7 +133,7 @@ const AddScrap = () => {
 
         const man = userData?.displayName || '';
         const date = new Date().toISOString();
-        const machineOpt = machine?.trim() || '';
+        const machineOpt = machineName?.trim() || '';
         const comment = note.trim();
 
         setBusy(true);
@@ -168,6 +169,7 @@ const AddScrap = () => {
                     qty: q,
                     date,
                     machine: machineOpt,
+                    printerId,
                     man,
                     currentStockQty: part.qty,
                     writeoffReason: 'scrap',
@@ -200,6 +202,7 @@ const AddScrap = () => {
                     qty: 1,
                     date,
                     machine: machineOpt,
+                    printerId,
                     man,
                     currentStockQty: Number(stockToner.toner.qty) || 0,
                     writeoffReason: 'scrap',

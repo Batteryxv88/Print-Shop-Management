@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import cls from './EngineerServiceList.module.scss';
-import { useAppSelector } from '../../../app/providers/StoreProvider/Store/hooks';
+import {
+    useAppSelector,
+    usePrinters,
+} from '../../../app/providers/StoreProvider/Store/hooks';
+import { movementMatchesSelectedPrinter } from '../../../shared/lib/printers/printerIdentity';
 import { useAuth } from '../../../contexts/AuthContext';
 import {
     reverseStockMovement,
@@ -19,7 +23,8 @@ const formatMoney = (n: number) =>
 
 const EngineerServiceList = () => {
     const { userData } = useAuth();
-    const machine = useAppSelector((state) => state.machines.machine);
+    const printerId = useAppSelector((state) => state.machines.machine);
+    const { printers } = usePrinters();
     const [items, setItems] = useState<StockMovement[]>([]);
     const [confirmId, setConfirmId] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
@@ -30,8 +35,11 @@ const EngineerServiceList = () => {
     }, []);
 
     const filtered = useMemo(
-        () => items.filter((m) => (m.machine || '').trim() === machine),
-        [items, machine]
+        () =>
+            items.filter((m) =>
+                movementMatchesSelectedPrinter(m, printerId, printers)
+            ),
+        [items, printerId, printers]
     );
 
     const { visibleItems, sentinelRef, hasMore, total, visibleCount } =

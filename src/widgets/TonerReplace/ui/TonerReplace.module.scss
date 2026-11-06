@@ -1,5 +1,9 @@
+@import '../../../app/styles/breakpoints/breakpoints';
+@import '../../../shared/styles/journalListDesktop';
+
 .toners {
     width: 100%;
+    min-width: 0;
     padding: 12px 18px 20px;
     display: flex;
     flex-direction: column;
@@ -21,6 +25,12 @@
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: rgba(255, 255, 255, 0.4);
+
+    @include journal-toner-grid-row;
+    @include up(sm) {
+        padding: 5px 12px;
+        justify-content: stretch;
+    }
 }
 
 .color {
@@ -28,6 +38,10 @@
     font-size: inherit;
     font-weight: inherit;
     color: inherit;
+
+    @include up(sm) {
+        min-width: 0;
+    }
 }
 
 .man {
@@ -37,6 +51,11 @@
     font-size: inherit;
     font-weight: inherit;
     color: inherit;
+
+    @include up(sm) {
+        flex: unset;
+        min-width: 0;
+    }
 }
 
 .date {
@@ -45,6 +64,10 @@
     font-size: inherit;
     font-weight: inherit;
     color: inherit;
+
+    @include up(sm) {
+        min-width: 0;
+    }
 }
 
 .delete {
@@ -53,6 +76,10 @@
     font-size: inherit;
     font-weight: inherit;
     color: inherit;
+
+    @include up(sm) {
+        min-width: 0;
+    }
 }
 
 .h2 {
@@ -74,8 +101,6 @@
     border-bottom: 1px solid rgba(98, 218, 251, 0.15);
     padding-bottom: 4px;
 }
-
-@import '../../../app/styles/breakpoints/breakpoints';
 
 @include down(sm) {
     .toners {

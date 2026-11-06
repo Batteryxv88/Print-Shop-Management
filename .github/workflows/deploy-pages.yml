@@ -45,9 +45,8 @@ jobs:
           CI: true
 
       - name: Production build
-        run: npm run build:prod
+        run: npm run build:pages
         env:
-          PUBLIC_PATH: /Print-Shop-Management/
           NODE_OPTIONS: --max-old-space-size=8192
 
       - name: Add .nojekyll

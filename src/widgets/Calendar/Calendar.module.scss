@@ -1,5 +1,9 @@
+@import '../../app/styles/breakpoints/breakpoints';
+@import '../../shared/styles/journalListDesktop';
+
 .calendar {
     width: 100%;
+    min-width: 0;
     padding: 12px 18px 20px;
     display: flex;
     flex-direction: column;
@@ -29,6 +33,12 @@
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: rgba(255, 255, 255, 0.4);
+
+    @include journal-parts-grid-row;
+    @include up(sm) {
+        padding: 5px 12px;
+        justify-content: stretch;
+    }
 }
 
 .h2 {
@@ -56,6 +66,10 @@
     font-size: inherit;
     font-weight: inherit;
     color: inherit;
+
+    @include up(sm) {
+        min-width: 0;
+    }
 }
 
 .number {
@@ -64,6 +78,10 @@
     font-size: inherit;
     font-weight: inherit;
     color: inherit;
+
+    @include up(sm) {
+        min-width: 0;
+    }
 }
 
 .man {
@@ -72,6 +90,10 @@
     font-size: inherit;
     font-weight: inherit;
     color: inherit;
+
+    @include up(sm) {
+        min-width: 0;
+    }
 }
 
 .qty {
@@ -80,6 +102,10 @@
     font-size: inherit;
     font-weight: inherit;
     color: inherit;
+
+    @include up(sm) {
+        min-width: 0;
+    }
 }
 
 .res {
@@ -88,6 +114,10 @@
     font-size: inherit;
     font-weight: inherit;
     color: inherit;
+
+    @include up(sm) {
+        min-width: 0;
+    }
 }
 
 .date {
@@ -96,6 +126,10 @@
     font-size: inherit;
     font-weight: inherit;
     color: inherit;
+
+    @include up(sm) {
+        min-width: 0;
+    }
 }
 
 .delete {
@@ -104,6 +138,10 @@
     font-size: inherit;
     font-weight: inherit;
     color: inherit;
+
+    @include up(sm) {
+        min-width: 0;
+    }
 }
 
 .emptyHint {
@@ -113,8 +151,6 @@
     color: rgba(255, 255, 255, 0.4);
     text-align: center;
 }
-
-@import '../../app/styles/breakpoints/breakpoints';
 
 @include down(sm) {
     .calendar {

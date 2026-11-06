@@ -11,10 +11,13 @@ import {
 } from '../../../services/stockAccounting';
 import { formatPeriodLabel, pad2 } from '../utils/counterReading';
 import { isMaterialMovement } from './buildPrinterAnalytics';
+import type { PrinterRef } from '../printers/printerIdentity';
+import { resolveMovementPrinterId } from '../printers/printerIdentity';
 
 export type CostMode = 'purchase' | 'used';
 
 export type PrinterMonthCost = {
+    printerId: string;
     name: string;
     total: number;
     breakdown: Record<CostCategory, number>;
@@ -26,11 +29,6 @@ export type PrinterCostMonthRow = {
     printers: PrinterMonthCost[];
     [printerName: string]: string | number | PrinterMonthCost[] | undefined;
 };
-
-type PrinterRef = { name: string; model: string };
-
-const norm = (s: string) =>
-    s.toLowerCase().replace(/\s+/g, ' ').trim();
 
 const parseMovementDate = (raw: unknown): Date | null => {
     if (!raw) return null;
@@ -98,21 +96,6 @@ const addTo = (
     target[key] += amount;
 };
 
-const peersForModel = (
-    printersByModel: Map<string, string[]>,
-    model: string
-): string[] => {
-    const exact = printersByModel.get(model);
-    if (exact && exact.length) return exact;
-    const n = norm(model);
-    if (!n) return [];
-    for (const [key, names] of Array.from(printersByModel.entries())) {
-        const kn = norm(key);
-        if (kn === n || kn.includes(n) || n.includes(kn)) return names;
-    }
-    return [];
-};
-
 const normalizeKind = (kind: unknown) =>
     String(kind || '')
         .toLowerCase()
@@ -131,36 +114,34 @@ export const buildPrinterMonthlyCosts = (
     mode: CostMode,
     usageExtra: StockMovement[] = []
 ): PrinterCostMonthRow[] => {
-    const printerNames = printers.map((p) => p.name).filter(Boolean);
-    const printersByModel = new Map<string, string[]>();
-    printers.forEach((p) => {
-        if (!p.name || !p.model) return;
-        const key = p.model.trim();
-        const list = printersByModel.get(key) || [];
-        list.push(p.name);
-        printersByModel.set(key, list);
-    });
+    const catalog = printers.map((p) => ({ id: p.id, name: p.name }));
+    const nameById = new Map(
+        printers.filter((p) => p.id).map((p) => [p.id, p.name] as const)
+    );
+    const activeIds = new Set(printers.map((p) => p.id).filter(Boolean));
 
     type Cell = Record<CostCategory, number>;
     const months = new Map<string, Map<string, Cell>>();
     /** id движений, которые реально попали в сумму (для дедупа истории) */
     const creditedIds = new Set<string>();
 
-    const ensure = (periodKey: string, name: string): Cell => {
+    const ensure = (periodKey: string, printerId: string): Cell => {
         if (!months.has(periodKey)) months.set(periodKey, new Map());
         const map = months.get(periodKey)!;
-        if (!map.has(name)) map.set(name, emptyCategoryBreakdown());
-        return map.get(name)!;
+        if (!map.has(printerId)) map.set(printerId, emptyCategoryBreakdown());
+        return map.get(printerId)!;
     };
 
     const credit = (
         periodKey: string,
-        name: string,
+        printerId: string,
         category: CostCategory | undefined,
         amount: number
     ) => {
-        if (!(amount > 0) || !name) return false;
-        addTo(ensure(periodKey, name), category, amount);
+        if (!(amount > 0) || !printerId || !activeIds.has(printerId)) {
+            return false;
+        }
+        addTo(ensure(periodKey, printerId), category, amount);
         return true;
     };
 
@@ -172,14 +153,14 @@ export const buildPrinterMonthlyCosts = (
         const amount = movementAmount(m);
         if (!(amount > 0)) return;
 
-        const machine = (m.machine || '').trim();
-        if (!machine) return;
+        const printerId = resolveMovementPrinterId(m, catalog);
+        if (!printerId) return;
         const category = m.costCategory;
         const kind = normalizeKind(m.kind);
 
         if (kind === 'engineer') {
             if (
-                credit(periodKey, machine, 'engineer', amount) &&
+                credit(periodKey, printerId, 'engineer', amount) &&
                 trackId &&
                 m.id
             ) {
@@ -194,7 +175,7 @@ export const buildPrinterMonthlyCosts = (
             kind === 'usage'
         ) {
             if (
-                credit(periodKey, machine, category, amount) &&
+                credit(periodKey, printerId, category, amount) &&
                 trackId &&
                 m.id
             ) {
@@ -211,22 +192,15 @@ export const buildPrinterMonthlyCosts = (
         const amount = movementAmount(m);
         if (!(amount > 0)) return;
 
-        const machine = (m.machine || '').trim();
         const category = m.costCategory;
         const kind = normalizeKind(m.kind);
 
         // Инженер — только «потрачено»
         if (kind !== 'purchase') return;
 
-        if (machine) {
-            credit(periodKey, machine, category, amount);
-            return;
-        }
-        const model = (m.model || '').trim();
-        const peers = peersForModel(printersByModel, model);
-        if (peers.length === 0) return;
-        const share = amount / peers.length;
-        peers.forEach((name) => credit(periodKey, name, category, share));
+        const resolvedId = resolveMovementPrinterId(m, catalog);
+        if (!resolvedId || !activeIds.has(resolvedId)) return;
+        credit(periodKey, resolvedId, category, amount);
     };
 
     if (mode === 'purchase') {
@@ -256,21 +230,20 @@ export const buildPrinterMonthlyCosts = (
         })
         .slice(-12);
 
-    const knownNames = new Set([
-        ...printerNames,
-        ...periodKeys.flatMap((pk) =>
-            Array.from(months.get(pk)?.keys() || [])
-        ),
-    ]);
-    const sortedNames = Array.from(knownNames).sort((a, b) =>
-        a.localeCompare(b, 'ru')
-    );
+    const sortedIds = Array.from(activeIds).sort((a, b) => {
+        const na = nameById.get(a) || a;
+        const nb = nameById.get(b) || b;
+        return na.localeCompare(nb, 'ru');
+    });
 
     return periodKeys.map((periodKey) => {
         const map = months.get(periodKey)!;
-        const points: PrinterMonthCost[] = sortedNames.map((name) => {
-            const breakdown = map.get(name) || emptyCategoryBreakdown();
+        const points: PrinterMonthCost[] = sortedIds.map((printerId) => {
+            const breakdown =
+                map.get(printerId) || emptyCategoryBreakdown();
+            const name = nameById.get(printerId) || printerId;
             return {
+                printerId,
                 name,
                 total: sumBreakdown(breakdown),
                 breakdown,
@@ -283,6 +256,7 @@ export const buildPrinterMonthlyCosts = (
             printers: points,
         };
         points.forEach((p) => {
+            row[p.printerId] = p.total;
             row[p.name] = p.total;
         });
         return row;

@@ -12,12 +12,13 @@ export type JournalKind =
 const ChangePageSlice = createSlice({
     name: 'ChangeMachineSlice',
     initialState: {
-        machine: "C71cf",
-        tonerMachine: "C71cf",
+        machine: '',
+        tonerMachine: '',
         storage: 'Детали',
         storageModel: '',
         /** Режим инвентаризации внутри текущего раздела склада */
         storageInventorizationOpen: false,
+        /** printerId */
         reportEditorMachine: '',
         /** Режим журнала учёта */
         journalKind: 'toner' as JournalKind,

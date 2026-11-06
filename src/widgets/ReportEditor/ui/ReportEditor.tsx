@@ -5,10 +5,8 @@ import { useAppDispatch, useAppSelector, usePrinters, useParts } from "../../../
 import { useQuantityToOrder } from "../../../shared/lib/hooks/useQuantityToOrder";
 import { subscribeToQuantityToOrder } from "../../../services/quantityToOrder";
 import { changeReportEditorMachine } from "../../../app/providers/StoreProvider/Store/ChangeMachineSlice";
-import {
-    getModelByPrinterName,
-    matchesModel,
-} from "../../../shared/lib/printers/printerUtils";
+import { matchesModel } from "../../../shared/lib/printers/printerUtils";
+import { getModelByPrinterId } from "../../../shared/lib/printers/printerIdentity";
 import { sortSections } from "../../../shared/lib/printers/sectionOrder";
 
 const ReportEditor = () => {
@@ -21,7 +19,7 @@ const ReportEditor = () => {
     const reportEditorMachine = useAppSelector(
         (state) => state.machines.reportEditorMachine
     );
-    const selectedModel = getModelByPrinterName(printers, reportEditorMachine);
+    const selectedModel = getModelByPrinterId(printers, reportEditorMachine);
 
     useEffect(() => {
         if (!subscriptionRef.current) {
@@ -99,12 +97,12 @@ const ReportEditor = () => {
                         key={printer.id}
                         type="button"
                         className={
-                            reportEditorMachine === printer.name
+                            reportEditorMachine === printer.id
                                 ? cls.printerActive
                                 : cls.printerTab
                         }
                         onClick={() =>
-                            dispatch(changeReportEditorMachine(printer.name))
+                            dispatch(changeReportEditorMachine(printer.id))
                         }
                     >
                         {printer.name}

@@ -4,6 +4,7 @@ import TonerPart from '../../../shared/ui/tonerPart/TonerPart';
 import { sortAndFilterToners } from '../lib/sortTonersByDate';
 import {
     useAppSelector,
+    usePrinters,
     useTonerHistory,
 } from '../../../app/providers/StoreProvider/Store/hooks';
 import { useInfiniteList } from '../../../shared/lib/hooks/useInfiniteList';
@@ -14,10 +15,12 @@ const TonerReplace = () => {
         (state) => state.machines.tonerMachine
     );
     const { tonersArray } = useTonerHistory();
+    const { printers } = usePrinters();
 
     const sortedToners = useMemo(
-        () => sortAndFilterToners(tonersArray, machineTonerState),
-        [tonersArray, machineTonerState]
+        () =>
+            sortAndFilterToners(tonersArray, machineTonerState, printers),
+        [tonersArray, machineTonerState, printers]
     );
     const { visibleItems, sentinelRef, hasMore, total, visibleCount } =
         useInfiniteList(sortedToners);

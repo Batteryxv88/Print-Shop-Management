@@ -10,6 +10,8 @@ export interface UsedPart {
     section: string;
     serviceLife?: number;
     percent: number;
+    machine?: string;
+    printerId?: string;
 }
 
 export interface UsedPartData {

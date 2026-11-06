@@ -7,6 +7,7 @@ interface Part {
     man: string;
     serviceLife: string;
     machine: string;
+    printerId?: string;
   }
   
   interface ArrayItem {
@@ -147,16 +148,23 @@ interface Part {
 //   return idWithLatestDate;
 
 
-export function findIdByPartNAndLatestDate(arr: ArrayItem[], partN: string, machine: string): string | null {
+export function findIdByPartNAndLatestDate(
+  arr: ArrayItem[],
+  partN: string,
+  printerId: string
+): string | null {
   // Определяем, является ли номер детали из массива sameColorParts
   const isSameColorPart = sameColorParts.includes(partN);
+  const pid = printerId.trim();
 
-  // Фильтруем массив по номеру partN и машине
+  // Фильтруем массив по номеру partN и printerId
   const filteredByPartNAndMachine = arr.filter((item) => {
+    const itemPid = (item.part.printerId || '').trim();
+    if (itemPid !== pid) return false;
     if (isSameColorPart) {
-      return item.part.partN.startsWith(partN) && item.part.machine === machine;
+      return item.part.partN.startsWith(partN);
     }
-    return item.part.partN === partN && item.part.machine === machine;
+    return item.part.partN === partN;
   });
 
   // Если нет объектов с указанным номером partN и машиной, возвращаем null

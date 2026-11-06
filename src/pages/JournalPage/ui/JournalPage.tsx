@@ -23,11 +23,12 @@ import EngineerServiceList from '../../../widgets/EngineerServiceList/ui/Enginee
 import AddScrap from '../../../features/ui/AddScrap/AddScrap';
 import ScrapList from '../../../widgets/ScrapList/ui/ScrapList';
 import CounterReadingForm from '../../../widgets/CounterReadingForm/ui/CounterReadingForm';
+import { matchesModel } from '../../../shared/lib/printers/printerUtils';
 import {
-    getModelByPrinterName,
-    getPrinterDisplayName,
-    matchesModel,
-} from '../../../shared/lib/printers/printerUtils';
+    getModelByPrinterId,
+    getPrinterDisplayNameById,
+    resolveSelectedPrinterId,
+} from '../../../shared/lib/printers/printerIdentity';
 import { sortSections } from '../../../shared/lib/printers/sectionOrder';
 import cls from './JournalPage.module.scss';
 
@@ -56,21 +57,20 @@ const JournalPage = () => {
 
     useEffect(() => {
         if (!needsPrinter || printers.length === 0) return;
-        const exists = printers.some((p) => p.name === selected);
-        if (!exists) {
-            const first = printers[0].name;
-            dispatch(changeMachine(first));
-            dispatch(changeTonerMachine(first));
+        const resolved = resolveSelectedPrinterId(selected, printers);
+        if (resolved !== selected) {
+            dispatch(changeMachine(resolved));
+            dispatch(changeTonerMachine(resolved));
         }
     }, [printers, selected, dispatch, needsPrinter]);
 
-    const onSelectPrinter = (name: string) => {
-        dispatch(changeMachine(name));
-        dispatch(changeTonerMachine(name));
+    const onSelectPrinter = (printerId: string) => {
+        dispatch(changeMachine(printerId));
+        dispatch(changeTonerMachine(printerId));
     };
 
     const machineModel = useMemo(
-        () => getModelByPrinterName(printers, machine),
+        () => getModelByPrinterId(printers, machine),
         [printers, machine]
     );
 
@@ -121,7 +121,7 @@ const JournalPage = () => {
                             <>
                                 <span className={cls.crumbSep}>›</span>
                                 <span className={cls.crumbCurrent}>
-                                    {getPrinterDisplayName(printers, selected)}
+                                    {getPrinterDisplayNameById(printers, selected)}
                                 </span>
                             </>
                         ) : null}

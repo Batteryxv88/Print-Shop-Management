@@ -56,6 +56,22 @@ const VariablesEditor = () => {
     const [seedBusy, setSeedBusy] = useState(false);
 
     const [optionDraft, setOptionDraft] = useState({ model: '', serialNumber: '' });
+    const [editSnapshot, setEditSnapshot] = useState<{
+        name: string;
+        ip: string;
+        serialNumber: string;
+    } | null>(null);
+    const [identityPrompt, setIdentityPrompt] = useState<{
+        payload: PrinterInput;
+    } | null>(null);
+
+    const identityFieldsChanged = (
+        payload: PrinterInput,
+        snap: { name: string; ip: string; serialNumber: string }
+    ) =>
+        payload.name.trim() !== snap.name.trim() ||
+        (payload.ip || '').trim() !== snap.ip.trim() ||
+        (payload.serialNumber || '').trim() !== snap.serialNumber.trim();
 
     useEffect(() => {
         dispatch(loadAppSettings());
@@ -110,6 +126,29 @@ const VariablesEditor = () => {
         return null;
     };
 
+    const finishPrinterForm = () => {
+        setForm(emptyForm);
+        setEditingId(null);
+        setEditSnapshot(null);
+        setIdentityPrompt(null);
+    };
+
+    const savePrinterWithIdentity = async (
+        payload: PrinterInput,
+        sameMachine: boolean
+    ) => {
+        if (!editingId) {
+            await addPrinter(payload);
+            return;
+        }
+        if (sameMachine) {
+            await updatePrinter(editingId, payload);
+            return;
+        }
+        await addPrinter(payload);
+        await deletePrinter(editingId);
+    };
+
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         setError('');
@@ -120,26 +159,47 @@ const VariablesEditor = () => {
             return;
         }
 
+        const payload: PrinterInput = {
+            name: form.name.trim(),
+            model: form.model.trim(),
+            ip: form.ip?.trim() || '',
+            serialNumber: form.serialNumber?.trim() || '',
+            options: form.options || [],
+            colorMode: form.colorMode || 'color',
+            colors: resolvePrinterColors(form),
+        };
+
+        if (
+            editingId &&
+            editSnapshot &&
+            identityFieldsChanged(payload, editSnapshot)
+        ) {
+            setIdentityPrompt({ payload });
+            return;
+        }
+
         setSaving(true);
         try {
-            const payload: PrinterInput = {
-                name: form.name.trim(),
-                model: form.model.trim(),
-                ip: form.ip?.trim() || '',
-                serialNumber: form.serialNumber?.trim() || '',
-                options: form.options || [],
-                colorMode: form.colorMode || 'color',
-                colors: resolvePrinterColors(form),
-            };
+            await savePrinterWithIdentity(payload, true);
+            finishPrinterForm();
+        } catch (err) {
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : 'Не удалось сохранить принтер'
+            );
+        } finally {
+            setSaving(false);
+        }
+    };
 
-            if (editingId) {
-                await updatePrinter(editingId, payload);
-            } else {
-                await addPrinter(payload);
-            }
-
-            setForm(emptyForm);
-            setEditingId(null);
+    const confirmIdentity = async (sameMachine: boolean) => {
+        if (!identityPrompt) return;
+        setSaving(true);
+        setError('');
+        try {
+            await savePrinterWithIdentity(identityPrompt.payload, sameMachine);
+            finishPrinterForm();
         } catch (err) {
             setError(
                 err instanceof Error
@@ -164,6 +224,11 @@ const VariablesEditor = () => {
             colors: resolvePrinterColors(printer),
         });
         setOptionDraft({ model: '', serialNumber: '' });
+        setEditSnapshot({
+            name: printer.name,
+            ip: printer.ip || '',
+            serialNumber: printer.serialNumber || '',
+        });
         setError('');
     };
 
@@ -171,12 +236,14 @@ const VariablesEditor = () => {
         setEditingId(null);
         setForm(emptyForm);
         setOptionDraft({ model: '', serialNumber: '' });
+        setEditSnapshot(null);
+        setIdentityPrompt(null);
         setError('');
     };
 
     const handleDelete = async (printer: Printer) => {
         const confirmed = window.confirm(
-            `Удалить принтер «${printer.name}»? История замен сохранится, но выбор этого принтера исчезнет из приложения.`
+            `Удалить принтер «${printer.name}»? История операций останется в базе по id аппарата, но в программе он больше не будет отображаться.`
         );
         if (!confirmed) return;
 
@@ -811,6 +878,52 @@ const VariablesEditor = () => {
                     </div>
                 </div>
             )}
+
+            {identityPrompt ? (
+                <div className={cls.modalOverlay} role="dialog" aria-modal>
+                    <div className={cls.modalCard}>
+                        <h3 className={cls.modalTitle}>
+                            Изменились данные аппарата
+                        </h3>
+                        <p className={cls.modalText}>
+                            Это та же физическая машина (сохранить учёт по id)
+                            или другая (новый учёт, старая история останется в
+                            базе, но скрыта)?
+                        </p>
+                        <p className={cls.modalHint}>
+                            Если меняли только IP или серийник без смены имени
+                            и нужен новый учёт — добавьте новый принтер и
+                            удалите старый.
+                        </p>
+                        <div className={cls.modalActions}>
+                            <button
+                                type="button"
+                                className={cls.modalPrimary}
+                                disabled={saving}
+                                onClick={() => void confirmIdentity(true)}
+                            >
+                                Та же машина
+                            </button>
+                            <button
+                                type="button"
+                                className={cls.modalSecondary}
+                                disabled={saving}
+                                onClick={() => void confirmIdentity(false)}
+                            >
+                                Другая машина
+                            </button>
+                            <button
+                                type="button"
+                                className={cls.modalGhost}
+                                disabled={saving}
+                                onClick={() => setIdentityPrompt(null)}
+                            >
+                                Отмена
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
         </div>
     );
 };

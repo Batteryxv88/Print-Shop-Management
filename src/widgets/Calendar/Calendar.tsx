@@ -12,7 +12,7 @@ import { filterByMachine } from './lib/filterByMachine';
 import { UsedPartData } from '../../services/usedParts';
 import { useInfiniteList } from '../../shared/lib/hooks/useInfiniteList';
 import InfiniteScrollSentinel from '../../shared/ui/InfiniteScrollSentinel/InfiniteScrollSentinel';
-import { getModelByPrinterName } from '../../shared/lib/printers/printerUtils';
+import { getModelByPrinterId } from '../../shared/lib/printers/printerIdentity';
 
 const Calendar = () => {
     const { usedPartsArray } = useUsedParts();
@@ -24,14 +24,15 @@ const Calendar = () => {
     const machineState = useAppSelector((state) => state.machines.machine);
 
     const machineModel = useMemo(
-        () => getModelByPrinterName(printers, machineState),
+        () => getModelByPrinterId(printers, machineState),
         [printers, machineState]
     );
 
     const filterAndSortData = useMemo(() => {
         const filteredDataByMachine = filterByMachine(
             usedPartsArray,
-            machineState
+            machineState,
+            printers
         );
         return filteredAndSortedData(
             filteredDataByMachine,
@@ -45,6 +46,7 @@ const Calendar = () => {
         filterOption,
         partsArray,
         machineModel,
+        printers,
     ]);
 
     const { visibleItems, sentinelRef, hasMore, total, visibleCount } =

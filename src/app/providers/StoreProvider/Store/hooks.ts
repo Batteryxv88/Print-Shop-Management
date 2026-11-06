@@ -23,6 +23,7 @@ import {
     changeReportEditorMachine,
 } from './ChangeMachineSlice';
 import { getUniqueModels } from '../../../../shared/lib/printers/printerUtils';
+import { resolveSelectedPrinterId } from '../../../../shared/lib/printers/printerIdentity';
 import {
     createSharedSubscription,
     retainSharedSubscription,
@@ -67,20 +68,26 @@ export const usePrinters = () => {
     useEffect(() => {
         if (printers.length === 0) return;
 
-        const names = printers.map((p) => p.name);
         const models = getUniqueModels(printers);
+        const firstId = printers[0]?.id || '';
 
-        if (!names.includes(machine)) {
-            dispatch(changeMachine(names[0]));
+        const nextMachine = resolveSelectedPrinterId(machine, printers);
+        if (nextMachine !== machine) {
+            dispatch(changeMachine(nextMachine));
         }
-        if (!names.includes(tonerMachine)) {
-            dispatch(changeTonerMachine(names[0]));
+        const nextToner = resolveSelectedPrinterId(tonerMachine, printers);
+        if (nextToner !== tonerMachine) {
+            dispatch(changeTonerMachine(nextToner));
         }
         if (!storageModel || !models.includes(storageModel)) {
             dispatch(changeStorageModel(models[0] || ''));
         }
-        if (!reportEditorMachine || !names.includes(reportEditorMachine)) {
-            dispatch(changeReportEditorMachine(names[0]));
+        const nextReport = resolveSelectedPrinterId(
+            reportEditorMachine,
+            printers
+        );
+        if (!reportEditorMachine || nextReport !== reportEditorMachine) {
+            dispatch(changeReportEditorMachine(nextReport || firstId));
         }
     }, [
         printers,

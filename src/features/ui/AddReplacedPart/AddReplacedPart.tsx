@@ -11,11 +11,11 @@ import {
 } from '../../../app/providers/StoreProvider/Store/hooks';
 import { lifePercent } from '../../../shared/lib/calculatePercentOfLife';
 import { useAuth } from '../../../contexts/AuthContext';
+import { findStockPart, matchesModel } from '../../../shared/lib/printers/printerUtils';
 import {
-    findStockPart,
-    getModelByPrinterName,
-    matchesModel,
-} from '../../../shared/lib/printers/printerUtils';
+    getModelByPrinterId,
+    getPrinterNameById,
+} from '../../../shared/lib/printers/printerIdentity';
 import { writeOffFifo } from '../../../services/stockAccounting';
 import { inferPartCostCategory } from '../../../shared/lib/stock/costCategory';
 import { parsePartLife } from '../../../shared/lib/printers/parsePartLife';
@@ -120,9 +120,10 @@ const AddReplacedPart = () => {
     const [serviceLifeDisplay, setServiceLifeDisplay] = useState('');
 
     const { partsArray } = useParts();
-    const machineState = useAppSelector((state) => state.machines.machine);
+    const printerId = useAppSelector((state) => state.machines.machine);
     const { printers } = usePrinters();
-    const printerModel = getModelByPrinterName(printers, machineState);
+    const printerModel = getModelByPrinterId(printers, printerId);
+    const machineName = getPrinterNameById(printers, printerId);
     const dispatch = useAppDispatch();
 
     const {
@@ -276,7 +277,8 @@ const AddReplacedPart = () => {
                 costCategory,
                 qty,
                 date,
-                machine: machineState,
+                machine: machineName,
+                printerId,
                 man: manName,
                 currentStockQty: Number(currentPart.part.quantity) || 0,
                 factoryLife,
@@ -294,7 +296,8 @@ const AddReplacedPart = () => {
                     section,
                     man: manName,
                     partName: newName,
-                    machine: machineState,
+                    machine: machineName,
+                    printerId,
                     totalCost: writeOff.totalCost,
                     unitPriceAvg: writeOff.unitPriceAvg,
                     movementId: writeOff.movementId,

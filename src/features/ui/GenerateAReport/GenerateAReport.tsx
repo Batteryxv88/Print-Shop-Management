@@ -19,6 +19,10 @@ import {
     useTonerHistory,
 } from "../../../app/providers/StoreProvider/Store/hooks";
 import { excelSheetName } from "../../../shared/lib/printers/printerUtils";
+import {
+    getPrinterNameById,
+    usageMatchesSelectedPrinter,
+} from "../../../shared/lib/printers/printerIdentity";
 
 const GenerateAReport = () => {
 
@@ -54,14 +58,22 @@ const GenerateAReport = () => {
     const handleGenerateReport = (e: FormValues) => {
       const filteredToners = toners.filter(
           (toner) =>
-              toner.toner.machine === e.machine &&
+              usageMatchesSelectedPrinter(
+                  toner.toner,
+                  e.machine,
+                  printers
+              ) &&
               new Date(toner.toner.date).setHours(0, 0, 0, 0) >= new Date(e.from).setHours(0, 0, 0, 0) &&
               new Date(toner.toner.date).setHours(0, 0, 0, 0) <= new Date(e.to).setHours(0, 0, 0, 0)
       );
   
       const filteredParts = parts.filter(
           (part) =>
-              part.part.machine === e.machine &&
+              usageMatchesSelectedPrinter(
+                  part.part,
+                  e.machine,
+                  printers
+              ) &&
               new Date(part.part.date).setHours(0, 0, 0, 0) >= new Date(e.from).setHours(0, 0, 0, 0) &&
               new Date(part.part.date).setHours(0, 0, 0, 0) <= new Date(e.to).setHours(0, 0, 0, 0)
       );
@@ -84,7 +96,7 @@ const GenerateAReport = () => {
       });
 
       result.push({
-          machine: e.machine,
+          machine: getPrinterNameById(printers, e.machine) || e.machine,
           period: `${e.from} - ${e.to}`,
           ...tonerCounts,
       });
@@ -192,17 +204,21 @@ const GenerateAReport = () => {
         const currentDate = new Date().toLocaleDateString('ru-RU');
 
         // Листы потраченных тонеров и деталей — по каждому принтеру
-        const printerNames =
+        const printerList =
             printers.length > 0
-                ? printers.map((p) => p.name)
-                : ['C71cf', 'Label 190'];
+                ? printers.map((p) => ({ id: p.id, name: p.name }))
+                : [];
 
         if (toners && toners.length > 0) {
-            printerNames.forEach((printerName) => {
+            printerList.forEach(({ id, name: printerName }) => {
                 const tonersData = toners
-                    .filter((t) => t.toner.machine === printerName)
+                    .filter((t) =>
+                        usageMatchesSelectedPrinter(t.toner, id, printers)
+                    )
                     .map((toner) => ({
-                        'Аппарат': toner.toner.machine,
+                        'Аппарат':
+                            getPrinterNameById(printers, id) ||
+                            toner.toner.machine,
                         'Цвет': toner.toner.color,
                         'Счетчик': toner.toner.counter,
                         'Ответственный': toner.toner.man,
@@ -229,11 +245,15 @@ const GenerateAReport = () => {
         }
 
         if (parts && parts.length > 0) {
-            printerNames.forEach((printerName) => {
+            printerList.forEach(({ id, name: printerName }) => {
                 const partsData = parts
-                    .filter((p) => p.part.machine === printerName)
+                    .filter((p) =>
+                        usageMatchesSelectedPrinter(p.part, id, printers)
+                    )
                     .map((part) => ({
-                        'Аппарат': part.part.machine,
+                        'Аппарат':
+                            getPrinterNameById(printers, id) ||
+                            part.part.machine,
                         'Наименование': part.part.partName,
                         'Артикул': part.part.partN,
                         'Количество': part.part.quantity,
@@ -446,9 +466,9 @@ const GenerateAReport = () => {
         summaryData.push({ 'Категория': '=== ПОТРАЧЕНО ===', 'Общее количество': '' });
 
         if (toners && toners.length > 0) {
-            printerNames.forEach((printerName) => {
-                const machineToners = toners.filter(
-                    (t: any) => t.toner.machine === printerName
+            printerList.forEach(({ id, name: printerName }) => {
+                const machineToners = toners.filter((t: any) =>
+                    usageMatchesSelectedPrinter(t.toner, id, printers)
                 );
                 if (machineToners.length > 0) {
                     summaryData.push({
@@ -460,9 +480,9 @@ const GenerateAReport = () => {
         }
         
         if (parts && parts.length > 0) {
-            printerNames.forEach((printerName) => {
-                const machineParts = parts.filter(
-                    (p: any) => p.part.machine === printerName
+            printerList.forEach(({ id, name: printerName }) => {
+                const machineParts = parts.filter((p: any) =>
+                    usageMatchesSelectedPrinter(p.part, id, printers)
                 );
                 if (machineParts.length > 0) {
                     summaryData.push({
@@ -527,7 +547,7 @@ const GenerateAReport = () => {
                     >
                         {printers.length > 0
                             ? printers.map((printer) => (
-                                  <option key={printer.id} value={printer.name}>
+                                  <option key={printer.id} value={printer.id}>
                                       {printer.name}
                                   </option>
                               ))

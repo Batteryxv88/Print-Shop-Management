@@ -16,6 +16,7 @@ import {
     StockItemType,
 } from '../../../services/stockAccounting';
 import { matchesModel } from '../../../shared/lib/printers/printerUtils';
+import { printersForModel } from '../../../shared/lib/printers/printerIdentity';
 import { getColorsForModel } from '../../../shared/lib/printers/tonerColors';
 import {
     DEFAULT_SECTION_ORDER,
@@ -259,6 +260,47 @@ const PurchaseStock = ({ type, layout = 'default' }: Props) => {
     const { partsArray } = useParts();
     const { tonersArr } = useToners();
     const { printers } = usePrinters();
+    const activeForModel = useMemo(
+        () => printersForModel(printers, storageModel),
+        [printers, storageModel]
+    );
+    const [purchasePrinter, setPurchasePrinter] = useState('__all__');
+
+    useEffect(() => {
+        if (activeForModel.length === 1) {
+            setPurchasePrinter(activeForModel[0].id);
+        } else if (activeForModel.length > 1) {
+            setPurchasePrinter((prev) =>
+                prev === '__all__' ||
+                activeForModel.some((p) => p.id === prev)
+                    ? prev
+                    : '__all__'
+            );
+        }
+    }, [activeForModel]);
+
+    const resolvePurchaseBind = (): {
+        printerId?: string;
+        machine?: string;
+    } => {
+        if (type === 'paper' || type === 'lamination') {
+            return {};
+        }
+        if (activeForModel.length === 0) {
+            throw new Error(
+                'Нет принтера этой модели в админке — добавьте аппарат или выберите другую модель'
+            );
+        }
+        if (activeForModel.length === 1) {
+            const p = activeForModel[0];
+            return { printerId: p.id, machine: p.name };
+        }
+        if (purchasePrinter && purchasePrinter !== '__all__') {
+            const p = activeForModel.find((x) => x.id === purchasePrinter);
+            if (p) return { printerId: p.id, machine: p.name };
+        }
+        return {};
+    };
 
     const partOptions = useMemo<PartOption[]>(() => {
         return partsArray
@@ -467,6 +509,7 @@ const PurchaseStock = ({ type, layout = 'default' }: Props) => {
 
         setSubmitting(true);
         try {
+            const bind = resolvePurchaseBind();
             const at = toIsoNoon(purchasedAt);
             // Последовательно: у каждого цвета свой currentStockQty
             for (const line of filledTonerLines) {
@@ -483,6 +526,7 @@ const PurchaseStock = ({ type, layout = 'default' }: Props) => {
                     comment: comment.trim(),
                     createdBy: userData?.displayName || '',
                     currentStockQty: line.currentQty,
+                    ...bind,
                 });
             }
             rememberSupplier(supplier);
@@ -535,6 +579,7 @@ const PurchaseStock = ({ type, layout = 'default' }: Props) => {
 
         setSubmitting(true);
         try {
+            const bind = resolvePurchaseBind();
             let target: { id: string; partN: string; partName: string; model: string; qty: number };
 
             if (isNewPart) {
@@ -581,6 +626,7 @@ const PurchaseStock = ({ type, layout = 'default' }: Props) => {
                 comment: comment.trim(),
                 createdBy: userData?.displayName || '',
                 currentStockQty: target.qty,
+                ...bind,
             });
 
             rememberSupplier(supplier);
@@ -594,6 +640,33 @@ const PurchaseStock = ({ type, layout = 'default' }: Props) => {
 
     const partTotal = (Number(partQty) || 0) * (Number(partPrice) || 0);
 
+    const purchasePrinterField =
+        type === 'part' || type === 'toner' ? (
+            activeForModel.length === 0 ? (
+                <p className={cls.submitError}>
+                    Нет принтера модели «{storageModel || '—'}» в админке
+                </p>
+            ) : activeForModel.length > 1 ? (
+                <div className={cls.box}>
+                    <label className={cls.label}>Аппарат</label>
+                    <select
+                        className={cls.input}
+                        value={purchasePrinter}
+                        onChange={(e) => setPurchasePrinter(e.target.value)}
+                    >
+                        <option value="__all__">
+                            На все аппараты модели
+                        </option>
+                        {activeForModel.map((p) => (
+                            <option key={p.id} value={p.id}>
+                                {p.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            ) : null
+        ) : null;
+
     const commonFields = (
         <>
             <div className={cls.box}>
@@ -606,6 +679,8 @@ const PurchaseStock = ({ type, layout = 'default' }: Props) => {
                     required
                 />
             </div>
+
+            {purchasePrinterField}
 
             <div className={cls.box}>
                 <label className={cls.label}>Поставщик</label>

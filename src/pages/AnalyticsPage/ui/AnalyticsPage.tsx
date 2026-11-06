@@ -52,7 +52,19 @@ import {
 import {
     buildPrinterAnalytics,
     collectUnattachedMovements,
+    isMaterialMovement,
 } from '../../../shared/lib/stock/buildPrinterAnalytics';
+import {
+    activePrinterIdSet,
+    resolveMovementPrinterId,
+    toPrinterRefs,
+} from '../../../shared/lib/printers/printerIdentity';
+import {
+    displayMachineLabel,
+    filterCounterReadingsForActivePrinters,
+    filterMovementsForActivePrinters,
+    filterUsageByPrinterId,
+} from '../../../shared/lib/printers/activePrinterFilter';
 import {
     buildTonerUnits,
     sortedTonerColors,
@@ -427,7 +439,6 @@ const AnalyticsPage = () => {
     const [counterReadings, setCounterReadings] = useState<
         CounterReadingRecord[]
     >([]);
-    const [stockValue, setStockValue] = useState(0);
     const [lots, setLots] = useState<StockLot[]>([]);
     const [showUnattached, setShowUnattached] = useState(false);
     const paperStockEnabled = useAppSelector(
@@ -454,7 +465,7 @@ const AnalyticsPage = () => {
     const [costHoverTip, setCostHoverTip] = useState<CostHoverTip | null>(null);
     const [costTipVisible, setCostTipVisible] = useState(false);
     const [costTipShown, setCostTipShown] = useState<CostHoverTip | null>(null);
-    /** Выбранный принтер в блоке «Затраты по принтерам» */
+    /** printerId в блоке «Затраты по принтерам» */
     const [selectedPrinter, setSelectedPrinter] = useState<string | null>(
         null
     );
@@ -511,7 +522,6 @@ const AnalyticsPage = () => {
             );
             setMovements(moves);
             setCostMovements(allMoves);
-            setStockValue(stockValueFromLots(lots));
             setLots(lots);
             setCounterReadings(readings);
         } catch (err: any) {
@@ -536,58 +546,120 @@ const AnalyticsPage = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps -- только кнопка «Обновить»
     }, [refreshNonce]);
 
-    const writeoffs = useMemo(
-        () =>
-            movements.filter(
-                (m) => isProductionWriteoff(m) && isActiveCostMovement(m)
-            ),
-        [movements]
-    );
-    const scrapMoves = useMemo(
-        () =>
-            movements.filter(
-                (m) => isScrapMovement(m) && isActiveCostMovement(m)
-            ),
-        [movements]
-    );
-    const purchases = useMemo(
-        () =>
-            movements.filter(
-                (m) => m.kind === 'purchase' && isActiveCostMovement(m)
-            ),
-        [movements]
-    );
-    const engineerMoves = useMemo(
-        () =>
-            movements.filter(
-                (m) => m.kind === 'engineer' && isActiveCostMovement(m)
-            ),
-        [movements]
+    const printerRefs = useMemo(() => toPrinterRefs(printers), [printers]);
+    const activeIds = useMemo(
+        () => activePrinterIdSet(printers),
+        [printers]
     );
 
-    // Потрачено = списания (замены, расходка, тонер) + работа инженера
-    const usedCost =
-        writeoffs.reduce((s, m) => s + Number(m.totalCost || 0), 0) +
-        engineerMoves.reduce((s, m) => s + Number(m.totalCost || 0), 0);
-    const scrapCost = scrapMoves.reduce(
-        (s, m) => s + Number(m.totalCost || 0),
-        0
-    );
-    // Закуплено = только приходы
-    const purchaseCost = purchases.reduce(
-        (s, m) => s + Number(m.totalCost || 0),
-        0
+    /** Остаток FIFO: только партии с явной привязкой к активному принтеру */
+    const stockValue = useMemo(() => {
+        const boundLots = lots.filter((lot) => {
+            const pid = (lot.printerId || '').trim();
+            return Boolean(pid && activeIds.has(pid));
+        });
+        return stockValueFromLots(boundLots);
+    }, [lots, activeIds]);
+
+    const analyticsMovements = useMemo(
+        () => filterMovementsForActivePrinters(movements, printers),
+        [movements, printers]
     );
 
-    const economyTotal = writeoffs.reduce(
-        (s, m) => s + (Number(m.economyAmount) || 0),
-        0
+    const analyticsCostMovements = useMemo(
+        () => filterMovementsForActivePrinters(costMovements, printers),
+        [costMovements, printers]
     );
+
+    const analyticsUsedParts = useMemo(
+        () =>
+            filterUsageByPrinterId(
+                usedPartsArray,
+                (item) => item.part,
+                printers
+            ),
+        [usedPartsArray, printers]
+    );
+
+    const analyticsTonerHistory = useMemo(
+        () =>
+            filterUsageByPrinterId(
+                tonerHistory,
+                (item) => item.toner,
+                printers
+            ),
+        [tonerHistory, printers]
+    );
+
+    const analyticsReadings = useMemo(
+        () =>
+            filterCounterReadingsForActivePrinters(
+                counterReadings,
+                printers
+            ),
+        [counterReadings, printers]
+    );
+
+    const printersCatalog = useMemo(
+        () => printers.map((p) => ({ id: p.id, name: p.name })),
+        [printers]
+    );
+
+    /**
+     * KPI шапки по аппаратам: только движения с printerId активного принтера.
+     * Бумага/ламинат (общий склад) и приходы «на модель» без printerId не учитываются.
+     */
+    const { purchaseCost, usedCost, scrapCost, economyTotal } = useMemo(() => {
+        let purchased = 0;
+        let used = 0;
+        let scrap = 0;
+        let economy = 0;
+
+        analyticsMovements.forEach((m) => {
+            if (!isActiveCostMovement(m)) return;
+            if (isMaterialMovement(m)) return;
+            const amount = Number(m.totalCost) || 0;
+            if (!(amount > 0)) return;
+
+            const resolved = resolveMovementPrinterId(m, printersCatalog);
+            if (!resolved || !activeIds.has(resolved)) return;
+
+            if (m.kind === 'purchase') {
+                purchased += amount;
+                return;
+            }
+            if (m.kind === 'engineer') {
+                used += amount;
+                return;
+            }
+            if (isProductionWriteoff(m)) {
+                used += amount;
+                economy += Number(m.economyAmount) || 0;
+                return;
+            }
+            if (isScrapMovement(m)) {
+                scrap += amount;
+            }
+        });
+
+        return {
+            purchaseCost: purchased,
+            usedCost: used,
+            scrapCost: scrap,
+            economyTotal: economy,
+        };
+    }, [analyticsMovements, printersCatalog, activeIds]);
 
     // Объём печати — не режем фильтром затрат; максимум 12 месяцев
     const allVolumeRows = useMemo(
-        () => buildPrintVolumeSeries(counterReadings),
-        [counterReadings]
+        () =>
+            buildPrintVolumeSeries(
+                analyticsReadings,
+                undefined,
+                undefined,
+                activeIds
+            ),
+        [analyticsReadings, activeIds]
     );
     const printVolumeRows = useMemo(
         () => allVolumeRows.slice(-12),
@@ -616,31 +688,31 @@ const AnalyticsPage = () => {
 
     const costSourceMovements = useMemo(() => {
         const byId = new Map<string, StockMovement>();
-        [...costMovements, ...movements].forEach((m) => {
+        [...analyticsCostMovements, ...analyticsMovements].forEach((m) => {
             if (m.id) byId.set(m.id, m);
         });
         return Array.from(byId.values());
-    }, [costMovements, movements]);
+    }, [analyticsCostMovements, analyticsMovements]);
 
     const usageExtraMovements = useMemo(
         () =>
             usageEventsToMovements(
-                usedPartsArray,
-                tonerHistory,
+                analyticsUsedParts,
+                analyticsTonerHistory,
                 costSourceMovements
             ),
-        [usedPartsArray, tonerHistory, costSourceMovements]
+        [analyticsUsedParts, analyticsTonerHistory, costSourceMovements]
     );
 
     const costMonthRows = useMemo(
         () =>
             buildPrinterMonthlyCosts(
-                printers.map((p) => ({ name: p.name, model: p.model })),
+                printerRefs,
                 costSourceMovements,
                 costMode,
                 costMode === 'used' ? usageExtraMovements : []
             ),
-        [printers, costSourceMovements, costMode, usageExtraMovements]
+        [printerRefs, costSourceMovements, costMode, usageExtraMovements]
     );
 
     const costChartHasData = useMemo(
@@ -648,24 +720,18 @@ const AnalyticsPage = () => {
         [costMonthRows]
     );
 
-    const costChartPrinters = useMemo(() => {
-        const names = new Set<string>();
-        printers.forEach((p) => {
-            if (p.name) names.add(p.name);
-        });
-        costMonthRows.forEach((row) => {
-            row.printers.forEach((p) => {
-                if (p.total > 0) names.add(p.name);
-            });
-        });
-        return Array.from(names)
-            .sort((a, b) => a.localeCompare(b, 'ru'))
-            .map((name, i) => ({
-                id: name,
-                name,
-                color: PRINTER_LINE_COLORS[i % PRINTER_LINE_COLORS.length],
-            }));
-    }, [printers, costMonthRows]);
+    const costChartPrinters = useMemo(
+        () =>
+            [...printers]
+                .sort((a, b) => a.name.localeCompare(b.name, 'ru'))
+                .map((p, i) => ({
+                    id: p.id,
+                    name: p.name,
+                    color:
+                        PRINTER_LINE_COLORS[i % PRINTER_LINE_COLORS.length],
+                })),
+        [printers]
+    );
 
     const toggleCostPrinter = (id: string) => {
         setHiddenCostPrinters((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -674,22 +740,22 @@ const AnalyticsPage = () => {
     };
 
     /** Оставить на обоих графиках только один принтер (или вернуть все) */
-    const focusPrinterOnCharts = (name: string) => {
-        if (focusedPrinter === name) {
+    const focusPrinterOnCharts = (printerId: string) => {
+        if (focusedPrinter === printerId) {
             setFocusedPrinter(null);
             setHiddenCostPrinters({});
             setHiddenVolumePrinters({});
             return;
         }
-        setFocusedPrinter(name);
+        setFocusedPrinter(printerId);
         const hiddenCost: Record<string, boolean> = {};
         costChartPrinters.forEach((p) => {
-            if (p.name !== name) hiddenCost[p.id] = true;
+            if (p.id !== printerId) hiddenCost[p.id] = true;
         });
         setHiddenCostPrinters(hiddenCost);
         const hiddenVolume: Record<string, boolean> = {};
         printVolumePrinters.forEach((p) => {
-            if (p.name !== name) hiddenVolume[p.id] = true;
+            if (p.id !== printerId) hiddenVolume[p.id] = true;
         });
         setHiddenVolumePrinters(hiddenVolume);
         setCostHoverTip(null);
@@ -697,32 +763,26 @@ const AnalyticsPage = () => {
     };
 
     const printerRows = useMemo(
-        () =>
-            buildPrinterAnalytics(
-                printers.map((p) => ({ name: p.name, model: p.model })),
-                movements
-            ),
-        [printers, movements]
+        () => buildPrinterAnalytics(printerRefs, analyticsMovements),
+        [printerRefs, analyticsMovements]
     );
 
     const tonerUnitsByPrinter = useMemo(
         () =>
             buildTonerUnits(
-                movements,
-                tonerHistory,
+                analyticsMovements,
+                analyticsTonerHistory,
                 startOfDayIso(from),
-                endOfDayIso(to)
+                endOfDayIso(to),
+                printerRefs
             ),
-        [movements, tonerHistory, from, to]
+        [analyticsMovements, analyticsTonerHistory, from, to, printerRefs]
     );
 
     const unattachedMovements = useMemo(
         () =>
-            collectUnattachedMovements(
-                printers.map((p) => ({ name: p.name, model: p.model })),
-                movements
-            ),
-        [printers, movements]
+            collectUnattachedMovements(printerRefs, analyticsMovements),
+        [printerRefs, analyticsMovements]
     );
     const unattachedTotal = useMemo(
         () =>
@@ -734,8 +794,13 @@ const AnalyticsPage = () => {
     );
 
     const materials = useMemo(
-        () => buildMaterialsSummary(movements, costSourceMovements, lots),
-        [movements, costSourceMovements, lots]
+        () =>
+            buildMaterialsSummary(
+                analyticsMovements,
+                costSourceMovements,
+                lots
+            ),
+        [analyticsMovements, costSourceMovements, lots]
     );
     const materialKinds = useMemo(
         () =>
@@ -755,7 +820,7 @@ const AnalyticsPage = () => {
 
     const selectedRow = useMemo(
         () =>
-            printerRows.find((r) => r.name === selectedPrinter) ||
+            printerRows.find((r) => r.printerId === selectedPrinter) ||
             printerRows[0] ||
             null,
         [printerRows, selectedPrinter]
@@ -769,22 +834,22 @@ const AnalyticsPage = () => {
     const costPurchaseMonthRows = useMemo(
         () =>
             buildPrinterMonthlyCosts(
-                printers.map((p) => ({ name: p.name, model: p.model })),
+                printerRefs,
                 costSourceMovements,
                 'purchase'
             ),
-        [printers, costSourceMovements]
+        [printerRefs, costSourceMovements]
     );
 
     const costUsedMonthRows = useMemo(
         () =>
             buildPrinterMonthlyCosts(
-                printers.map((p) => ({ name: p.name, model: p.model })),
+                printerRefs,
                 costSourceMovements,
                 'used',
                 usageExtraMovements
             ),
-        [printers, costSourceMovements, usageExtraMovements]
+        [printerRefs, costSourceMovements, usageExtraMovements]
     );
 
     useEffect(() => {
@@ -795,16 +860,17 @@ const AnalyticsPage = () => {
         void exportAnalyticsExcel({
             from,
             to,
+            printers,
             stockValue,
             printerRows,
             clickCosts,
             volumeRows: allVolumeRows.slice(-12),
             costPurchaseRows: costPurchaseMonthRows,
             costUsedRows: costUsedMonthRows,
-            movements,
-            counterReadings,
-            usedParts: usedPartsArray,
-            tonerHistory,
+            movements: analyticsMovements,
+            counterReadings: analyticsReadings,
+            usedParts: analyticsUsedParts,
+            tonerHistory: analyticsTonerHistory,
         }).catch((err) => {
             console.error(err);
             setError(
@@ -822,30 +888,27 @@ const AnalyticsPage = () => {
         allVolumeRows,
         costPurchaseMonthRows,
         costUsedMonthRows,
-        movements,
-        counterReadings,
-        usedPartsArray,
-        tonerHistory,
+        analyticsMovements,
+        analyticsReadings,
+        analyticsUsedParts,
+        analyticsTonerHistory,
+        printers,
     ]);
 
-    const movementMachines = useMemo(() => {
-        const set = new Set<string>();
-        printers.forEach((p) => {
-            if (p.name) set.add(p.name);
-        });
-        movements.forEach((m) => {
-            const name = (m.machine || '').trim();
-            if (name) set.add(name);
-        });
-        return Array.from(set).sort((a, b) => a.localeCompare(b, 'ru'));
-    }, [printers, movements]);
+    const movementPrinterOptions = useMemo(
+        () =>
+            [...printers]
+                .filter((p) => p.id && p.name)
+                .sort((a, b) => a.name.localeCompare(b.name, 'ru')),
+        [printers]
+    );
 
     const recentAll = useMemo(() => {
-        const list = [...movements].reverse();
+        const list = [...analyticsMovements].reverse();
         return list.filter((m) => {
             if (
                 movementsPrinterFilter &&
-                (m.machine || '').trim() !== movementsPrinterFilter
+                (m.printerId || '').trim() !== movementsPrinterFilter
             ) {
                 return false;
             }
@@ -857,10 +920,10 @@ const AnalyticsPage = () => {
             }
             return true;
         });
-    }, [movements, movementsPrinterFilter, movementsKindFilter]);
+    }, [analyticsMovements, movementsPrinterFilter, movementsKindFilter]);
 
-    const showMovementsFor = (name: string) => {
-        setMovementsPrinterFilter(name);
+    const showMovementsFor = (printerId: string) => {
+        setMovementsPrinterFilter(printerId);
         setMovementsKindFilter('');
         window.requestAnimationFrame(() => {
             movementsRef.current?.scrollIntoView({
@@ -1331,13 +1394,14 @@ const AnalyticsPage = () => {
                                 >
                                     {printerRows.map((row) => {
                                         const active =
-                                            selectedRow?.name === row.name;
+                                            selectedRow?.printerId ===
+                                            row.printerId;
                                         const units = tonerUnitsByPrinter.get(
-                                            row.name
+                                            row.printerId
                                         );
                                         return (
                                             <button
-                                                key={row.name}
+                                                key={row.printerId}
                                                 type="button"
                                                 role="tab"
                                                 aria-selected={active}
@@ -1348,7 +1412,7 @@ const AnalyticsPage = () => {
                                                 }`}
                                                 onClick={() =>
                                                     setSelectedPrinter(
-                                                        row.name
+                                                        row.printerId
                                                     )
                                                 }
                                             >
@@ -1418,18 +1482,18 @@ const AnalyticsPage = () => {
                                                     type="button"
                                                     className={`${cls.ghostBtn} ${
                                                         focusedPrinter ===
-                                                        selectedRow.name
+                                                        selectedRow.printerId
                                                             ? cls.ghostBtnActive
                                                             : ''
                                                     }`}
                                                     onClick={() =>
                                                         focusPrinterOnCharts(
-                                                            selectedRow.name
+                                                            selectedRow.printerId
                                                         )
                                                     }
                                                 >
                                                     {focusedPrinter ===
-                                                    selectedRow.name
+                                                    selectedRow.printerId
                                                         ? 'Все на графиках'
                                                         : 'Только этот на графиках'}
                                                 </button>
@@ -1438,7 +1502,7 @@ const AnalyticsPage = () => {
                                                     className={cls.ghostBtn}
                                                     onClick={() =>
                                                         showMovementsFor(
-                                                            selectedRow.name
+                                                            selectedRow.printerId
                                                         )
                                                     }
                                                 >
@@ -1454,7 +1518,7 @@ const AnalyticsPage = () => {
                                             );
                                             const units =
                                                 tonerUnitsByPrinter.get(
-                                                    selectedRow.name
+                                                    selectedRow.printerId
                                                 );
                                             return (
                                                 <div className={cls.tiles}>
@@ -1857,9 +1921,9 @@ const AnalyticsPage = () => {
                                     aria-label="Фильтр по аппарату"
                                 >
                                     <option value="">Все аппараты</option>
-                                    {movementMachines.map((name) => (
-                                        <option key={name} value={name}>
-                                            {name}
+                                    {movementPrinterOptions.map((p) => (
+                                        <option key={p.id} value={p.id}>
+                                            {p.name}
                                         </option>
                                     ))}
                                 </select>
@@ -1980,7 +2044,12 @@ const AnalyticsPage = () => {
                                                       )} ₽`
                                                     : '—'}
                                             </td>
-                                            <td>{m.machine || '—'}</td>
+                                            <td>
+                                                {displayMachineLabel(
+                                                    m,
+                                                    printers
+                                                )}
+                                            </td>
                                             <td>{m.man || '—'}</td>
                                         </tr>
                                     ))}

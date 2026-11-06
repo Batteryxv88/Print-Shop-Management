@@ -477,6 +477,77 @@
 
 @import '../../../app/styles/breakpoints/breakpoints';
 
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.55);
+}
+
+.modalCard {
+    max-width: 420px;
+    width: 100%;
+    padding: 20px;
+    border-radius: 12px;
+    background: var(--bg-secondary, #1e1e1e);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.modalTitle {
+    margin: 0 0 12px;
+    font-size: 1.1rem;
+}
+
+.modalText,
+.modalHint {
+    margin: 0 0 12px;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    opacity: 0.9;
+}
+
+.modalHint {
+    font-size: 0.82rem;
+    opacity: 0.75;
+}
+
+.modalActions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.modalPrimary,
+.modalSecondary,
+.modalGhost {
+    min-height: 40px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.modalPrimary {
+    background: #bb86fc;
+    color: #121212;
+}
+
+.modalSecondary {
+    background: rgba(255, 255, 255, 0.12);
+    color: inherit;
+}
+
+.modalGhost {
+    background: transparent;
+    color: inherit;
+    opacity: 0.8;
+}
+
 @include down(md) {
     .editor {
         padding: 12px 10px 20px;

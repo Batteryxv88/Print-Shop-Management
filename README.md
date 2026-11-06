@@ -80,6 +80,22 @@ npm run build:prod
 
 Готовые файлы — в папке `build/`.
 
+### Публикация
+
+| Площадка | URL (пример) | Сборка | Команда |
+|----------|--------------|--------|---------|
+| GitHub Pages | `https://batteryxv88.github.io/Print-Shop-Management/` | `PUBLIC_PATH=/Print-Shop-Management/` | `npm run deploy` |
+| Firebase Hosting | `https://sl-sandbox-b84b3.web.app` | `PUBLIC_PATH=/` | `npm run deploy:firebase` |
+
+**Firebase Hosting (локально):**
+
+1. Один раз: `npm install`, затем `npx firebase login` (CLI из `firebase-tools`).
+2. В [Firebase Console](https://console.firebase.google.com) → **Build → Hosting** включите Hosting для проекта `sl-sandbox-b84b3`.
+3. **Authentication → Settings → Authorized domains** — добавьте `sl-sandbox-b84b3.web.app` и `sl-sandbox-b84b3.firebaseapp.com` (GitHub Pages домен оставьте, если нужен).
+4. `npm run deploy:firebase`
+
+**CI:** workflow [`.github/workflows/deploy-firebase-hosting.yml`](./.github/workflows/deploy-firebase-hosting.yml) — секрет репозитория `FIREBASE_SERVICE_ACCOUNT` (JSON сервисного аккаунта с правом деплоя Hosting). Без секрета job упадёт; локальный деплой не требует секрета.
+
 ---
 
 ## Роли
@@ -131,7 +147,10 @@ snmp-agent/      # Windows-агент снятия счётчиков по SNMP
 | Команда | Описание |
 |---------|----------|
 | `npm start` | Dev-сервер |
-| `npm run build:prod` | Продакшен-сборка |
+| `npm run build:prod` | Продакшен-сборка (путь как для GitHub Pages по умолчанию) |
+| `npm run build:pages` | Сборка под GitHub Pages |
+| `npm run build:firebase` | Сборка под Firebase Hosting (`/`) |
+| `npm run deploy:firebase` | Сборка + `firebase deploy --only hosting` |
 | `npm run build:dev` | Dev-сборка |
 | `cd snmp-agent && npm run once` | Разовое снятие счётчиков |
 

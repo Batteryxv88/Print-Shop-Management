@@ -49,6 +49,7 @@ export type Toner = {
     counter?: number | string;
     date: string;
     machine?: string;
+    printerId?: string;
     totalCost?: number;
     unitPriceAvg?: number;
     movementId?: string;

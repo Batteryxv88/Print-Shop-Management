@@ -23,10 +23,13 @@ import {
 } from '../counterReading/buildPrintVolume';
 import type { PrinterCostMonthRow } from './buildPrinterMonthlyCosts';
 import { excelSheetName } from '../printers/printerUtils';
+import type { Printer } from '../../../services/printers';
+import { getPrinterNameById } from '../printers/printerIdentity';
 
 type UsedPartRow = {
     id: string;
     part: {
+        printerId?: string;
         machine?: string;
         partName?: string;
         partN?: string;
@@ -43,6 +46,7 @@ type UsedPartRow = {
 type TonerHistRow = {
     id: string;
     toner: {
+        printerId?: string;
         machine?: string;
         color?: string;
         counter?: number | string;
@@ -190,9 +194,23 @@ const nextOriginRow = (sheet: XLSX.WorkSheet): number => {
     return XLSX.utils.decode_range(ref).e.r + 1;
 };
 
+const printerLabel = (
+    printers: Printer[],
+    printerId?: string,
+    machineFallback?: string
+): string => {
+    const id = (printerId || '').trim();
+    if (id) {
+        const name = getPrinterNameById(printers, id);
+        if (name) return name;
+    }
+    return (machineFallback || '').trim();
+};
+
 export type AnalyticsExportInput = {
     from: string;
     to: string;
+    printers: Printer[];
     stockValue: number;
     printerRows: PrinterAnalyticsRow[];
     clickCosts: ClickCostRow[];
@@ -208,6 +226,7 @@ export type AnalyticsExportInput = {
 /** Расширенный Excel аналитики с диаграммами на тех же листах */
 export const exportAnalyticsExcel = async (input: AnalyticsExportInput) => {
     const wb = XLSX.utils.book_new();
+    const { printers } = input;
     const periodLabel = `${input.from} — ${input.to}`;
     const charts: ChartSpec[] = [];
 
@@ -605,7 +624,7 @@ export const exportAnalyticsExcel = async (input: AnalyticsExportInput) => {
             'Кол-во': m.qty,
             'Сумма ₽': money(Number(m.totalCost) || 0),
             'Экономия ₽': money(Number(m.economyAmount) || 0),
-            'Аппарат': m.machine || '',
+            'Аппарат': printerLabel(printers, m.printerId, m.machine),
             'Кто': m.man || '',
             'Поставщик': m.supplier || '',
         })),
@@ -661,7 +680,11 @@ export const exportAnalyticsExcel = async (input: AnalyticsExportInput) => {
         input.usedParts
             .filter((p) => inRange(p.part.date))
             .map((p) => ({
-                'Аппарат': p.part.machine || '',
+                'Аппарат': printerLabel(
+                    printers,
+                    p.part.printerId,
+                    p.part.machine
+                ),
                 'Наименование': p.part.partName || '',
                 'Артикул': p.part.partN || '',
                 'Кол-во': p.part.quantity ?? '',
@@ -682,7 +705,11 @@ export const exportAnalyticsExcel = async (input: AnalyticsExportInput) => {
         input.tonerHistory
             .filter((t) => inRange(t.toner.date))
             .map((t) => ({
-                'Аппарат': t.toner.machine || '',
+                'Аппарат': printerLabel(
+                    printers,
+                    t.toner.printerId,
+                    t.toner.machine
+                ),
                 'Цвет': t.toner.color || '',
                 'Счётчик': t.toner.counter ?? '',
                 'Сумма ₽': money(Number(t.toner.totalCost) || 0),

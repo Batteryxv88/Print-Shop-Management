@@ -44,7 +44,8 @@ export const periodOverlapsDateRange = (
 export const buildPrintVolumeSeries = (
     readings: CounterReadingRecord[],
     from?: string,
-    to?: string
+    to?: string,
+    activePrinterIds?: Set<string>
 ): PrintVolumeMonthRow[] => {
     const sorted = [...readings].sort((a, b) =>
         a.periodKey.localeCompare(b.periodKey)
@@ -66,6 +67,9 @@ export const buildPrintVolumeSeries = (
         const points: PrintVolumePrinterPoint[] = [];
 
         (curr.printers || []).forEach((p) => {
+            if (activePrinterIds && !activePrinterIds.has(p.printerId)) {
+                return;
+            }
             const before = prevMap.get(p.printerId);
             const volume = diffCounterValues(
                 p.values,
