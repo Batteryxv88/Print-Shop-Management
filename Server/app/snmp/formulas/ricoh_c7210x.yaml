@@ -1,0 +1,61 @@
+# Ricoh Pro C7210X, контроллер E-46A.
+# Сверено с панелью 192.168.88.119 (2026-11-05):
+#   Цвет 3966887 = type 608, не type 600 Full Color.
+#   Ч/Б 1150315 = type 609, не type 601 Monocolor.
+#   5-й цвет 13849 = type 2001 Fifth Station Total, не type 2007 Development.
+#   Всего = type 10 и скаляр .19.1.0.
+# Индекс строки (.9.13 и т.д.) на другой прошивке может съехать — берём type.
+id: ricoh_c7210x
+title: Ricoh Pro C7210X
+order: 4
+profile: ricoh
+detect:
+  - C7210
+require:
+  - total
+  - color
+  - black
+unmapped: счётчики C7210X ещё не сопоставлены
+
+snmp:
+  table: 1.3.6.1.4.1.367.3.2.1.2.19.5.1
+  type_column: 1.3.6.1.4.1.367.3.2.1.2.19.5.1.2
+  name_column: 1.3.6.1.4.1.367.3.2.1.2.19.5.1.5
+  value_column: 1.3.6.1.4.1.367.3.2.1.2.19.5.1.9
+  total:
+    type: 10
+    name: "Counter: Machine Total"
+    scalar: 1.3.6.1.4.1.367.3.2.1.2.19.1.0
+    example_oid: 1.3.6.1.4.1.367.3.2.1.2.19.5.1.9.1
+  color:
+    type: 608
+    name: "Total Prints: Color"
+    example_oid: 1.3.6.1.4.1.367.3.2.1.2.19.5.1.9.13
+  black:
+    type: 609
+    name: "Total Prints: Black & White"
+    example_oid: 1.3.6.1.4.1.367.3.2.1.2.19.5.1.9.14
+  fifth_color:
+    type: 2001
+    name: "Counter: Fifth Station Total"
+    example_oid: 1.3.6.1.4.1.367.3.2.1.2.19.5.1.9.41
+
+billing:
+  - key: total
+    label: Всего
+    rule: counter_type
+    type: 10
+    fallback_metric: total
+  - key: color
+    label: Цвет
+    rule: counter_type
+    type: 608
+  - key: black
+    label: Ч/Б
+    rule: counter_type
+    type: 609
+  - key: fifth_color
+    label: 5-й цвет
+    rule: counter_type
+    type: 2001
+    optional: true

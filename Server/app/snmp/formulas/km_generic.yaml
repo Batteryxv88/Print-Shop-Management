@@ -1,0 +1,34 @@
+# Konica без отдельной формулы (C14000, C2060L, Label и остальные).
+# Те же подписи, что у C3070: Всего / Ч/Б / Цвет. Математика C6100 сюда не применяется.
+id: km_generic
+title: Konica (общая, не C3070/C6100)
+order: 5
+profile: konica_minolta
+detect_profile: konica_minolta
+
+snmp:
+  total:
+    oid: 1.3.6.1.4.1.18334.1.1.1.5.7.2.1.1.0
+    name: mltSysTotalCount
+  black:
+    name: Ч/Б, сумма функций цвета 1 (BW)
+    color_index: 1
+    value_column: 1.3.6.1.4.1.18334.1.1.1.5.7.2.2.1.5
+  color:
+    name: Цвет, сумма функций цвета 2 (4C)
+    color_index: 2
+    value_column: 1.3.6.1.4.1.18334.1.1.1.5.7.2.2.1.5
+
+billing:
+  - key: total
+    label: Всего
+    rule: label
+    match: Всего
+  - key: color
+    label: Цвет
+    rule: label
+    match: Цвет
+  - key: black
+    label: Ч/Б
+    rule: label
+    match: Ч/Б

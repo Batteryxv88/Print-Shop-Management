@@ -2,7 +2,7 @@
 
 Внутренняя система учёта для типографии (этикетка / цифровая печать): склад расходников, журнал обслуживания принтеров, счётчики, аналитика затрат и цеховые инструменты.
 
-Стек: **React + TypeScript + Redux Toolkit + Firebase (Firestore/Auth)** + опциональный **Appwrite (self-hosted, в подготовке)** + **Windows SNMP-агент**.
+Стек: **React + TypeScript + Redux Toolkit + Firebase (Firestore/Auth)** + опциональный **Appwrite (self-hosted, в подготовке)** + **Windows-приложение сбора счётчиков по SNMP** ([`Server/`](./Server)).
 
 ---
 
@@ -39,8 +39,10 @@
 - Ротация (раскладка этикетки)
 - Поиск сервисных кодов ошибок по машинам
 
-### SNMP-агент (Windows)
-Папка [`snmp-agent/`](./snmp-agent) — локальная программа: в заданный день снимает счётчики с принтеров по SNMP и пишет в Firestore. Подробности в [`snmp-agent/README.md`](./snmp-agent/README.md).
+### Сбор счётчиков по SNMP (Windows)
+Папка [`Server/`](./Server) — desktop-приложение **PrinterCounterCollector**: опрашивает принтеры по SNMP, хранит снимки локально и отправляет показания в Firestore (`CounterReadings`). Подробности в [`Server/README.md`](./Server/README.md).
+
+Папка [`snmp-agent/`](./snmp-agent) — прежний Node-агент. Для ежедневного сбора его запускать не нужно.
 
 ---
 
@@ -124,21 +126,23 @@ src/
   config/        # DATA_BACKEND и т.п.
   shared/        # UI-киты, утилиты, стили
 appwrite/        # Docker + npm run setup (коллекции под Firestore)
-snmp-agent/      # Windows-агент снятия счётчиков по SNMP
+Server/          # Windows-приложение сбора счётчиков по SNMP
+snmp-agent/      # прежний Node-агент, для ежедневного сбора не используется
 ```
 
 ---
 
-## SNMP-агент (кратко)
+## Сбор счётчиков (кратко)
 
-1. Заполните **IP** принтеров в админке.
+Приложение лежит в [`Server/`](./Server).
+
+1. Заполните **IP** принтеров в админке (**Принтеры**).
 2. Задайте **день снятия** счётчиков.
-3. Скачайте service account JSON из Firebase → `snmp-agent/serviceAccountKey.json`.
-4. Скопируйте `snmp-agent/config.example.json` → `config.json`.
-5. `cd snmp-agent && npm install && npm run dry-run`
-6. Установите задание Планировщика: `scripts/install-task.ps1`
+3. Скачайте service account JSON из Firebase и укажите путь к нему в настройках приложения. Файл не коммитьте.
+4. Из `Server`: `python -m venv .venv`, затем `pip install -r requirements.txt` и `python run.py`.
+5. На вкладке «Принтеры» загрузите список из Firestore и проверьте SNMP.
 
-Не коммитьте `serviceAccountKey.json` и `config.json` — они в `.gitignore`.
+Сборка exe: `Server/build.bat`. Готовый файл появляется в `dist/` и в git не входит.
 
 ---
 
@@ -152,14 +156,14 @@ snmp-agent/      # Windows-агент снятия счётчиков по SNMP
 | `npm run build:firebase` | Сборка под Firebase Hosting (`/`) |
 | `npm run deploy:firebase` | Сборка + `firebase deploy --only hosting` |
 | `npm run build:dev` | Dev-сборка |
-| `cd snmp-agent && npm run once` | Разовое снятие счётчиков |
+| `cd Server && python run.py` | Сборщик счётчиков по SNMP |
 
 ---
 
 ## Безопасность
 
 - Клиентский конфиг Firebase в репозитории — нормальная практика для веб-приложений; доступ ограничивайте **Firestore Security Rules** и Auth.
-- Ключ сервисного аккаунта агента — секрет, только на ПК в цехе.
+- Ключ сервисного аккаунта сборщика — секрет, только на ПК в цехе.
 - Файл `.env` (если используете) не должен содержать приватные ключи.
 
 ---

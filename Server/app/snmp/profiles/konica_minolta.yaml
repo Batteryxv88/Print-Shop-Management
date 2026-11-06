@@ -1,0 +1,107 @@
+# AccurioPress C6100 / C14000, AccurioPrint C3070L / C2060L,
+# AccurioLabel 190 / 230 / 400 — одно дерево Konica 18334
+# (старые Minolta — то же дерево под 2590, второй набор колонок ниже).
+# Отдельные профили не нужны: цветовой индекс задаёт enum, а не «магический» лист.
+# MIB mltSysPrintFunctionCounterTable (MC2350 / enterprise 2590 = 18334.1.1.1.5.7.2.2):
+#   value  .2.1.5.<color>.<function>
+#   color  1=BW, 2=4C Full Color, 3=3C, 4=CMY (1 цвет), 5=RGB, 6=сумма 3+4+5
+#   function 1=copy, 2=printer, 3=receive, 4=fax, 5=reportPrint
+# Панель Total / Full Color / Black — это сумма функций для BW и только для 4C.
+# Прежние .5.1.2 и .5.2.2 — лишь функция printer, поэтому Ч/Б и цвет
+# чуть расходились с панелью. .5.4 (CMY/2-color) в «Цвет» не входит.
+# Total .1.1.0 (mltSysTotalCount) оставлен: он уже совпадает с панелью.
+# https://mibbrowser.online/mibdb_search.php?mib=MC2350-MIB
+id: konica_minolta
+display_name: Konica Minolta Accurio (Press / Print / Label)
+enterprise_ids:
+  - "18334"
+  - "2590"
+collect_printer_mib_supplies: false
+component_filter:
+  exclude_keywords:
+    - toner
+    - ink
+    - staple
+    - waste
+    - bottle
+    - cartridge
+    - powder
+  include_keywords:
+    - drum
+    - belt
+    - fuser
+    - developer
+    - charge
+    - roller
+    - opc
+    - photoconductor
+    - transfer
+    - fixing
+    - cleaning
+    - blade
+    - unit
+    - life
+    - maintenance
+counter_walks:
+  - id: km_print_function
+    mapper: konica_print_function
+    max_rows: 80
+    preserve_keys:
+      - total
+    columns:
+      - value_oid: 1.3.6.1.4.1.18334.1.1.1.5.7.2.2.1.5
+        color_type_oid: 1.3.6.1.4.1.18334.1.1.1.5.7.2.2.1.3
+        function_type_oid: 1.3.6.1.4.1.18334.1.1.1.5.7.2.2.1.4
+      - value_oid: 1.3.6.1.4.1.2590.1.1.1.5.7.2.2.1.5
+        color_type_oid: 1.3.6.1.4.1.2590.1.1.1.5.7.2.2.1.3
+        function_type_oid: 1.3.6.1.4.1.2590.1.1.1.5.7.2.2.1.4
+metrics:
+  - key: sys_name
+    oid: 1.3.6.1.2.1.1.5.0
+    label: Имя устройства
+    category: info
+  - key: total
+    oid: 1.3.6.1.4.1.18334.1.1.1.5.7.2.1.1.0
+    label: Всего
+    category: counter
+  - key: duplex_total
+    oid: 1.3.6.1.4.1.18334.1.1.1.5.7.2.1.3.0
+    label: Дуплекс
+    category: counter
+    optional: true
+  - key: originals
+    oid: 1.3.6.1.4.1.18334.1.1.1.5.7.2.1.8.0
+    label: Оригиналы
+    category: counter
+    optional: true
+  - key: prints
+    oid: 1.3.6.1.4.1.18334.1.1.1.5.7.2.1.9.0
+    label: Отпечатки
+    category: counter
+    optional: true
+  # Запас, если таблица недоступна: copy+print только BW и только 4C, без CMY.
+  - key: copy_bw
+    oid: 1.3.6.1.4.1.18334.1.1.1.5.7.2.2.1.5.1.1
+    label: Ч/Б, только копия
+    category: counter
+    optional: true
+  - key: print_bw
+    oid: 1.3.6.1.4.1.18334.1.1.1.5.7.2.2.1.5.1.2
+    label: Ч/Б, только печать
+    category: counter
+    optional: true
+  - key: copy_full
+    oid: 1.3.6.1.4.1.18334.1.1.1.5.7.2.2.1.5.2.1
+    label: Полный цвет, только копия
+    category: counter
+    optional: true
+  - key: print_full
+    oid: 1.3.6.1.4.1.18334.1.1.1.5.7.2.2.1.5.2.2
+    label: Полный цвет, только печать
+    category: counter
+    optional: true
+  - key: total_fallback
+    oid: 1.3.6.1.2.1.43.10.2.1.4.1.1
+    label: Общий счётчик (Printer-MIB fallback)
+    category: counter
+    optional: true

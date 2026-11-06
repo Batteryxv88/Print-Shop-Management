@@ -1,0 +1,29 @@
+# Ricoh Pro 8210 — монохром. Один счётчик Ч/Б, он же Всего. Цвета нет.
+id: ricoh_8210
+title: Ricoh Pro 8210
+order: 3
+profile: ricoh
+detect:
+  - "(?<!\\d)8210(?!\\d)"
+
+snmp:
+  total:
+    oid: 1.3.6.1.4.1.367.3.2.1.2.19.1.0
+    name: ricohEngCounterTotal
+  black:
+    table: 1.3.6.1.4.1.367.3.2.1.2.19.5.1
+    type_column: 1.3.6.1.4.1.367.3.2.1.2.19.5.1.2
+    value_column: 1.3.6.1.4.1.367.3.2.1.2.19.5.1.9
+    type: 609
+    name: "Total Prints: Black & White"
+
+billing:
+  - key: black
+    label: Ч/Б
+    rule: label
+    match: Ч/Б
+    fallback_match: Всего
+  - key: total
+    label: Всего
+    rule: copy
+    from: black

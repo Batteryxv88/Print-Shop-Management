@@ -1,0 +1,21 @@
+# Профиль без модели. Всего / Ч/Б / Цвет по подписям, если они есть.
+id: generic
+title: Общая (без формулы модели)
+order: 6
+profile: generic
+
+snmp: {}
+
+billing:
+  - key: total
+    label: Всего
+    rule: label
+    match: Всего
+  - key: color
+    label: Цвет
+    rule: label
+    match: Цвет
+  - key: black
+    label: Ч/Б
+    rule: label
+    match: Ч/Б

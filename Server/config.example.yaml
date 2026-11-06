@@ -1,0 +1,30 @@
+snmp:
+  default_community: public
+  timeout_sec: 5
+  retries: 2
+  # SNMP v3 (этап 3 — пока не используется приложением):
+  # v3_user: ""
+  # v3_auth_key: ""
+  # v3_priv_key: ""
+  # v3_auth_protocol: SHA
+  # v3_priv_protocol: AES
+
+schedule:
+  enabled: false
+  mode: monthly  # daily | monthly
+  time: "08:00"  # локальное время Windows
+
+retry:
+  enabled: false
+  day_start: "07:00"  # локальное время, начало окна почасового повтора
+  day_end: "22:00"    # конец окна (включительно, по часам)
+
+firebase:
+  enabled: false
+  project_id: "sl-sandbox-b84b3"
+  credentials_path: ""
+  site_id: default  # не используется в SL; зарезервировано
+  agent_user_id: snmp-desktop-collector
+  agent_user_name: SNMP Desktop
+
+database_path: data/collector.db

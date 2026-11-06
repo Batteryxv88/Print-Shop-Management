@@ -1,0 +1,12 @@
+data/*.db
+data/config.yaml
+data/*.txt
+build/
+dist/
+dist*/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+*.log

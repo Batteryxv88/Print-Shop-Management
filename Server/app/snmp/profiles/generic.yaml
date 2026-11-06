@@ -1,0 +1,32 @@
+id: generic
+display_name: Generic Printer-MIB
+enterprise_ids: []
+collect_printer_mib_supplies: false
+component_filter:
+  exclude_keywords:
+    - toner
+    - ink
+    - staple
+    - waste
+    - bottle
+metrics:
+  - key: sys_name
+    oid: 1.3.6.1.2.1.1.5.0
+    label: Имя устройства
+    category: info
+  - key: sys_descr
+    oid: 1.3.6.1.2.1.1.1.0
+    label: Описание
+    category: info
+  - key: printer_name
+    oid: 1.3.6.1.2.1.43.5.1.1.16.1
+    label: Имя принтера
+    category: info
+  - key: serial_number
+    oid: 1.3.6.1.2.1.43.5.1.1.17.1
+    label: Серийный номер
+    category: info
+  - key: total
+    oid: 1.3.6.1.2.1.43.10.2.1.4.1.1
+    label: Общий счётчик (life count)
+    category: counter
