@@ -2,7 +2,14 @@ import unittest
 from datetime import datetime
 
 from app.models import Printer
-from app.sync.period import get_active_period_key, to_period_key
+from app.sync.period import (
+    get_active_period_key,
+    period_key_from_date_key,
+    resolve_daily_collect_reason,
+    to_date_key,
+    to_period_key,
+    today_date_key,
+)
 from app.sync.sl_mapping import (
     billing_to_sl_values,
     local_color_mode_from_sl,
@@ -25,6 +32,17 @@ class TestPeriodKey(unittest.TestCase):
 
     def test_to_period_key(self) -> None:
         self.assertEqual(to_period_key(2026, 1), "2026-01")
+
+    def test_today_date_key(self) -> None:
+        now = datetime(2026, 11, 12, 13, 30, 0)
+        self.assertEqual(today_date_key(now), "2026-11-12")
+        self.assertEqual(to_date_key(2026, 1, 5), "2026-01-05")
+        self.assertEqual(period_key_from_date_key("2026-11-12"), "2026-11")
+
+    def test_daily_collect_reason(self) -> None:
+        self.assertEqual(resolve_daily_collect_reason(existing=False), "due")
+        self.assertEqual(resolve_daily_collect_reason(existing=True), "update-existing")
+        self.assertEqual(resolve_daily_collect_reason(existing=True, force=True), "force")
 
 
 class TestSlMapping(unittest.TestCase):
@@ -90,6 +108,141 @@ class TestCloudPrinterUpsert(unittest.TestCase):
             assert p2 is not None
             self.assertFalse(p2.enabled)
             db.close()
+
+
+class _FakeSlFirestore:
+    def __init__(self) -> None:
+        self.docs: dict[str, dict] = {}
+        self.created: list[str] = []
+        self.updated: list[str] = []
+
+    def resolve_period_to_collect(self, force: bool = False):
+        from app.sync.period import (
+            period_key_from_date_key,
+            resolve_daily_collect_reason,
+            today_date_key,
+        )
+        from app.sync.sl_firestore import PeriodCollectPlan
+
+        date_key = today_date_key()
+        existing = date_key in self.docs
+        return PeriodCollectPlan(
+            date_key=date_key,
+            period_key=period_key_from_date_key(date_key),
+            counter_reading_day=6,
+            reason=resolve_daily_collect_reason(existing=existing, force=force),
+        )
+
+    def fetch_counter_reading(self, date_key: str):
+        return self.docs.get(date_key)
+
+    def create_counter_reading(self, date_key, printers, user_id, user_name, note=""):
+        self.docs[date_key] = {
+            "id": date_key,
+            "dateKey": date_key,
+            "periodKey": date_key[:7],
+            "printers": printers,
+            "userId": user_id,
+            "userName": user_name,
+            "note": note,
+        }
+        self.created.append(date_key)
+
+    def update_counter_reading(self, date_key, printers, user_name, note=""):
+        self.docs[date_key]["printers"] = printers
+        self.docs[date_key]["note"] = note
+        self.updated.append(date_key)
+
+
+class TestDailyFirestorePush(unittest.TestCase):
+    def test_creates_today_date_key_document(self) -> None:
+        from pathlib import Path
+        import tempfile
+
+        from app.config import FirebaseConfig
+        from app.storage.db import Database
+        from app.sync.firestore_stub import FirestoreBackend
+        from app.sync.period import today_date_key
+
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Database(Path(tmp) / "t.db")
+            db.upsert_printer_from_cloud(
+                firestore_id="p1",
+                name="KM-1",
+                host="192.168.0.10",
+                model="C3070",
+                profile_id="konica_minolta",
+                counter_preset="generic",
+                color_mode="color",
+                default_community="public",
+            )
+            printer = db.get_printer_by_firestore_id("p1")
+            assert printer is not None and printer.id is not None
+            db.add_reading(printer.id, "daily", "ok", {"total": 100, "black": 40, "color": 60})
+
+            backend = FirestoreBackend(
+                db,
+                FirebaseConfig(enabled=True, project_id="test", agent_user_name="SNMP Desktop"),
+            )
+            fake = _FakeSlFirestore()
+            backend._fs = fake
+            result = backend.push_monthly_counter_reading(force=False)
+            db.close()
+
+        today = today_date_key()
+        self.assertTrue(result.success)
+        self.assertEqual(result.state, "sent")
+        self.assertIn(today, result.message)
+        self.assertEqual(fake.created, [today])
+        self.assertEqual(fake.docs[today]["dateKey"], today)
+        self.assertEqual(fake.docs[today]["periodKey"], today[:7])
+        self.assertEqual(fake.docs[today]["printers"][0]["printerId"], "p1")
+
+    def test_updates_existing_today_document(self) -> None:
+        from pathlib import Path
+        import tempfile
+
+        from app.config import FirebaseConfig
+        from app.storage.db import Database
+        from app.sync.firestore_stub import FirestoreBackend
+        from app.sync.period import today_date_key
+
+        today = today_date_key()
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Database(Path(tmp) / "t.db")
+            db.upsert_printer_from_cloud(
+                firestore_id="p1",
+                name="KM-1",
+                host="192.168.0.10",
+                model="C3070",
+                profile_id="konica_minolta",
+                counter_preset="generic",
+                color_mode="color",
+                default_community="public",
+            )
+            printer = db.get_printer_by_firestore_id("p1")
+            assert printer is not None and printer.id is not None
+            db.add_reading(printer.id, "daily", "ok", {"total": 200, "black": 80, "color": 120})
+
+            backend = FirestoreBackend(
+                db,
+                FirebaseConfig(enabled=True, project_id="test", agent_user_name="SNMP Desktop"),
+            )
+            fake = _FakeSlFirestore()
+            fake.docs[today] = {
+                "id": today,
+                "dateKey": today,
+                "printers": [{"printerId": "p1", "printerName": "KM-1", "values": {"total": 1}}],
+            }
+            backend._fs = fake
+            result = backend.push_monthly_counter_reading(force=False)
+            db.close()
+
+        self.assertTrue(result.success)
+        self.assertEqual(fake.updated, [today])
+        self.assertEqual(fake.created, [])
+        self.assertEqual(fake.docs[today]["printers"][0]["printerId"], "p1")
+        self.assertIn("values", fake.docs[today]["printers"][0])
 
 
 if __name__ == "__main__":

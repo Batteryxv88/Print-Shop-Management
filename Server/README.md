@@ -41,7 +41,7 @@ python run.py
 - История снимков, экспорт CSV
 - **Узлы (барабаны, ролики)**: SNMP walk по Printer-MIB с фильтром в YAML (`component_filter` — без тонера/скрепок); секция «Узлы» в истории
 - **Редактирование принтеров**: IP, профиль OID, community, вкл/выкл сбора
-- Синхронизация с SL: загрузка `Printers`, отправка `CounterReadings/{YYYY-MM}`
+- Синхронизация с SL: загрузка `Printers`, отправка `CounterReadings/{YYYY-MM-DD}`
 
 ## SNMP на принтере
 
@@ -65,17 +65,17 @@ Desktop-приложение подключается к тому же прое�
 | Firestore | Назначение |
 |-----------|------------|
 | `Printers/{id}` | IP и имя правятся в веб-админке SL |
-| `CounterReadings/{YYYY-MM}` | месячные показания (массив `printers[]`) |
-| `AppSettings/main` | `counterReadingDay` — день снятия |
+| `CounterReadings/{YYYY-MM-DD}` | дневные показания (`dateKey`, `periodKey`, массив `printers[]`) |
+| `AppSettings/main` | `counterReadingDay` — день напоминания в веб-SL |
 
 **Настройки:** `project_id` (например `sl-sandbox-b84b3`), путь к **service account JSON**, `agent_user_id` / `agent_user_name`.
 
 **Рабочий процесс:**
 
-1. В SL задайте IP принтеров и день снятия.
+1. В SL задайте IP принтеров.
 2. В desktop: «Загрузить из Firestore» на вкладке «Принтеры».
 3. SNMP-снимки копятся локально в SQLite.
-4. «Отправить показания за период» (или автоматически после месячного сбора) создаёт документ `CounterReadings/{periodKey}`, если его ещё нет.
+4. «Снять сейчас» и «Отправить показания за сегодня» пишут (или обновляют) документ `CounterReadings/{YYYY-MM-DD}` с полем `dateKey` — тот же формат, что ручное сохранение в журнале.
 
 Прежний Node-агент [`snmp-agent`](../snmp-agent) можно не запускать: его роль выполняет это приложение.
 

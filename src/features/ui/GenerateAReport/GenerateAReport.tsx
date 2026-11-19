@@ -552,10 +552,7 @@ const GenerateAReport = () => {
                                   </option>
                               ))
                             : (
-                                <>
-                                    <option value={"C71cf"}>C71cf</option>
-                                    <option value={"Label 190"}>Label 190</option>
-                                </>
+                                <option value="">Нет принтеров</option>
                               )}
                     </select>
                 </div>

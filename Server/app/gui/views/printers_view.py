@@ -353,7 +353,7 @@ class PrintersView(ctk.CTkFrame):
                 if single_name:
                     printer = next((p for p in self.db.list_printers() if p.name == single_name), None)
                     if printer:
-                        self.collector._collect_one(printer, self.collector.config.schedule.mode)
+                        self.collector.collect_one_and_sync(printer)
                         self.after(0, lambda: self.progress.set(1))
                 else:
                     fn(on_progress=on_progress)

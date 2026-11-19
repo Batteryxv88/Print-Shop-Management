@@ -14,6 +14,12 @@ export type AppSettings = {
     laminationStockEnabled: boolean;
     /** Режим склада бумаги: лист / рулон / оба */
     paperFormMode: PaperFormMode;
+    /** Раздел «Калькулятор» */
+    calculatorEnabled: boolean;
+    /** Раздел «Ротация» */
+    rotationEnabled: boolean;
+    /** Раздел «Сервис инструкции» */
+    manualsEnabled: boolean;
 };
 
 const DEFAULTS: AppSettings = {
@@ -21,7 +27,13 @@ const DEFAULTS: AppSettings = {
     paperStockEnabled: true,
     laminationStockEnabled: true,
     paperFormMode: 'both',
+    calculatorEnabled: true,
+    rotationEnabled: true,
+    manualsEnabled: true,
 };
+
+const flag = (raw: unknown, fallback: boolean): boolean =>
+    raw === undefined ? fallback : Boolean(raw);
 
 const normalizePaperFormMode = (raw: unknown): PaperFormMode => {
     if (raw === 'sheet' || raw === 'roll' || raw === 'both') return raw;
@@ -36,15 +48,21 @@ export const fetchAppSettings = async (): Promise<AppSettings> => {
     return {
         counterReadingDay:
             Number.isFinite(day) && day >= 1 && day <= 31 ? day : null,
-        paperStockEnabled:
-            data.paperStockEnabled === undefined
-                ? DEFAULTS.paperStockEnabled
-                : Boolean(data.paperStockEnabled),
-        laminationStockEnabled:
-            data.laminationStockEnabled === undefined
-                ? DEFAULTS.laminationStockEnabled
-                : Boolean(data.laminationStockEnabled),
+        paperStockEnabled: flag(
+            data.paperStockEnabled,
+            DEFAULTS.paperStockEnabled
+        ),
+        laminationStockEnabled: flag(
+            data.laminationStockEnabled,
+            DEFAULTS.laminationStockEnabled
+        ),
         paperFormMode: normalizePaperFormMode(data.paperFormMode),
+        calculatorEnabled: flag(
+            data.calculatorEnabled,
+            DEFAULTS.calculatorEnabled
+        ),
+        rotationEnabled: flag(data.rotationEnabled, DEFAULTS.rotationEnabled),
+        manualsEnabled: flag(data.manualsEnabled, DEFAULTS.manualsEnabled),
     };
 };
 
@@ -65,6 +83,9 @@ export const saveAppSettings = async (
     next.paperFormMode = normalizePaperFormMode(next.paperFormMode);
     next.paperStockEnabled = Boolean(next.paperStockEnabled);
     next.laminationStockEnabled = Boolean(next.laminationStockEnabled);
+    next.calculatorEnabled = Boolean(next.calculatorEnabled);
+    next.rotationEnabled = Boolean(next.rotationEnabled);
+    next.manualsEnabled = Boolean(next.manualsEnabled);
 
     await setDoc(SETTINGS_DOC, next, { merge: true });
     return next;

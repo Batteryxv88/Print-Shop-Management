@@ -82,6 +82,15 @@ class CollectorService:
         self._sync.push_reading(dto)
         return printer, rid, status
 
+    def collect_one_and_sync(self, printer: Printer) -> tuple[Printer, int | None, str | None]:
+        period = self.config.schedule.mode
+        if period not in ("daily", "monthly"):
+            period = "daily"
+        result = self._collect_one(printer, period)
+        if self.config.firebase.enabled and result[2] in ("ok", "partial"):
+            self.try_push_monthly_sl_sync(force=False)
+        return result
+
     def collect_all(
         self,
         period_type: str | None = None,
@@ -107,7 +116,9 @@ class CollectorService:
                 if on_progress:
                     on_progress(printer.name, done, total)
                 results.append((printer, rid, status))
-        if self.config.firebase.enabled and period == "monthly":
+        if self.config.firebase.enabled and any(
+            status in ("ok", "partial") for _, _, status in results
+        ):
             self.try_push_monthly_sl_sync(force=False)
         return results
 
@@ -169,6 +180,8 @@ class CollectorService:
                 if on_progress:
                     on_progress(printer.name, done, total)
                 results.append((printer, rid, status))
-        if self.config.firebase.enabled and period == "monthly" and results:
+        if self.config.firebase.enabled and any(
+            status in ("ok", "partial") for _, _, status in results
+        ):
             self.try_push_monthly_sl_sync(force=False)
         return results

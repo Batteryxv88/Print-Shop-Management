@@ -10,6 +10,7 @@ import { AuthForm } from "../components/AuthForm";
 import { AuthProvider } from "../contexts/AuthContext";
 import { ProtectedRoute } from "../components/ProtectedRoute";
 import { RoleBasedRoute } from "../components/RoleBasedRoute";
+import { OptionalModuleRoute } from "../components/OptionalModuleRoute";
 import { FirebaseDataProvider } from "./providers/FirebaseDataProvider";
 import cls from './App.module.scss';
 import { RotationPageAsync } from "../pages/RotationPage/ui/RotationPage.async";
@@ -75,17 +76,25 @@ const App = () => {
                               }
                             />
                             <Route path="/report" element={<Navigate to="/analytics" replace />} />
-                            <Route path="/calculator" element={<CalculatorPageAsync />} />
+                            <Route path="/calculator" element={
+                              <OptionalModuleRoute module="calculatorEnabled">
+                                <CalculatorPageAsync />
+                              </OptionalModuleRoute>
+                            } />
                             <Route path="/rotation"
-                              element={<RoleBasedRoute
-                                allowedRoles={['администратор', 'руководитель', 'печатник', 'дизайнер', 'резчик', 'менеджер']}>
-                                <RotationPageAsync />
-                              </RoleBasedRoute>} />
+                              element={<OptionalModuleRoute module="rotationEnabled">
+                                <RoleBasedRoute
+                                  allowedRoles={['администратор', 'руководитель', 'печатник', 'дизайнер', 'резчик', 'менеджер']}>
+                                  <RotationPageAsync />
+                                </RoleBasedRoute>
+                              </OptionalModuleRoute>} />
                             <Route path="/manuals"
-                              element={<RoleBasedRoute
-                                allowedRoles={['администратор', 'руководитель', 'печатник']}>
-                                <ManualsPageAsync />
-                              </RoleBasedRoute>} />
+                              element={<OptionalModuleRoute module="manualsEnabled">
+                                <RoleBasedRoute
+                                  allowedRoles={['администратор', 'руководитель', 'печатник']}>
+                                  <ManualsPageAsync />
+                                </RoleBasedRoute>
+                              </OptionalModuleRoute>} />
                             <Route
                               path="/admin"
                               element={

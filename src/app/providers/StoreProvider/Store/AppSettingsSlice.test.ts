@@ -15,6 +15,9 @@ describe('AppSettingsSlice', () => {
                     paperStockEnabled: false,
                     laminationStockEnabled: true,
                     paperFormMode: 'roll',
+                    calculatorEnabled: true,
+                    rotationEnabled: false,
+                    manualsEnabled: true,
                 },
                 '',
                 undefined
@@ -25,6 +28,8 @@ describe('AppSettingsSlice', () => {
         expect(state.counterReadingDay).toBe(15);
         expect(state.paperStockEnabled).toBe(false);
         expect(state.paperFormMode).toBe('roll');
+        expect(state.rotationEnabled).toBe(false);
+        expect(state.calculatorEnabled).toBe(true);
         expect(state.error).toBeNull();
     });
 
@@ -43,6 +48,9 @@ describe('AppSettingsSlice', () => {
                     paperStockEnabled: false,
                     laminationStockEnabled: true,
                     paperFormMode: 'both',
+                    calculatorEnabled: true,
+                    rotationEnabled: true,
+                    manualsEnabled: true,
                 },
                 '',
                 { paperStockEnabled: false }

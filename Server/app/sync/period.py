@@ -18,6 +18,28 @@ def to_period_key(year: int, month: int) -> str:
     return f"{year}-{month:02d}"
 
 
+def to_date_key(year: int, month: int, day: int) -> str:
+    return f"{year}-{month:02d}-{day:02d}"
+
+
+def today_date_key(now: datetime | None = None) -> str:
+    now = now or datetime.now()
+    return to_date_key(now.year, now.month, now.day)
+
+
+def period_key_from_date_key(date_key: str) -> str:
+    return date_key[:7] if len(date_key) >= 7 else date_key
+
+
+def resolve_daily_collect_reason(existing: bool, force: bool = False) -> str:
+    """due | update-existing | force — план записи CounterReadings/{YYYY-MM-DD}."""
+    if force:
+        return "force"
+    if existing:
+        return "update-existing"
+    return "due"
+
+
 def get_due_date(year: int, month: int, day_of_month: int) -> datetime:
     day = min(max(1, day_of_month), _days_in_month(year, month))
     return datetime(year, month, day, 0, 0, 0, 0)

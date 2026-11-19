@@ -17,7 +17,7 @@ class FirestoreBackend:
     """
     Коллекции SL:
       Printers/{id}
-      CounterReadings/{YYYY-MM}
+      CounterReadings/{YYYY-MM-DD}
       AppSettings/main
     """
 
@@ -41,7 +41,7 @@ class FirestoreBackend:
         return msg
 
     def push_reading(self, reading: ReadingDTO) -> SyncResult:
-        """SNMP-снимок уже в SQLite; в SL уходит агрегат за месяц отдельным шагом."""
+        """SNMP-снимок уже в SQLite; в SL уходит дневной агрегат отдельным шагом."""
         return SyncResult(
             success=True,
             state="local",
@@ -90,44 +90,31 @@ class FirestoreBackend:
     def resolve_period_plan(self, force: bool = False) -> dict[str, Any]:
         plan = self._fs.resolve_period_to_collect(force=force)
         return {
+            "date_key": plan.date_key,
             "period_key": plan.period_key,
             "counter_reading_day": plan.counter_reading_day,
             "reason": plan.reason,
         }
 
-    def _period_key_for_push(self, force: bool) -> tuple[str | None, str, SyncResult | None]:
+    def _date_key_for_push(self, force: bool) -> tuple[str | None, str, SyncResult | None]:
         plan = self._fs.resolve_period_to_collect(force=force)
-        if plan.reason == "no-day":
-            return None, plan.reason, SyncResult(
-                success=False,
-                state="skipped",
-                message="В AppSettings не задан counterReadingDay",
-            )
-        if plan.reason == "too-early" and not force:
-            return None, plan.reason, SyncResult(
-                success=False,
-                state="skipped",
-                message="Ещё рано для активного периода снятия",
-            )
-        period_key = plan.period_key
-        if not period_key and force:
-            from datetime import datetime
+        date_key = plan.date_key
+        if not date_key:
+            from app.sync.period import today_date_key
 
-            from app.sync.period import to_period_key
-
-            now = datetime.now()
-            period_key = to_period_key(now.year, now.month)
-        if not period_key:
+            date_key = today_date_key()
+        if not date_key:
             return None, plan.reason, SyncResult(
                 success=False,
                 state="error",
-                message="Не удалось определить periodKey",
+                message="Не удалось определить dateKey",
             )
-        return period_key, plan.reason, None
+        return date_key, plan.reason, None
 
     def push_monthly_counter_reading(self, force: bool = False) -> SyncResult:
+        """Пишет дневной документ CounterReadings/{YYYY-MM-DD} (имя сохранено для совместимости)."""
         try:
-            period_key, plan_reason, early = self._period_key_for_push(force)
+            date_key, _plan_reason, early = self._date_key_for_push(force)
             if early:
                 return early
 
@@ -140,7 +127,7 @@ class FirestoreBackend:
                 )
             note = f"Без снимка: {', '.join(missing)}" if missing else ""
 
-            existing = self._fs.fetch_counter_reading(period_key or "")
+            existing = self._fs.fetch_counter_reading(date_key or "")
             added = 0
             if existing:
                 prev = existing.get("printers") or []
@@ -154,7 +141,7 @@ class FirestoreBackend:
                 )
                 merged = merge_sl_printer_entries(prev, entries)
                 self._fs.update_counter_reading(
-                    period_key or "",
+                    date_key or "",
                     merged,
                     self._config.agent_user_name,
                     note,
@@ -162,14 +149,8 @@ class FirestoreBackend:
                 action = "merged"
                 out_printers = merged
             else:
-                if plan_reason == "already-done":
-                    return SyncResult(
-                        success=False,
-                        state="skipped",
-                        message=f"Показания за {period_key} уже внесены в SL, но документ не прочитан",
-                    )
                 self._fs.create_counter_reading(
-                    period_key or "",
+                    date_key or "",
                     entries,
                     self._config.agent_user_id,
                     self._config.agent_user_name,
@@ -179,19 +160,20 @@ class FirestoreBackend:
                 out_printers = entries
 
             payload = {
-                "period_key": period_key,
+                "date_key": date_key,
+                "period_key": (date_key or "")[:7],
                 "printers": out_printers,
                 "source": "snmp-desktop-collector",
                 "missing": missing,
                 "action": action,
             }
-            self._db.enqueue_period_sync(period_key or "", payload, "sent", None)
+            self._db.enqueue_period_sync(date_key or "", payload, "sent", None)
             if action == "merged":
-                msg = f"Дополнено в SL за {period_key}: обновлено {len(entries)} принтер(ов)"
+                msg = f"Обновлено в SL за {date_key}: {len(entries)} принтер(ов)"
                 if added > 0:
                     msg += f", добавлено {added}"
             else:
-                msg = f"Отправлено в SL за период {period_key} ({len(entries)} принтеров)"
+                msg = f"Отправлено в SL за {date_key} ({len(entries)} принтеров)"
             if missing:
                 msg += f"; без данных: {len(missing)}"
             return SyncResult(success=True, state="sent", message=msg)
@@ -200,12 +182,12 @@ class FirestoreBackend:
         except NotConfiguredError as exc:
             return SyncResult(success=False, state="error", message=str(exc))
         except Exception as exc:
-            pk = ""
+            dk = ""
             try:
-                pk, _, _ = self._period_key_for_push(force)
+                dk, _, _ = self._date_key_for_push(force)
             except Exception:
                 pass
-            if pk:
-                self._db.enqueue_period_sync(pk, {"error": str(exc)}, "error", str(exc))
+            if dk:
+                self._db.enqueue_period_sync(dk, {"error": str(exc)}, "error", str(exc))
             return SyncResult(success=False, state="error", message=str(exc))
 

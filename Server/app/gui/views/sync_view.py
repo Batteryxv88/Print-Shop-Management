@@ -22,7 +22,7 @@ class SyncView(ctk.CTkFrame):
         bar.grid(row=0, column=0, sticky="ew", padx=10, pady=10)
         ctk.CTkLabel(
             bar,
-            text="Синхронизация с SL (Firestore): месячные показания CounterReadings",
+            text="Синхронизация с SL (Firestore): дневные показания CounterReadings/{YYYY-MM-DD}",
         ).pack(side="left", padx=5)
 
         self.status = ctk.CTkLabel(self, text="", anchor="w", justify="left")
@@ -33,12 +33,12 @@ class SyncView(ctk.CTkFrame):
         ctk.CTkButton(actions, text="Обновить статус", command=self.refresh).pack(side="left", padx=4)
         ctk.CTkButton(
             actions,
-            text="Отправить показания за период",
+            text="Отправить показания за сегодня",
             command=self._push_period,
         ).pack(side="left", padx=4)
         ctk.CTkButton(
             actions,
-            text="Тест: текущий месяц (если пусто)",
+            text="Повторить отправку за сегодня",
             command=lambda: self._push_period(force=True),
         ).pack(side="left", padx=4)
 
@@ -49,19 +49,18 @@ class SyncView(ctk.CTkFrame):
     def _format_period_status(self) -> str:
         plan = self.collector.sl_period_status(force=False)
         reason = plan.get("reason", "disabled")
-        pk = plan.get("period_key")
+        dk = plan.get("date_key") or plan.get("period_key")
         day = plan.get("counter_reading_day")
         labels = {
             "disabled": "Firebase выключен",
-            "no-day": "В SL не задан день снятия (AppSettings)",
-            "too-early": "Ещё рано для активного периода",
-            "already-done": f"Период {pk} в SL есть — можно дополнить после новых SNMP-снимков",
-            "due": f"Можно отправить период {pk}",
-            "force": f"Тестовый период {pk}",
+            "due": f"Можно отправить день {dk}",
+            "update-existing": f"День {dk} в SL есть — повтор обновит снимок",
+            "already-done": f"День {dk} в SL есть — повтор обновит снимок",
+            "force": f"Принудительно день {dk}",
         }
         base = labels.get(str(reason), str(reason))
         if day is not None:
-            base += f" · день снятия: {day}"
+            base += f" · день напоминания: {day}"
         return base
 
     def refresh(self) -> None:
@@ -73,7 +72,7 @@ class SyncView(ctk.CTkFrame):
             return
         for item in items:
             p = item["payload"]
-            period = item.get("period_key") or p.get("period_key") or "—"
+            period = item.get("period_key") or p.get("date_key") or p.get("period_key") or "—"
             self.text.insert(
                 "end",
                 f"#{item['id']} period={period} state={item['state']}\n",

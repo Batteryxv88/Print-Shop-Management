@@ -17,6 +17,9 @@ const initialState: State = {
     paperStockEnabled: true,
     laminationStockEnabled: true,
     paperFormMode: 'both',
+    calculatorEnabled: true,
+    rotationEnabled: true,
+    manualsEnabled: true,
     loaded: false,
     saving: false,
     error: null,
@@ -33,6 +36,15 @@ export const saveStockModuleSettings = createAsyncThunk(
         paperStockEnabled?: boolean;
         laminationStockEnabled?: boolean;
         paperFormMode?: PaperFormMode;
+    }) => saveAppSettings(patch)
+);
+
+export const saveOptionalModuleSettings = createAsyncThunk(
+    'appSettings/saveOptionalModules',
+    async (patch: {
+        calculatorEnabled?: boolean;
+        rotationEnabled?: boolean;
+        manualsEnabled?: boolean;
     }) => saveAppSettings(patch)
 );
 
@@ -60,6 +72,18 @@ const appSettingsSlice = createSlice({
                 state.error = null;
             })
             .addCase(saveStockModuleSettings.rejected, (state, action) => {
+                state.saving = false;
+                state.error = action.error.message || 'Ошибка сохранения';
+            })
+            .addCase(saveOptionalModuleSettings.pending, (state) => {
+                state.saving = true;
+            })
+            .addCase(saveOptionalModuleSettings.fulfilled, (state, action) => {
+                Object.assign(state, action.payload);
+                state.saving = false;
+                state.error = null;
+            })
+            .addCase(saveOptionalModuleSettings.rejected, (state, action) => {
                 state.saving = false;
                 state.error = action.error.message || 'Ошибка сохранения';
             });

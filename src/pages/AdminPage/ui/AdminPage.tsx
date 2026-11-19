@@ -4,11 +4,15 @@ import cls from "./AdminPage.module.scss";
 import { AdminMainComponent } from "../../../pages/AdminMainComponent";
 import VariablesEditor from "../../../widgets/VariablesEditor/ui/VariablesEditor";
 import StockModulesEditor from "../../../widgets/StockModulesEditor/ui/StockModulesEditor";
+import OptionalModulesEditor from "../../../widgets/OptionalModulesEditor/ui/OptionalModulesEditor";
 import { useIsMobile } from "../../../shared/lib/hooks/useBreakpoint";
+
+const SECTIONS = ["Редактор переменных", "Склады материалов", "Разделы"] as const;
 
 const sectionLabel = (id: string) => {
     if (id === "Редактор переменных") return "Принтеры";
     if (id === "Склады материалов") return "Склады";
+    if (id === "Разделы") return "Разделы";
     return "Пользователи";
 };
 
@@ -17,10 +21,10 @@ const AdminPage = () => {
     dispatch(changePage("admin"));
     const adminComponent = useAppSelector((state) => state.adminComponent.adminComponent);
     const isMobile = useIsMobile();
-    const section = adminComponent === "Редактор переменных" || adminComponent === "Склады материалов"
+    const section = (SECTIONS as readonly string[]).includes(adminComponent)
         ? adminComponent
         : "Главная";
-    const isHeavyEditor = section !== "Главная";
+    const isHeavyEditor = section === "Редактор переменных" || section === "Склады материалов";
 
     if (isMobile && isHeavyEditor) {
         return (
@@ -57,6 +61,7 @@ const AdminPage = () => {
                     {section === "Главная" && <AdminMainComponent />}
                     {section === "Редактор переменных" && <VariablesEditor />}
                     {section === "Склады материалов" && <StockModulesEditor />}
+                    {section === "Разделы" && <OptionalModulesEditor />}
                 </div>
             </div>
         </div>

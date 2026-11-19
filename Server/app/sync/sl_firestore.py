@@ -8,7 +8,11 @@ from typing import Any
 
 from app.config import FirebaseConfig
 from app.sync.base import NotConfiguredError
-from app.sync.period import get_active_period_key, to_period_key
+from app.sync.period import (
+    period_key_from_date_key,
+    resolve_daily_collect_reason,
+    today_date_key,
+)
 
 
 @dataclass
@@ -22,9 +26,10 @@ class SlPrinterRemote:
 
 @dataclass
 class PeriodCollectPlan:
-    period_key: str | None
+    date_key: str | None  # YYYY-MM-DD — id документа CounterReadings
+    period_key: str | None  # YYYY-MM
     counter_reading_day: int | None
-    reason: str  # force | no-day | too-early | already-done | due
+    reason: str  # force | due | update-existing
 
 
 class SlFirestore:
@@ -94,9 +99,9 @@ class SlFirestore:
         out.sort(key=lambda p: p.name.lower())
         return out
 
-    def fetch_counter_reading(self, period_key: str) -> dict[str, Any] | None:
+    def fetch_counter_reading(self, date_key: str) -> dict[str, Any] | None:
         db = self._client()
-        snap = db.collection("CounterReadings").document(period_key).get()
+        snap = db.collection("CounterReadings").document(date_key).get()
         if not snap.exists:
             return None
         data = snap.to_dict() or {}
@@ -106,45 +111,35 @@ class SlFirestore:
     def resolve_period_to_collect(self, force: bool = False) -> PeriodCollectPlan:
         settings = self.fetch_app_settings()
         day = settings.get("counterReadingDay")
-
-        if force:
-            now = __import__("datetime").datetime.now()
-            period_key = to_period_key(now.year, now.month)
-            return PeriodCollectPlan(
-                period_key=period_key,
-                counter_reading_day=day,
-                reason="force",
-            )
-
-        if day is None:
-            return PeriodCollectPlan(None, None, "no-day")
-
-        period_key = get_active_period_key(int(day))
-        if period_key is None:
-            return PeriodCollectPlan(None, day, "too-early")
-
-        existing = self.fetch_counter_reading(period_key)
-        if existing:
-            return PeriodCollectPlan(period_key, day, "already-done")
-
-        return PeriodCollectPlan(period_key, day, "due")
+        date_key = today_date_key()
+        period_key = period_key_from_date_key(date_key)
+        existing = self.fetch_counter_reading(date_key)
+        reason = resolve_daily_collect_reason(existing=bool(existing), force=force)
+        return PeriodCollectPlan(
+            date_key=date_key,
+            period_key=period_key,
+            counter_reading_day=day,
+            reason=reason,
+        )
 
     def create_counter_reading(
         self,
-        period_key: str,
+        date_key: str,
         printers: list[dict[str, Any]],
         user_id: str,
         user_name: str,
         note: str = "",
     ) -> None:
         db = self._client()
-        ref = db.collection("CounterReadings").document(period_key)
-        from datetime import datetime
+        ref = db.collection("CounterReadings").document(date_key)
+        from datetime import datetime, timezone
 
         from google.cloud.firestore_v1 import transactional
 
-        now = datetime.now().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
+        period_key = period_key_from_date_key(date_key)
         payload = {
+            "dateKey": date_key,
             "periodKey": period_key,
             "completedAt": now,
             "userId": user_id,
@@ -159,7 +154,7 @@ class SlFirestore:
             snap = ref.get(transaction=transaction)
             if snap.exists:
                 raise ValueError(
-                    f"Показания за {period_key} уже есть в Firestore — повторная запись пропущена."
+                    f"Показания за {date_key} уже есть в Firestore — повторная запись пропущена."
                 )
             transaction.set(ref, payload)
 
@@ -167,33 +162,38 @@ class SlFirestore:
 
     def update_counter_reading(
         self,
-        period_key: str,
+        date_key: str,
         printers: list[dict[str, Any]],
         user_name: str,
         note: str = "",
     ) -> None:
         db = self._client()
-        ref = db.collection("CounterReadings").document(period_key)
-        from datetime import datetime
+        ref = db.collection("CounterReadings").document(date_key)
+        from datetime import datetime, timezone
 
         from google.cloud.firestore_v1 import transactional
 
-        now = datetime.now().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
+        period_key = period_key_from_date_key(date_key)
 
         @transactional
         def _run(transaction: Any) -> None:
             snap = ref.get(transaction=transaction)
             if not snap.exists:
                 raise ValueError(
-                    f"Показания за {period_key} не найдены — нельзя дополнить запись."
+                    f"Показания за {date_key} не найдены — нельзя дополнить запись."
                 )
             transaction.update(
                 ref,
                 {
                     "printers": printers,
                     "note": note or "",
+                    "dateKey": date_key,
+                    "periodKey": period_key,
                     "updatedAt": now,
                     "updatedByName": user_name,
+                    "completedAt": now,
+                    "source": "snmp-desktop-collector",
                 },
             )
 
@@ -201,18 +201,18 @@ class SlFirestore:
 
     def upsert_counter_reading(
         self,
-        period_key: str,
+        date_key: str,
         printers: list[dict[str, Any]],
         user_id: str,
         user_name: str,
         note: str = "",
     ) -> str:
-        """Создаёт документ или обновляет printers[] (режим «Изменить» в веб-SL)."""
-        existing = self.fetch_counter_reading(period_key)
+        """Создаёт дневной документ или обновляет printers[] (как веб-SL и snmp-agent)."""
+        existing = self.fetch_counter_reading(date_key)
         if existing:
-            self.update_counter_reading(period_key, printers, user_name, note)
+            self.update_counter_reading(date_key, printers, user_name, note)
             return "merged"
-        self.create_counter_reading(period_key, printers, user_id, user_name, note)
+        self.create_counter_reading(date_key, printers, user_id, user_name, note)
         return "created"
 
     def health_check_details(self) -> tuple[bool, str]:

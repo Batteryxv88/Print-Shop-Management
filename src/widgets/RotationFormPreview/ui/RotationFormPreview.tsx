@@ -5,8 +5,6 @@ import { useSelector } from 'react-redux';
 import { useAppDispatch } from '../../../app/providers/StoreProvider/Store/hooks';
 import { setSelectedFormId } from '../../../app/providers/StoreProvider/Store/SelectedFormSlice';
 import {
-    FIGURED_DOG_FACE,
-    FIGURED_DOG_MOUTH,
     FIGURED_LABEL_PATH,
     previewBorderRadius,
     previewOutline,
@@ -157,15 +155,6 @@ const RotationFormPreview = () => {
                             stroke="#BB86FC"
                             strokeWidth="2"
                             strokeLinejoin="round"
-                            vectorEffect="non-scaling-stroke"
-                        />
-                        <path d={FIGURED_DOG_FACE} fill="#BB86FC" />
-                        <path
-                            d={FIGURED_DOG_MOUTH}
-                            fill="none"
-                            stroke="#BB86FC"
-                            strokeWidth="1.8"
-                            strokeLinecap="round"
                             vectorEffect="non-scaling-stroke"
                         />
                     </svg>

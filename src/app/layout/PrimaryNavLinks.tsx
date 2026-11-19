@@ -3,6 +3,7 @@ import classNames from 'classnames';
 import Button from '../../shared/ui/Button/Button';
 import CounterReadingReminder from '../../shared/ui/CounterReadingReminder/CounterReadingReminder';
 import { useAuth } from '../../contexts/AuthContext';
+import { useAppSelector } from '../providers/StoreProvider/Store/hooks';
 
 export type PrimaryNavLinksProps = {
     className?: string;
@@ -25,6 +26,8 @@ export const PrimaryNavLinks = ({
     const isAdmin = userData?.role === 'администратор';
     const isDirector = userData?.role === 'руководитель';
     const isPrinter = userData?.role === 'печатник';
+    const { calculatorEnabled, rotationEnabled, manualsEnabled } =
+        useAppSelector((state) => state.appSettings);
 
     const linkClass = (active: boolean) =>
         classNames(linkClassName, active && activeClassName);
@@ -60,27 +63,33 @@ export const PrimaryNavLinks = ({
                     <Button name="АНАЛИТИКА" />
                 </Link>
             )}
-            <Link
-                className={linkClass(location.pathname === '/calculator')}
-                to="/calculator"
-                onClick={onLinkClick}
-            >
-                <Button name="КАЛЬКУЛЯТОР" />
-            </Link>
-            <Link
-                className={linkClass(location.pathname === '/rotation')}
-                to="/rotation"
-                onClick={onLinkClick}
-            >
-                <Button name="РОТАЦИЯ" />
-            </Link>
-            <Link
-                className={linkClass(location.pathname === '/manuals')}
-                to="/manuals"
-                onClick={onLinkClick}
-            >
-                <Button name="СЕРВИС ИНСТРУКЦИИ" />
-            </Link>
+            {calculatorEnabled && (
+                <Link
+                    className={linkClass(location.pathname === '/calculator')}
+                    to="/calculator"
+                    onClick={onLinkClick}
+                >
+                    <Button name="КАЛЬКУЛЯТОР" />
+                </Link>
+            )}
+            {rotationEnabled && (
+                <Link
+                    className={linkClass(location.pathname === '/rotation')}
+                    to="/rotation"
+                    onClick={onLinkClick}
+                >
+                    <Button name="РОТАЦИЯ" />
+                </Link>
+            )}
+            {manualsEnabled && (
+                <Link
+                    className={linkClass(location.pathname === '/manuals')}
+                    to="/manuals"
+                    onClick={onLinkClick}
+                >
+                    <Button name="СЕРВИС ИНСТРУКЦИИ" />
+                </Link>
+            )}
             {isAdmin && (
                 <Link
                     className={linkClass(location.pathname === '/admin')}

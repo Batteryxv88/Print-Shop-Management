@@ -1,7 +1,6 @@
 import { useEffect, useState, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { changePage } from '../../../app/providers/StoreProvider/Store/ChangePageSlice';
 import { useAppDispatch } from '../../../app/providers/StoreProvider/Store/hooks';
-import ThicknessChart, { ThicknessRow } from './ThicknessChart';
 import cls from './CalculatorPage.module.scss';
 import {
     LAMINATION_CORE_MM,
@@ -10,24 +9,14 @@ import {
     PAPER_CORE_MM,
     PAPER_FILM_MM,
     PaperCode,
+    STANDARD_LENGTHS_M,
+    formatMm,
     rollLengthM,
     rollThicknessMm,
 } from '../../../shared/lib/calculator/rollThickness';
 
 type CalcMode = 'length' | 'thickness';
 type LaminateType = keyof typeof LAMINATION_FILM_MM;
-
-const laminationRows: ThicknessRow[] = [
-    { id: 'matte', label: 'Матовая', coreMm: LAMINATION_CORE_MM, filmMm: LAMINATION_FILM_MM.matte },
-    { id: 'glossy', label: 'Глянцевая', coreMm: LAMINATION_CORE_MM, filmMm: LAMINATION_FILM_MM.glossy },
-];
-
-const paperRows: ThicknessRow[] = PAPER_CODES.map((code) => ({
-    id: code,
-    label: code,
-    coreMm: PAPER_CORE_MM,
-    filmMm: PAPER_FILM_MM[code],
-}));
 
 const laminationOptions: { id: LaminateType; label: string }[] = [
     { id: 'matte', label: 'Матовая' },
@@ -40,6 +29,7 @@ const paperOptions: { id: PaperCode; label: string }[] = PAPER_CODES.map((code) 
 }));
 
 interface CustomRollProps<T extends string> {
+    title: string;
     mode: CalcMode;
     onMode: (mode: CalcMode) => void;
     options: { id: T; label: string }[];
@@ -80,6 +70,7 @@ const liveRoll = (
 };
 
 function CustomRoll<T extends string>({
+    title,
     mode,
     onMode,
     options,
@@ -93,13 +84,20 @@ function CustomRoll<T extends string>({
 }: CustomRollProps<T>) {
     const { result, error } = liveRoll(input, filmMm, coreMm, mode, missingLabel);
     const unit = mode === 'thickness' ? 'мм' : 'м';
+    const selectedLength = mode === 'thickness' ? parseFloat(input) : NaN;
 
     const onKeyDown = (e: ReactKeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') e.currentTarget.blur();
     };
 
+    const pickLength = (length: number) => {
+        onMode('thickness');
+        onInput(String(length));
+    };
+
     return (
-        <div className={cls.calc}>
+        <section className={cls.calc}>
+            <h2 className={cls.calcTitle}>{title}</h2>
             <div className={cls.calcRow}>
                 <button
                     type="button"
@@ -126,6 +124,28 @@ function CustomRoll<T extends string>({
                     </button>
                 ))}
             </div>
+            <div className={cls.ruler} role="list">
+                {STANDARD_LENGTHS_M.map((length) => {
+                    const thickness = filmMm == null
+                        ? null
+                        : formatMm(rollThicknessMm(coreMm, filmMm, length));
+                    const active = selectedLength === length;
+                    return (
+                        <button
+                            key={length}
+                            type="button"
+                            role="listitem"
+                            className={`${cls.tick} ${active ? cls.tickActive : ''}`}
+                            aria-label={thickness == null ? `${length} м` : `${length} м, толщина ${thickness} мм`}
+                            aria-pressed={active}
+                            onClick={() => pickLength(length)}
+                        >
+                            <span className={cls.tickLength}>{length} м</span>
+                            <span className={cls.tickThickness}>{thickness ?? '\u00a0'}</span>
+                        </button>
+                    );
+                })}
+            </div>
             <div className={cls.calcLine}>
                 <input
                     type="number"
@@ -140,7 +160,7 @@ function CustomRoll<T extends string>({
                 </span>
             </div>
             {error && <div className={cls.error}>{error}</div>}
-        </div>
+        </section>
     );
 }
 
@@ -183,10 +203,9 @@ const CalculatorPage = () => {
                     </nav>
                 </div>
                 <div className={cls.content}>
-                    <div className={cls.charts}>
-                        <ThicknessChart title="Бумага" rows={paperRows} />
-                        <ThicknessChart title="Ламинация" rows={laminationRows} />
+                    <div className={cls.calcs}>
                         <CustomRoll
+                            title="Бумага"
                             mode={materialMode}
                             onMode={setMaterialMode}
                             options={paperOptions}
@@ -199,6 +218,7 @@ const CalculatorPage = () => {
                             missingLabel="Выберите материал"
                         />
                         <CustomRoll
+                            title="Ламинация"
                             mode={laminationMode}
                             onMode={setLaminationMode}
                             options={laminationOptions}

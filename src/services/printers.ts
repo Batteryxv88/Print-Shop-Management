@@ -40,27 +40,6 @@ export interface Printer {
 
 export type PrinterInput = Omit<Printer, 'id'>;
 
-export const DEFAULT_PRINTERS: PrinterInput[] = [
-    {
-        name: 'C71cf',
-        model: 'C71cf',
-        ip: '',
-        serialNumber: '',
-        options: [],
-        colorMode: 'color',
-        colors: ['C', 'M', 'Y', 'K'],
-    },
-    {
-        name: 'Label 190',
-        model: 'Label 190',
-        ip: '',
-        serialNumber: '',
-        options: [],
-        colorMode: 'color',
-        colors: ['C', 'M', 'Y', 'K'],
-    },
-];
-
 const COLLECTION = 'Printers';
 
 const normalizePrinterPayload = (printer: PrinterInput) => {
@@ -112,12 +91,7 @@ const mapPrinterDoc = (id: string, data: Record<string, any>): Printer => {
 
 export const subscribeToPrinters = (callback: (printers: Printer[]) => void) => {
     const printersCollection = collection(db, COLLECTION);
-    return onSnapshot(printersCollection, async (snapshot) => {
-        if (snapshot.empty) {
-            await seedDefaultPrinters();
-            return;
-        }
-
+    return onSnapshot(printersCollection, (snapshot) => {
         const printers = snapshot.docs.map((d) =>
             mapPrinterDoc(d.id, d.data())
         );
@@ -125,18 +99,6 @@ export const subscribeToPrinters = (callback: (printers: Printer[]) => void) => 
         printers.sort((a, b) => a.name.localeCompare(b.name, 'ru'));
         callback(printers);
     });
-};
-
-export const seedDefaultPrinters = async (): Promise<void> => {
-    const printersCollection = collection(db, COLLECTION);
-    const snapshot = await getDocs(printersCollection);
-    if (!snapshot.empty) return;
-
-    await Promise.all(
-        DEFAULT_PRINTERS.map((printer) =>
-            addDoc(printersCollection, normalizePrinterPayload(printer))
-        )
-    );
 };
 
 export const addPrinter = async (printer: PrinterInput): Promise<string> => {
