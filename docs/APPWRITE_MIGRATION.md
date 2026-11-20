@@ -141,7 +141,19 @@ APPWRITE_DATABASE_ID=print_shop
 
 `src/app/providers/FirebaseDataProvider/index.tsx` по-прежнему только диспатчит `loadAppSettings`. Достаточно, чтобы `appSettings.ts` читал Appwrite.
 
-Слайсы в `src/app/providers/StoreProvider/Store/*Slice.ts` трогать только если они сами импортируют `firebase/*`. Сейчас данные приходят из сервисов.
+Часть слайсов и экранов импортирует `firebase/*` напрямую, их тоже перевести на сервисы:
+
+- `src/app/providers/StoreProvider/Store/CounterReadingSlice.ts`
+- `src/app/providers/StoreProvider/Store/HoldersAndKnifesSlice.ts`
+- `src/app/providers/StoreProvider/Store/LaminationsSlice.ts`
+- `src/app/providers/StoreProvider/Store/MaterialsSlice.ts`
+- `src/app/providers/StoreProvider/Store/PartSlice.ts`
+- `src/app/providers/StoreProvider/Store/ReplacedPartSlice.ts`
+- `src/app/providers/StoreProvider/Store/RotationFormsSlice.ts`
+- `src/app/providers/StoreProvider/Store/TonerSlice.ts`
+- `src/app/providers/StoreProvider/Store/TonersStorageSlice.ts`
+- `src/pages/AdminMainComponent.tsx`
+- `src/shared/ui/EditReportPart/EditReportPart.tsx`
 
 `src/telegramBot.js` тоже читает Firestore. Перевести вместе с сервисами либо оставить на Firebase, пока бот не нужен на новом бэкенде.
 
