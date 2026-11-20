@@ -21,8 +21,8 @@
 | | |
 |---|---|
 | Версия | Appwrite 1.7.4, Traefik 3.6, MariaDB 10.11 |
-| Консоль | https://lives-posts-kurt-parties.trycloudflare.com/console |
-| Endpoint для SDK | `https://lives-posts-kurt-parties.trycloudflare.com/v1` |
+| Консоль | https://vincent-explosion-agencies-try.trycloudflare.com/console |
+| Endpoint для SDK | `https://vincent-explosion-agencies-try.trycloudflare.com/v1` |
 | Project ID | `print-shop` |
 | Database ID | `print_shop` |
 | Пользователь приложения | `mkovalev@prim.offset.loc`, id `admin`, роль `администратор` |
@@ -34,7 +34,7 @@
 Web platforms проекта, с которых браузер имеет право вызывать API:
 
 - `localhost`
-- хост туннеля (`lives-posts-kurt-parties.trycloudflare.com` на момент записи)
+- хост туннеля (`vincent-explosion-agencies-try.trycloudflare.com` на момент записи)
 - `sl-sandbox-b84b3.web.app`
 - `sl-sandbox-b84b3.firebaseapp.com`
 
@@ -48,7 +48,7 @@ Web platforms проекта, с которых браузер имеет пра
 
 ```
 DATA_BACKEND=appwrite
-APPWRITE_ENDPOINT=https://lives-posts-kurt-parties.trycloudflare.com/v1
+APPWRITE_ENDPOINT=https://vincent-explosion-agencies-try.trycloudflare.com/v1
 APPWRITE_PROJECT_ID=print-shop
 APPWRITE_DATABASE_ID=print_shop
 ```
