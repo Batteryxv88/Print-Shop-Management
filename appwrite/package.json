@@ -5,7 +5,8 @@
   "description": "Создание базы и коллекций Appwrite под Print Shop Management",
   "scripts": {
     "setup": "node scripts/setup.mjs",
-    "setup:check": "node scripts/setup.mjs --check-only"
+    "setup:check": "node scripts/setup.mjs --check-only",
+    "bootstrap": "node scripts/bootstrap-project.mjs"
   },
   "dependencies": {
     "node-appwrite": "^14.1.0"

@@ -1,6 +1,6 @@
 # Appwrite для Print Shop Management
 
-Подготовка **локальной** базы (домашний ПК или VPS). **Firebase в приложении пока не отключается** — здесь только инфраструктура и схема под будущий адаптер.
+Подготовка базы на своём сервере. Приложение пока работает через Firebase. Порядок переключения фронта: [docs/APPWRITE_MIGRATION.md](../docs/APPWRITE_MIGRATION.md).
 
 ## Что делает setup
 
@@ -11,7 +11,33 @@
 
 Вложенные массивы Firestore (партии FIFO, принтеры в счётчиках, опции принтера) в Appwrite хранятся в полях `*Json` — так же будет читать будущий адаптер.
 
-## 1. Установить Appwrite (Windows, Docker Desktop)
+## 1. Установить Appwrite (Ubuntu)
+
+Нужен Docker. Скрипт кладёт зафиксированный compose **1.7.4** с **Traefik 3.6** (на Docker 29 Traefik 2.11 не поднимает маршруты).
+
+```bash
+cd appwrite
+chmod +x scripts/install-ubuntu.sh
+./scripts/install-ubuntu.sh --domain localhost
+# или свой хост: --domain appwrite.example.com --dir "$HOME/appwrite"
+```
+
+Если перед Appwrite стоит туннель и TLS заканчивается на нём, в `.env` оставьте `_APP_OPTIONS_FORCE_HTTPS=disabled`.
+
+Дальше проект и схема:
+
+```bash
+cd appwrite
+cp .env.example .env
+# APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID, APPWRITE_API_KEY
+npm install
+npm run bootstrap -- --credentials /secure/credentials.txt
+npm run setup
+```
+
+`bootstrap` создаёт проект `print-shop`, web-платформы и ключ только на базы. Ключ попадает в `appwrite/.env`, его не коммитят. Пользователя приложения скрипт создаёт отдельно: `npm run bootstrap -- --credentials ... --create-app-user`.
+
+## 1b. Установить Appwrite (Windows, Docker Desktop)
 
 ```powershell
 cd appwrite
@@ -59,7 +85,7 @@ npm run setup:check
 1. **Auth** — регистрация/логин (Console или позже из приложения).
 2. В коллекции `users` — документ с полями `email`, `role`, `authUserId` (= `$id` из Appwrite Auth).
 
-Скрипт **не** создаёт пользователей — только схему.
+`setup.mjs` создаёт только схему. Учётку Auth и документ `users` создаёт `bootstrap-project.mjs --create-app-user`.
 
 ## 5. Права доступа
 
@@ -69,10 +95,12 @@ npm run setup:check
 
 ```
 appwrite/
-  schema/collections.mjs   — описание коллекций
-  scripts/setup.mjs        — создание в Appwrite
-  scripts/install-docker.ps1
-  docker/                  — появится после install-docker (compose)
+  schema/collections.mjs        — описание коллекций
+  scripts/setup.mjs             — база, коллекции, настройки
+  scripts/bootstrap-project.mjs — проект, платформы, ключ, пользователь
+  scripts/install-ubuntu.sh     — Docker Compose на Ubuntu
+  scripts/install-docker.ps1    — скачать compose на Windows
+  docker/docker-compose.yml     — Appwrite 1.7.4 и Traefik 3.6
 ```
 
 Константы для кода: `src/data/appwrite/collectionIds.ts`.

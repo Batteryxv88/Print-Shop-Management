@@ -44,7 +44,9 @@ export const collections = [
             { key: 'serialNumber', type: 'string', size: 128 },
             { key: 'colorMode', type: 'string', size: 16 },
             { key: 'colorsJson', type: 'string', size: 2000 },
-            { key: 'optionsJson', type: 'string', size: 16000 },
+            // >16381 символов: MariaDB хранит поле как TEXT, иначе строка
+            // VARCHAR не влезает в лимит ширины строки 65535 байт.
+            { key: 'optionsJson', type: 'string', size: 20000 },
         ],
         indexes: [{ key: 'by_name', attributes: ['name'], type: 'key' }],
     },

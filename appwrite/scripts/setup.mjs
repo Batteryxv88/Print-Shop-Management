@@ -49,6 +49,13 @@ const COLLECTION_PERMS = [
     Permission.delete(Role.users()),
 ];
 
+// На документе Appwrite 1.7 разрешает read/update/delete/write, но не create.
+const DOCUMENT_PERMS = [
+    Permission.read(Role.users()),
+    Permission.update(Role.users()),
+    Permission.delete(Role.users()),
+];
+
 const env = loadEnv();
 const endpoint = env.APPWRITE_ENDPOINT;
 const projectId = env.APPWRITE_PROJECT_ID;
@@ -97,8 +104,11 @@ const listCollections = async () => {
 };
 
 const waitAttributesReady = async (collectionId, expectedCount) => {
-    for (let i = 0; i < 60; i++) {
-        const res = await databases.listAttributes(databaseId, collectionId);
+    // На слабом сервере воркер баз данных создаёт атрибуты дольше 30 секунд.
+    for (let i = 0; i < 180; i++) {
+        const res = await databases.listAttributes(databaseId, collectionId, [
+            Query.limit(100),
+        ]);
         const attrs = res.attributes || [];
         const ready = attrs.filter((a) => a.status === 'available').length;
         const failed = attrs.some((a) => a.status === 'failed');
@@ -110,7 +120,7 @@ const waitAttributesReady = async (collectionId, expectedCount) => {
         if (ready >= expectedCount && attrs.length >= expectedCount) {
             return;
         }
-        await sleep(500);
+        await sleep(1000);
     }
     throw new Error(`Таймаут атрибутов для ${collectionId}`);
 };
@@ -191,26 +201,32 @@ const createAttribute = async (collectionId, attr) => {
 };
 
 const ensureCollection = async (def, existingIds) => {
-    if (existingIds.has(def.id)) {
+    if (!existingIds.has(def.id)) {
+        if (checkOnly) {
+            console.log(`  ✗ Нет коллекции ${def.id}`);
+            return;
+        }
+        await databases.createCollection(
+            databaseId,
+            def.id,
+            def.name,
+            COLLECTION_PERMS,
+            true,
+            true
+        );
+        console.log(`  + Коллекция ${def.id}`);
+    } else {
         console.log(`  ✓ Коллекция ${def.id}`);
-        return;
-    }
-    if (checkOnly) {
-        console.log(`  ✗ Нет коллекции ${def.id}`);
-        return;
+        if (checkOnly) return;
     }
 
-    await databases.createCollection(
-        databaseId,
-        def.id,
-        def.name,
-        COLLECTION_PERMS,
-        true,
-        true
-    );
-    console.log(`  + Коллекция ${def.id}`);
+    const current = await databases.listAttributes(databaseId, def.id, [
+        Query.limit(100),
+    ]);
+    const have = new Set((current.attributes || []).map((attr) => attr.key));
 
     for (const attr of def.attributes) {
+        if (have.has(attr.key)) continue;
         try {
             await createAttribute(def.id, attr);
         } catch (err) {
@@ -269,7 +285,7 @@ const seedAppSettings = async () => {
             'AppSettings',
             ID.unique(),
             payload,
-            COLLECTION_PERMS
+            DOCUMENT_PERMS
         );
         console.log(`  + AppSettings «${key}»`);
     }
