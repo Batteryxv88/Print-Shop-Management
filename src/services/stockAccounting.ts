@@ -903,9 +903,74 @@ export const stockValueFromLots = (lots: StockLot[]): number =>
         0
     );
 
+const FIRESTORE_IN_LIMIT = 30;
+
+const chunkIds = (ids: string[]): string[][] => {
+    const unique = Array.from(
+        new Set(ids.map((id) => String(id)).filter((id) => id.trim()))
+    );
+    const chunks: string[][] = [];
+    for (let i = 0; i < unique.length; i += FIRESTORE_IN_LIMIT) {
+        chunks.push(unique.slice(i, i + FIRESTORE_IN_LIMIT));
+    }
+    return chunks;
+};
+
+/**
+ * Партии и приходы только по позициям из файла заказа.
+ * При отсутствии составного индекса движения читаются по stockId и
+ * отфильтровываются на клиенте — цена последней закупки не теряется.
+ */
+const loadPurchaseSourcesForStockIds = async (
+    stockIds: string[]
+): Promise<{ lots: StockLot[]; moves: StockMovement[] }> => {
+    const lots: StockLot[] = [];
+    const moves: StockMovement[] = [];
+
+    for (const chunk of chunkIds(stockIds)) {
+        const lotsSnap = await getDocs(
+            query(collection(db, LOTS), where('stockId', 'in', chunk))
+        );
+        lotsSnap.docs.forEach((d) => {
+            lots.push(mapLotDoc(d.id, d.data() as Omit<StockLot, 'id'>));
+        });
+
+        let movesSnap;
+        try {
+            movesSnap = await getDocs(
+                query(
+                    collection(db, MOVEMENTS),
+                    where('kind', '==', 'purchase'),
+                    where('stockId', 'in', chunk)
+                )
+            );
+        } catch (err) {
+            if (!isFirestoreIndexError(err)) throw err;
+            console.warn(
+                '[stockAccounting] purchase-by-stockId index missing; reading movements for these stock ids',
+                err
+            );
+            movesSnap = await getDocs(
+                query(collection(db, MOVEMENTS), where('stockId', 'in', chunk))
+            );
+        }
+        movesSnap.docs.forEach((d) => {
+            const movement = mapMovementDoc(
+                d.id,
+                d.data() as Record<string, unknown>
+            );
+            if (movement.kind !== 'purchase') return;
+            moves.push(movement);
+        });
+    }
+
+    return { lots, moves };
+};
+
 /**
  * Последняя цена закупки по stockId (FIFO-партии и движения purchase).
  * Если позиция никогда не приходовалась — цены нет (0).
+ * С переданным списком id читаются только эти позиции, не весь склад.
  */
 export const fetchLastPartPurchasePrices = async (
     stockIds?: string[]
@@ -946,15 +1011,32 @@ export const fetchLastPartPurchasePrices = async (
         }
     };
 
-    const [lotsSnap, movesSnap] = await Promise.all([
-        getDocs(collection(db, LOTS)),
-        getDocs(
-            query(collection(db, MOVEMENTS), where('kind', '==', 'purchase'))
-        ),
-    ]);
+    const { lots, moves } = wanted
+        ? await loadPurchaseSourcesForStockIds(Array.from(wanted))
+        : await (async () => {
+              const [lotsSnap, movesSnap] = await Promise.all([
+                  getDocs(collection(db, LOTS)),
+                  getDocs(
+                      query(
+                          collection(db, MOVEMENTS),
+                          where('kind', '==', 'purchase')
+                      )
+                  ),
+              ]);
+              return {
+                  lots: lotsSnap.docs.map((d) =>
+                      mapLotDoc(d.id, d.data() as Omit<StockLot, 'id'>)
+                  ),
+                  moves: movesSnap.docs.map((d) =>
+                      mapMovementDoc(
+                          d.id,
+                          d.data() as Record<string, unknown>
+                      )
+                  ),
+              };
+          })();
 
-    lotsSnap.docs.forEach((d) => {
-        const lot = d.data() as StockLot;
+    lots.forEach((lot) => {
         if (lot.type && lot.type !== 'part') return;
         consider(
             lot.stockId,
@@ -963,8 +1045,7 @@ export const fetchLastPartPurchasePrices = async (
         );
     });
 
-    movesSnap.docs.forEach((d) => {
-        const m = d.data() as StockMovement;
+    moves.forEach((m) => {
         if (m.type && m.type !== 'part') return;
         consider(
             m.stockId,

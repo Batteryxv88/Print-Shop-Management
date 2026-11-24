@@ -16,7 +16,7 @@ import {
     exportOrderListToExcel,
     setNotificationCallback,
 } from '../../../shared/lib/utils/exportOrderList';
-import { fetchQuantityToOrder } from '../../../app/providers/StoreProvider/Store/QuantityToOrderSlice';
+import { useQuantityToOrderLive } from '../../../shared/lib/hooks/useQuantityToOrder';
 import { loadAppSettings } from '../../../app/providers/StoreProvider/Store/AppSettingsSlice';
 import NotificationModal from '../../../shared/ui/NotificationModal/NotificationModal';
 
@@ -73,9 +73,7 @@ const SidebarStock = () => {
         laminationStockEnabled,
         loaded: settingsLoaded,
     } = useAppSelector((state) => state.appSettings);
-    const quantityToOrderData = useAppSelector(
-        (state) => state.quantityToOrder.orders
-    );
+    useQuantityToOrderLive();
     const { orderList } = useOrderList();
 
     const materialSections = useMemo(() => {
@@ -135,12 +133,6 @@ const SidebarStock = () => {
             }
         );
     }, []);
-
-    useEffect(() => {
-        if (quantityToOrderData.length === 0) {
-            dispatch(fetchQuantityToOrder());
-        }
-    }, [dispatch, quantityToOrderData.length]);
 
     const renderItem = (section: SectionItem) => {
         const active = storage === section.name;

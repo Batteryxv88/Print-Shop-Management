@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../../../app/providers/StoreProvider/Store';
 import {
@@ -9,7 +10,41 @@ import {
     setLoading,
     setError
 } from '../../../app/providers/StoreProvider/Store/QuantityToOrderSlice';
-import { QuantityToOrder } from '../../../services/quantityToOrder';
+import {
+    QuantityToOrder,
+    subscribeToQuantityToOrder,
+} from '../../../services/quantityToOrder';
+import {
+    createSharedSubscription,
+    retainSharedSubscription,
+} from '../firebase/sharedSubscription';
+
+const quantityToOrderSub = createSharedSubscription();
+
+/** Один onSnapshot на коллекцию, даже если хук вызван с главной и со склада. */
+export const useQuantityToOrderLive = () => {
+    const dispatch = useDispatch<AppDispatch>();
+
+    useEffect(() => {
+        const starting = !quantityToOrderSub.unsubscribe;
+        if (starting) {
+            dispatch(setLoading(true));
+        }
+        return retainSharedSubscription(quantityToOrderSub, () =>
+            subscribeToQuantityToOrder(
+                (orders) => {
+                    dispatch(setOrders(orders));
+                    dispatch(setLoading(false));
+                    dispatch(setError(null));
+                },
+                (error) => {
+                    dispatch(setLoading(false));
+                    dispatch(setError(error.message));
+                }
+            )
+        );
+    }, [dispatch]);
+};
 
 export const useQuantityToOrder = () => {
     const dispatch = useDispatch<AppDispatch>();

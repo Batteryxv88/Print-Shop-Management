@@ -20,8 +20,8 @@ const MaterialUsageList = ({ kind }: Props) => {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        return subscribeMaterialUsages(setItems);
-    }, []);
+        return subscribeMaterialUsages(setItems, kind);
+    }, [kind]);
 
     const filtered = useMemo(
         () => items.filter((i) => i.kind === kind),

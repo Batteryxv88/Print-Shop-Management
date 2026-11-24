@@ -3,6 +3,8 @@ import {
     doc,
     getDoc,
     getDocs,
+    limit,
+    orderBy,
     query,
     runTransaction,
     where,
@@ -69,6 +71,36 @@ const mapDoc = (
             ? String(data.updatedByName)
             : undefined,
     };
+};
+
+const latestReading = (
+    rows: CounterReadingRecord[]
+): CounterReadingRecord | null => {
+    if (rows.length === 0) return null;
+    return rows.reduce((a, b) =>
+        sortKeyForReading(a) >= sortKeyForReading(b) ? a : b
+    );
+};
+
+/** Месяцы YYYY-MM от fromM до toM включительно. */
+const monthKeysBetween = (fromM: string, toM: string): string[] => {
+    if (!/^\d{4}-\d{2}$/.test(fromM) || !/^\d{4}-\d{2}$/.test(toM)) return [];
+    if (fromM > toM) return [];
+    const keys: string[] = [];
+    let year = Number(fromM.slice(0, 4));
+    let month = Number(fromM.slice(5, 7));
+    const endYear = Number(toM.slice(0, 4));
+    const endMonth = Number(toM.slice(5, 7));
+    while (year < endYear || (year === endYear && month <= endMonth)) {
+        keys.push(`${year}-${String(month).padStart(2, '0')}`);
+        month += 1;
+        if (month > 12) {
+            month = 1;
+            year += 1;
+        }
+        if (keys.length > 240) break;
+    }
+    return keys;
 };
 
 const mergeDuplicateSortKeys = (
@@ -150,14 +182,48 @@ export const invalidateCounterReadingsCache = () => {
     cacheAll = null;
 };
 
+/**
+ * Последнее снятие для шапки: один документ с максимальным dateKey.
+ * Полный список остаётся для формы. Если индекса нет или дневных
+ * документов ещё нет, читаем коллекцию целиком, чтобы напоминание не пропало.
+ */
 export const fetchLastCounterReading =
     async (): Promise<CounterReadingRecord | null> => {
-        const all = await fetchAllCounterReadings();
-        if (all.length === 0) return null;
-        return all.reduce((a, b) =>
-            sortKeyForReading(a) >= sortKeyForReading(b) ? a : b
-        );
+        try {
+            const qy = query(
+                collection(db, COL),
+                orderBy('dateKey', 'desc'),
+                limit(1)
+            );
+            const snap = await getDocs(qy);
+            if (!snap.empty) {
+                const d = snap.docs[0];
+                return mapDoc(d.id, d.data());
+            }
+        } catch (err) {
+            console.warn(
+                '[counterReadings] last-reading query failed; falling back to full scan',
+                err
+            );
+        }
+        return latestReading(await fetchAllCounterReadings());
     };
+
+/** Legacy-документы с id месяца YYYY-MM, без поля dateKey. */
+const fetchLegacyMonthReadings = async (
+    fromM: string,
+    toM: string
+): Promise<CounterReadingRecord[]> => {
+    const keys = monthKeysBetween(fromM, toM);
+    if (keys.length === 0) return [];
+    const snaps = await Promise.all(
+        keys.map((key) => getDoc(doc(db, COL, key)))
+    );
+    return snaps
+        .filter((snap) => snap.exists())
+        .map((snap) => mapDoc(snap.id, snap.data()!))
+        .filter((row) => !row.dateKey);
+};
 
 export const fetchCounterReadingsInDateRange = async (
     fromDateKey: string,
@@ -183,17 +249,13 @@ export const fetchCounterReadingsForAnalytics = async (
     prev.setDate(prev.getDate() - 1);
     const anchorFrom = `${prev.getFullYear()}-${pad(prev.getMonth() + 1)}-${pad(prev.getDate())}`;
 
-    const [dailyInRange, all] = await Promise.all([
-        fetchDailyByDateKeyRange(anchorFrom, toDateKey),
-        fetchAllCounterReadings(),
-    ]);
     const fromM = fromDateKey.slice(0, 7);
     const toM = toDateKey.slice(0, 7);
 
-    const legacyPicked = all.filter((r) => {
-        if (r.dateKey) return false;
-        return r.periodKey >= fromM && r.periodKey <= toM;
-    });
+    const [dailyInRange, legacyPicked] = await Promise.all([
+        fetchDailyByDateKeyRange(anchorFrom, toDateKey),
+        fetchLegacyMonthReadings(fromM, toM),
+    ]);
 
     const byId = new Map<string, CounterReadingRecord>();
     dailyInRange.forEach((r) => byId.set(r.id, r));

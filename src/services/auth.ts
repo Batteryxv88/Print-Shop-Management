@@ -7,7 +7,7 @@ import {
 } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
 import { auth } from './firebase';
-import { checkUserExists, getUserRole } from './users';
+import { getUserByEmail } from './users';
 
 // Функция для проверки, активирована ли проверка наличия пользователя
 export const isUserCheckActive = (): boolean => {
@@ -34,14 +34,12 @@ export const login = async (email: string, password: string) => {
     // Проверяем, активирована ли проверка наличия пользователя
     if (isUserCheckActive()) {
       // Проверяем, есть ли пользователь в нашей коллекции пользователей
-      const userExists = await checkUserExists(email);
-      if (!userExists) {
+      const userData = await getUserByEmail(email);
+      if (!userData) {
         throw new Error('Пользователь с таким email не найден. Пожалуйста, обратитесь к администратору.');
       }
-      
-      // Проверяем роль пользователя
-      const userRole = await getUserRole(email);
-      if (!userRole || !allowedRoles.includes(userRole)) {
+
+      if (!userData.role || !allowedRoles.includes(userData.role)) {
         throw new Error('У вас нет доступа к системе. Пожалуйста, обратитесь к администратору.');
       }
     }

@@ -34,34 +34,29 @@ export const createUserInFirestore = async (uid: string, userData: UserData): Pr
   }
 };
 
-// Проверка существования пользователя в Firestore
-export const checkUserExists = async (email: string): Promise<boolean> => {
+/** Один запрос users по email: и наличие, и роль. */
+export const getUserByEmail = async (email: string): Promise<UserData | null> => {
   try {
     const usersQuery = query(collection(db, 'users'), where('email', '==', email));
     const querySnapshot = await getDocs(usersQuery);
-    return !querySnapshot.empty;
+    if (querySnapshot.empty) return null;
+    return querySnapshot.docs[0].data() as UserData;
   } catch (error) {
-    console.error('Error checking if user exists:', error);
-    return false;
+    console.error('Error getting user by email:', error);
+    return null;
   }
+};
+
+// Проверка существования пользователя в Firestore
+export const checkUserExists = async (email: string): Promise<boolean> => {
+  const user = await getUserByEmail(email);
+  return user !== null;
 };
 
 // Получение роли пользователя по email
 export const getUserRole = async (email: string): Promise<string | null> => {
-  try {
-    const usersQuery = query(collection(db, 'users'), where('email', '==', email));
-    const querySnapshot = await getDocs(usersQuery);
-    
-    if (querySnapshot.empty) {
-      return null;
-    }
-    
-    const userData = querySnapshot.docs[0].data() as UserData;
-    return userData.role;
-  } catch (error) {
-    console.error('Error getting user role:', error);
-    return null;
-  }
+  const user = await getUserByEmail(email);
+  return user?.role ?? null;
 };
 
 // Обновление данных пользователя

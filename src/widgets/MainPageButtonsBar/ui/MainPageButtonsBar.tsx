@@ -3,12 +3,11 @@ import cls from './MainPageButtonsBar.module.scss';
 import PurchaseStock from '../../../features/ui/PurchaseStock/PurchaseStock';
 import { useOrderList } from '../../../shared/lib/hooks/useOrderList';
 import { exportOrderListToExcel, setNotificationCallback } from '../../../shared/lib/utils/exportOrderList';
-import { useAppDispatch, useAppSelector } from '../../../app/providers/StoreProvider/Store/hooks';
-import { fetchQuantityToOrder } from '../../../app/providers/StoreProvider/Store/QuantityToOrderSlice';
+import { useQuantityToOrderLive } from '../../../shared/lib/hooks/useQuantityToOrder';
 import NotificationModal from '../../../shared/ui/NotificationModal/NotificationModal';
 
 const MainPageButtonsBar = () => {
-    const dispatch = useAppDispatch();
+    useQuantityToOrderLive();
     const { orderList } = useOrderList();
     
     const [notification, setNotification] = useState<{
@@ -23,8 +22,6 @@ const MainPageButtonsBar = () => {
         type: 'info'
     });
     
-    const quantityToOrderData = useAppSelector((state) => state.quantityToOrder.orders);
-    
     useEffect(() => {
         setNotificationCallback((title: string, message: string, type: 'info' | 'warning' | 'error' | 'success' = 'info') => {
             setNotification({
@@ -35,13 +32,7 @@ const MainPageButtonsBar = () => {
             });
         });
     }, []);
-    
-    useEffect(() => {
-        if (quantityToOrderData.length === 0) {
-            dispatch(fetchQuantityToOrder());
-        }
-    }, [dispatch, quantityToOrderData.length]);
-    
+
     const handleOrderExport = () => {
         void exportOrderListToExcel(orderList);
     };

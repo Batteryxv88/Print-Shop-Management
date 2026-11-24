@@ -9,15 +9,25 @@ export interface QuantityToOrder {
     use: boolean;
 }
 
-export const subscribeToQuantityToOrder = (callback: (orders: QuantityToOrder[]) => void) => {
+export const subscribeToQuantityToOrder = (
+    callback: (orders: QuantityToOrder[]) => void,
+    onError?: (error: Error) => void
+) => {
     const ordersCollection = collection(db, 'quantityToOrder');
-    return onSnapshot(ordersCollection, (snapshot) => {
-        const orders = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        })) as QuantityToOrder[];
-        callback(orders);
-    });
+    return onSnapshot(
+        ordersCollection,
+        (snapshot) => {
+            const orders = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            })) as QuantityToOrder[];
+            callback(orders);
+        },
+        (err) => {
+            console.error('quantityToOrder listener failed', err);
+            onError?.(err instanceof Error ? err : new Error(String(err)));
+        }
+    );
 };
 
 export const fetchQuantityToOrder = async (): Promise<QuantityToOrder[]> => {

@@ -5,6 +5,10 @@ import {
     doc,
     getDoc,
     onSnapshot,
+    query,
+    where,
+    type DocumentData,
+    type QuerySnapshot,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { reverseStockMovement } from './stockAccounting';
@@ -29,21 +33,68 @@ export type MaterialUsageInput = Omit<MaterialUsage, 'id'>;
 
 const COLLECTION = 'MaterialUsages';
 
-export const subscribeMaterialUsages = (
-    callback: (items: MaterialUsage[]) => void
+const publishMaterialUsages = (
+    snap: QuerySnapshot<DocumentData>,
+    callback: (items: MaterialUsage[]) => void,
+    filterKind?: MaterialUsageKind
 ) => {
-    return onSnapshot(collection(db, COLLECTION), (snap) => {
-        const items = snap.docs.map((d) => ({
-            id: d.id,
-            ...(d.data() as Omit<MaterialUsage, 'id'>),
-        }));
-        items.sort(
-            (a, b) =>
-                new Date(b.date || 0).getTime() -
-                new Date(a.date || 0).getTime()
+    let items = snap.docs.map((d) => ({
+        id: d.id,
+        ...(d.data() as Omit<MaterialUsage, 'id'>),
+    }));
+    if (filterKind) {
+        items = items.filter((item) => item.kind === filterKind);
+    }
+    items.sort(
+        (a, b) =>
+            new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime()
+    );
+    callback(items);
+};
+
+/**
+ * Слушатель журнала расхода. С kind читается только эта вкладка, без лимита.
+ * Если запрос по полю недоступен, слушатель всей коллекции сохраняет тот же список.
+ */
+export const subscribeMaterialUsages = (
+    callback: (items: MaterialUsage[]) => void,
+    kind?: MaterialUsageKind
+) => {
+    let activeUnsub = () => undefined as void;
+    let stopped = false;
+
+    const listenAll = (filterKind?: MaterialUsageKind) => {
+        activeUnsub = onSnapshot(collection(db, COLLECTION), (snap) => {
+            publishMaterialUsages(snap, callback, filterKind);
+        });
+    };
+
+    if (!kind) {
+        listenAll();
+    } else {
+        const byKind = query(
+            collection(db, COLLECTION),
+            where('kind', '==', kind)
         );
-        callback(items);
-    });
+        activeUnsub = onSnapshot(
+            byKind,
+            (snap) => publishMaterialUsages(snap, callback),
+            (err) => {
+                console.warn(
+                    '[materialUsage] kind query failed; falling back to full collection',
+                    err
+                );
+                if (stopped) return;
+                activeUnsub();
+                listenAll(kind);
+            }
+        );
+    }
+
+    return () => {
+        stopped = true;
+        activeUnsub();
+    };
 };
 
 export const addMaterialUsage = async (

@@ -9,7 +9,6 @@ import {
     type ReactNode,
 } from 'react';
 import { changePage } from '../../../app/providers/StoreProvider/Store/ChangePageSlice';
-import { requestAnalyticsExport } from '../../../app/providers/StoreProvider/Store/AnalyticsFilterSlice';
 import {
     useAppDispatch,
     useAppSelector,
@@ -78,21 +77,13 @@ const AnalyticsCosts = lazy(() => import('./AnalyticsCosts'));
 const AnalyticsMaterials = lazy(() => import('./AnalyticsMaterials'));
 const AnalyticsMovements = lazy(() => import('./AnalyticsMovements'));
 
-export type AnalyticsTabId =
-    | 'overview'
-    | 'charts'
-    | 'costs'
-    | 'materials'
-    | 'movements'
-    | 'export';
+export type AnalyticsTabId = 'costs' | 'charts' | 'materials' | 'movements';
 
 const TAB_DEFS: { id: AnalyticsTabId; label: string }[] = [
-    { id: 'overview', label: 'Обзор' },
-    { id: 'charts', label: 'Графики' },
     { id: 'costs', label: 'Затраты' },
+    { id: 'charts', label: 'Графики' },
     { id: 'materials', label: 'Материалы' },
     { id: 'movements', label: 'Движения' },
-    { id: 'export', label: 'Выгрузка' },
 ];
 
 const AnalyticsPage = () => {
@@ -144,20 +135,12 @@ const AnalyticsPage = () => {
     const movementsRef = useRef<HTMLDivElement>(null);
     const lastExportNonce = useRef(0);
 
-    const [activeTab, setActiveTab] = useState<AnalyticsTabId>('charts');
+    const [activeTab, setActiveTab] = useState<AnalyticsTabId>('costs');
     const [visitedTabs, setVisitedTabs] = useState<Set<AnalyticsTabId>>(
-        () => new Set<AnalyticsTabId>(['overview', 'charts'])
+        () => new Set<AnalyticsTabId>(['costs'])
     );
     const [volumeGranularity, setVolumeGranularity] =
         useState<PrintVolumeChartGranularity>('month');
-
-    useEffect(() => {
-        if (isMobile) {
-            setActiveTab('overview');
-        } else {
-            setActiveTab('charts');
-        }
-    }, [isMobile]);
 
     const markTabVisited = useCallback((tab: AnalyticsTabId) => {
         setVisitedTabs((prev) => {
@@ -667,10 +650,6 @@ const AnalyticsPage = () => {
         visibleCount: recentVisibleCount,
     } = useInfiniteList(recentAll);
 
-    const visibleTabs = isMobile
-        ? TAB_DEFS.filter((t) => t.id === 'overview')
-        : TAB_DEFS;
-
     const tabTriggerId = (id: AnalyticsTabId) => `analytics-tab-${id}-trigger`;
     const tabPanelDomId = (id: AnalyticsTabId) => `analytics-tab-${id}-panel`;
 
@@ -714,7 +693,7 @@ const AnalyticsPage = () => {
                                 role="tablist"
                                 aria-label="Разделы аналитики"
                             >
-                                {visibleTabs.map((t) => (
+                                {TAB_DEFS.map((t) => (
                                     <li key={t.id} role="none">
                                         <button
                                             type="button"
@@ -741,14 +720,6 @@ const AnalyticsPage = () => {
                                 id={tabPanelDomId(activeTab)}
                                 aria-labelledby={tabTriggerId(activeTab)}
                             >
-                                {activeTab === 'overview' && (
-                                    <p className={cls.sectionHint}>
-                                        Период и кнопки «Обновить» / Excel —
-                                        в боковой панели. Откройте вкладки
-                                        ниже для графиков и таблиц.
-                                    </p>
-                                )}
-
                                 {activeTab === 'charts' &&
                                     visitedTabs.has('charts') && (
                                         <SuspenseBlock>
@@ -894,28 +865,6 @@ const AnalyticsPage = () => {
                                         </SuspenseBlock>
                                     )}
 
-                                {activeTab === 'export' && (
-                                    <section className={cls.section}>
-                                        <h2 className={cls.sectionTitle}>
-                                            Выгрузка Excel
-                                        </h2>
-                                        <p className={cls.sectionHint}>
-                                            Сводка по текущему периоду и KPI.
-                                            Дублирует кнопку в боковой панели.
-                                        </p>
-                                        <button
-                                            type="button"
-                                            className={cls.ghostBtn}
-                                            onClick={() =>
-                                                dispatch(
-                                                    requestAnalyticsExport()
-                                                )
-                                            }
-                                        >
-                                            Скачать Excel
-                                        </button>
-                                    </section>
-                                )}
                             </div>
                         </>
                     )}

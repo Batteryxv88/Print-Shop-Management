@@ -20,6 +20,7 @@ test.describe('@tablet Analytics', () => {
         }
 
         await expect(page.getByTestId('analytics-mobile-notice')).toBeHidden();
+        await page.getByRole('tab', { name: 'Графики' }).click();
         await expect(
             page.getByRole('heading', { name: 'Объём печати (по месяцам)' })
         ).toBeVisible();
