@@ -85,6 +85,24 @@
     letter-spacing: 0.04em;
 }
 
+.qty {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.qtyEmpty {
+    color: rgba(255, 255, 255, 0.38);
+}
+
+.stockLine {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.75);
+    white-space: nowrap;
+}
+
 .replaceBtn {
     height: 30px;
     padding: 0 14px;
@@ -126,5 +144,9 @@
         width: 100%;
         min-height: var(--touch-target-min, 44px);
         height: auto;
+    }
+
+    .stockLine {
+        width: 100%;
     }
 }

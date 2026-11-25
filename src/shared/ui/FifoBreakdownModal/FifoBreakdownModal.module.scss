@@ -12,6 +12,14 @@
     @include overlay-sheet-mobile;
 }
 
+.overlayIn {
+    animation: fifoFadeIn 220ms ease forwards;
+}
+
+.overlayOut {
+    animation: fifoFadeOut 220ms ease forwards;
+}
+
 .modal {
     background: var(--surface-2);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -23,6 +31,14 @@
     padding: 20px 22px 18px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
     @include dialog-sheet-mobile;
+}
+
+.modalIn {
+    animation: fifoPopIn 220ms ease forwards;
+}
+
+.modalOut {
+    animation: fifoPopOut 220ms ease forwards;
 }
 
 .title {
@@ -106,5 +122,65 @@
 
     &:hover {
         filter: brightness(1.05);
+    }
+}
+
+@keyframes fifoFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fifoFadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes fifoPopIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes fifoPopOut {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .overlayIn,
+    .overlayOut,
+    .modalIn,
+    .modalOut {
+        animation: none;
+    }
+
+    .overlayIn,
+    .modalIn {
+        opacity: 1;
+        transform: none;
+    }
+
+    .overlayOut,
+    .modalOut {
+        opacity: 0;
     }
 }

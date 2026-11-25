@@ -525,10 +525,18 @@ const AnalyticsPage = () => {
         [printerRows, selectedPrinter]
     );
 
-    const clickCosts = useMemo(
-        () => buildClickCosts(printerRows, allVolumeRows, from, to),
-        [printerRows, allVolumeRows, from, to]
-    );
+    const clickCosts = useMemo(() => {
+        const clickUnitByPrinterId = new Map(
+            printers.map((p) => [p.id, p.clickUnit] as const)
+        );
+        return buildClickCosts(
+            printerRows,
+            allVolumeRows,
+            from,
+            to,
+            clickUnitByPrinterId
+        );
+    }, [printerRows, allVolumeRows, from, to, printers]);
 
     const costPurchaseMonthRows = useMemo(
         () =>

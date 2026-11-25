@@ -117,6 +117,7 @@ const AddReplacedPart = () => {
 
     const [partQuery, setPartQuery] = useState('');
     const [selectedPartId, setSelectedPartId] = useState<string | null>(null);
+    const [installName, setInstallName] = useState('');
     const [serviceLifeDisplay, setServiceLifeDisplay] = useState('');
 
     const { partsArray } = useParts();
@@ -154,6 +155,23 @@ const AddReplacedPart = () => {
         [partOptions, selectedPartId]
     );
 
+    const installNames = useMemo(() => {
+        const part = partsArray.find((item) => item.id === selectedPartId);
+        const stored = Array.isArray(part?.part?.names)
+            ? part.part.names.map((name: string) => String(name).trim()).filter(Boolean)
+            : [];
+        if (stored.length > 0) return stored;
+        const single = String(part?.part?.partName || '').trim();
+        return single ? [single] : [];
+    }, [partsArray, selectedPartId]);
+
+    const installKey = installNames.join('\n');
+    useEffect(() => {
+        setInstallName(installNames.length === 1 ? installNames[0] : '');
+        // Имена группы зависят от выбранной карточки, не от каждого рендера.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedPartId, installKey]);
+
     const exactMatch = useMemo(() => {
         const q = partQuery.trim().toUpperCase();
         if (!q) return null;
@@ -180,6 +198,7 @@ const AddReplacedPart = () => {
     const resetForm = () => {
         setPartQuery('');
         setSelectedPartId(null);
+        setInstallName('');
         setServiceLifeDisplay('');
         setSubmitError('');
         setError(false);
@@ -233,6 +252,10 @@ const AddReplacedPart = () => {
             setSubmitError('Количество — минимум 1');
             return;
         }
+        if (installNames.length > 1 && !installName) {
+            setSubmitError('Выберите, какую позицию меняете');
+            return;
+        }
 
         const currentPart =
             (selectedPartId &&
@@ -255,7 +278,10 @@ const AddReplacedPart = () => {
         setError(false);
         setSubmitting(true);
 
-        const newName = currentPart.part.partName;
+        const newName =
+            installNames.length > 1
+                ? installName
+                : installNames[0] || currentPart.part.partName;
         // Секция со склада модели — не хардкод partsFilter
         const section =
             String(currentPart.part.section || '').trim() ||
@@ -365,6 +391,26 @@ const AddReplacedPart = () => {
                                     {selectedPart.qty} шт.
                                 </span>
                             </div>
+                        )}
+                        {installNames.length > 1 && (
+                            <label className={cls.label}>
+                                Что меняете
+                                <select
+                                    className={cls.input}
+                                    value={installName}
+                                    onChange={(e) =>
+                                        setInstallName(e.target.value)
+                                    }
+                                    required
+                                >
+                                    <option value="">Выберите имя</option>
+                                    {installNames.map((name: string) => (
+                                        <option key={name} value={name}>
+                                            {name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
                         )}
                     </div>
 

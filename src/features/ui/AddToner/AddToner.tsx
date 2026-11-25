@@ -74,6 +74,26 @@ const AddToner = () => {
         ? availableColors[0] || 'K'
         : selectedColor;
 
+    const stockQtyByColor = useMemo(() => {
+        const qtyByColor: Record<string, number> = {};
+        const colors = isSingleColor
+            ? [colorToReplace]
+            : availableColors;
+        colors.forEach((color) => {
+            const stock = findTonerStock(tonersArr, color, printerModel);
+            qtyByColor[color] = Number(stock?.toner?.qty) || 0;
+        });
+        return qtyByColor;
+    }, [
+        availableColors,
+        colorToReplace,
+        isSingleColor,
+        printerModel,
+        tonersArr,
+    ]);
+
+    const stockQty = (color: string) => stockQtyByColor[color] ?? 0;
+
     const handleReplace = async () => {
         if (!colorToReplace || busy) return;
 
@@ -153,6 +173,7 @@ const AddToner = () => {
                     >
                         {availableColors.map((color) => {
                             const active = selectedColor === color;
+                            const qty = stockQty(color);
                             return (
                                 <button
                                     key={color}
@@ -165,7 +186,7 @@ const AddToner = () => {
                                             Boolean(selectedColor) && !active,
                                     })}
                                     onClick={() => setSelectedColor(color)}
-                                    title={`Тонер ${color}`}
+                                    title={`Тонер ${color}, на складе ${qty} шт.`}
                                     disabled={busy}
                                 >
                                     <span
@@ -178,10 +199,27 @@ const AddToner = () => {
                                     <span className={cls.colorLabel}>
                                         {color}
                                     </span>
+                                    <span
+                                        className={classNames(cls.qty, {
+                                            [cls.qtyEmpty]: qty <= 0,
+                                        })}
+                                    >
+                                        {qty} шт.
+                                    </span>
                                 </button>
                             );
                         })}
                     </div>
+                )}
+
+                {isSingleColor && (
+                    <span
+                        className={classNames(cls.stockLine, {
+                            [cls.qtyEmpty]: stockQty(colorToReplace) <= 0,
+                        })}
+                    >
+                        на складе {stockQty(colorToReplace)} шт.
+                    </span>
                 )}
 
                 <button
@@ -209,6 +247,7 @@ const AddToner = () => {
             <FifoBreakdownModal
                 isOpen={Boolean(breakdown)}
                 onClose={closeBreakdown}
+                autoCloseMs={4000}
                 title={breakdown?.title || ''}
                 subtitle={breakdown?.subtitle}
                 qty={breakdown?.qty || 0}

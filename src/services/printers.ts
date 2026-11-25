@@ -19,6 +19,12 @@ import {
 
 export type { PrinterColorMode };
 
+/** В чём считается один клик общего счётчика */
+export type ClickUnit = 'a4' | 'a3' | 'meter';
+
+export const parseClickUnit = (value: unknown): ClickUnit | undefined =>
+    value === 'a4' || value === 'a3' || value === 'meter' ? value : undefined;
+
 export interface PrinterOption {
     id: string;
     model: string;
@@ -36,6 +42,10 @@ export interface Printer {
     colorMode: PrinterColorMode;
     /** Тонерные цвета: для color по умолчанию CMYK, можно добавить W и др. */
     colors: string[];
+    /**
+     * Единица общего счётчика. Пустое поле — цена клика не считается.
+     */
+    clickUnit?: ClickUnit;
 }
 
 export type PrinterInput = Omit<Printer, 'id'>;
@@ -50,6 +60,7 @@ const normalizePrinterPayload = (printer: PrinterInput) => {
             ? printer.colors
             : defaultColorsForMode(colorMode)
     );
+    const clickUnit = parseClickUnit(printer.clickUnit);
 
     return {
         name: printer.name.trim(),
@@ -63,6 +74,7 @@ const normalizePrinterPayload = (printer: PrinterInput) => {
         })),
         colorMode,
         colors,
+        ...(clickUnit ? { clickUnit } : {}),
     };
 };
 
@@ -86,6 +98,7 @@ const mapPrinterDoc = (id: string, data: Record<string, any>): Printer => {
         options: Array.isArray(data.options) ? data.options : [],
         colorMode,
         colors,
+        clickUnit: parseClickUnit(data.clickUnit),
     };
 };
 

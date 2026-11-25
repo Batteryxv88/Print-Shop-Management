@@ -10,6 +10,8 @@ import {
     formatMoneyRu,
 } from '../../lib/stock/formatLotDate';
 
+const EXIT_MS = 220;
+
 export type FifoBreakdownModalProps = {
     isOpen: boolean;
     onClose: () => void;
@@ -19,6 +21,8 @@ export type FifoBreakdownModalProps = {
     totalCost: number;
     unitPriceAvg: number;
     slices: FifoLotSlice[];
+    /** Самозакрытие, мс. Пока не задано, модалка ждёт «Понятно». */
+    autoCloseMs?: number;
 };
 
 const FifoBreakdownModal = ({
@@ -30,10 +34,13 @@ const FifoBreakdownModal = ({
     totalCost,
     unitPriceAvg,
     slices,
+    autoCloseMs,
 }: FifoBreakdownModalProps) => {
     const modalRef = useRef<HTMLDivElement>(null);
     const [rows, setRows] = useState<EnrichedFifoSlice[]>([]);
     const [loading, setLoading] = useState(false);
+    const [mounted, setMounted] = useState(isOpen);
+    const [phase, setPhase] = useState<'in' | 'out'>(isOpen ? 'in' : 'out');
 
     useEffect(() => {
         if (!isOpen || slices.length === 0) {
@@ -62,13 +69,38 @@ const FifoBreakdownModal = ({
         return () => document.removeEventListener('keydown', onKey);
     }, [isOpen, onClose]);
 
-    if (!isOpen) return null;
+    useEffect(() => {
+        if (!isOpen || !autoCloseMs || autoCloseMs <= 0) return;
+        const timer = window.setTimeout(onClose, autoCloseMs);
+        return () => window.clearTimeout(timer);
+    }, [isOpen, autoCloseMs, onClose]);
+
+    useEffect(() => {
+        if (isOpen) {
+            setMounted(true);
+            setPhase('in');
+            return;
+        }
+        setPhase('out');
+        const timer = window.setTimeout(() => setMounted(false), EXIT_MS);
+        return () => window.clearTimeout(timer);
+    }, [isOpen]);
+
+    if (!mounted) return null;
+
+    const shown = phase === 'in';
 
     return (
-        <div className={cls.overlay} role="presentation">
+        <div
+            className={`${cls.overlay} ${shown ? cls.overlayIn : cls.overlayOut}`}
+            role="presentation"
+            onMouseDown={(event) => {
+                if (event.target === event.currentTarget) onClose();
+            }}
+        >
             <div
                 ref={modalRef}
-                className={cls.modal}
+                className={`${cls.modal} ${shown ? cls.modalIn : cls.modalOut}`}
                 role="dialog"
                 aria-labelledby="fifo-breakdown-title"
             >

@@ -252,12 +252,22 @@ export const exportAnalyticsExcel = async (input: AnalyticsExportInput) => {
     );
 
     // ——— Себестоимость клика + столбчатая диаграмма ———
+    const clickUnitLabel = (unit: ClickCostRow['clickUnit']) => {
+        if (unit === 'a4') return 'A4';
+        if (unit === 'a3') return 'A3';
+        if (unit === 'meter') return 'метры';
+        return 'не указано';
+    };
+    const clickMoney = (n: number | null) => (n != null ? money(n) : '');
     const clickRows = input.clickCosts.map((r) => ({
         'Аппарат': r.name,
         'Модель': r.model,
-        'Оттиски': r.pages,
+        'Единица': clickUnitLabel(r.clickUnit),
+        'Объём': r.pages,
         'Использовано ₽': money(r.usedCost),
-        '₽ / клик': r.clickCost != null ? money(r.clickCost) : '',
+        '₽ / A4': clickMoney(r.clickA4),
+        '₽ / A3': clickMoney(r.clickA3),
+        '₽ / м': clickMoney(r.clickMeter),
         'Закуплено ₽': money(r.purchasedTotal),
         'Экономия ₽': money(r.economy),
     }));
@@ -269,8 +279,11 @@ export const exportAnalyticsExcel = async (input: AnalyticsExportInput) => {
             [
                 { wch: 16 },
                 { wch: 22 },
-                { wch: 12 },
                 { wch: 14 },
+                { wch: 12 },
+                { wch: 16 },
+                { wch: 12 },
+                { wch: 12 },
                 { wch: 12 },
                 { wch: 14 },
                 { wch: 12 },
@@ -284,15 +297,20 @@ export const exportAnalyticsExcel = async (input: AnalyticsExportInput) => {
             categories: `${q(clickSheetName)}!$A$2:$A$${last}`,
             series: [
                 {
-                    nameRef: `${q(clickSheetName)}!$E$1`,
-                    ref: `${q(clickSheetName)}!$E$2:$E$${last}`,
+                    nameRef: `${q(clickSheetName)}!$F$1`,
+                    ref: `${q(clickSheetName)}!$F$2:$F$${last}`,
                     colour: '#BB86FC',
+                },
+                {
+                    nameRef: `${q(clickSheetName)}!$H$1`,
+                    ref: `${q(clickSheetName)}!$H$2:$H$${last}`,
+                    colour: '#03DAC6',
                 },
             ],
             anchor: { col: 8, row: 0 },
             width: 560,
             height: 340,
-            legend: false,
+            legend: 'b',
             yTitle: '₽',
             numberFormat: '0.000',
         });

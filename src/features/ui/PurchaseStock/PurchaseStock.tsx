@@ -303,18 +303,28 @@ const PurchaseStock = ({ type, layout = 'default' }: Props) => {
     };
 
     const partOptions = useMemo<PartOption[]>(() => {
-        return partsArray
+        const best = new Map<string, PartOption>();
+        partsArray
             .filter((item) => matchesModel(item.part?.model, storageModel))
-            .map((item) => ({
-                id: item.id,
-                partN: String(item.part.partN || ''),
-                partName: String(item.part.partName || ''),
-                section: String(item.part.section || ''),
-                model: item.part.model || storageModel || '',
-                qty: Number(item.part.quantity) || 0,
-                costCategory: inferPartCostCategory(item.part || {}),
-            }))
-            .sort((a, b) => a.partN.localeCompare(b.partN, 'ru'));
+            .forEach((item) => {
+                const option: PartOption = {
+                    id: item.id,
+                    partN: String(item.part.partN || ''),
+                    partName: String(item.part.partName || ''),
+                    section: String(item.part.section || ''),
+                    model: item.part.model || storageModel || '',
+                    qty: Number(item.part.quantity) || 0,
+                    costCategory: inferPartCostCategory(item.part || {}),
+                };
+                const key = `${option.partN.toUpperCase()}|${String(
+                    item.part.optionModel || ''
+                )}`;
+                const prev = best.get(key);
+                if (!prev || option.qty > prev.qty) best.set(key, option);
+            });
+        return Array.from(best.values()).sort((a, b) =>
+            a.partN.localeCompare(b.partN, 'ru')
+        );
     }, [partsArray, storageModel]);
 
     const sectionOptions = useMemo(() => {
@@ -582,7 +592,12 @@ const PurchaseStock = ({ type, layout = 'default' }: Props) => {
             const bind = resolvePurchaseBind();
             let target: { id: string; partN: string; partName: string; model: string; qty: number };
 
-            if (isNewPart) {
+            const existingArticle = partOptions.find(
+                (option) => option.partN.toUpperCase() === partN
+            );
+            if (isNewPart && existingArticle) {
+                target = existingArticle;
+            } else if (isNewPart) {
                 const model = storageModel || '';
                 const partLife =
                     partCategory === 'consumable'

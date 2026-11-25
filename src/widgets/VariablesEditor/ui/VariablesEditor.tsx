@@ -9,6 +9,7 @@ import {
     updatePrinter,
     deletePrinter,
     createOptionId,
+    parseClickUnit,
     Printer,
     PrinterInput,
     PrinterOption,
@@ -120,6 +121,9 @@ const VariablesEditor = () => {
         if (!model) {
             return 'Модель принтера обязательна';
         }
+        if (!parseClickUnit(data.clickUnit)) {
+            return 'Укажите, в чём считается клик: A4, A3 или метры';
+        }
 
         const duplicate = printers.find(
             (p) =>
@@ -141,6 +145,7 @@ const VariablesEditor = () => {
         options: form.options || [],
         colorMode: form.colorMode || 'color',
         colors: resolvePrinterColors(form),
+        clickUnit: parseClickUnit(form.clickUnit),
     });
 
     const finishPrinterForm = () => {
@@ -195,6 +200,7 @@ const VariablesEditor = () => {
             options: printer.options ? [...printer.options] : [],
             colorMode: printer.colorMode || 'color',
             colors: resolvePrinterColors(printer),
+            clickUnit: printer.clickUnit,
         });
         setOptionDraft({ model: '', serialNumber: '' });
         setConfirm(null);
@@ -287,6 +293,7 @@ const VariablesEditor = () => {
             options: printer.options || [],
             colorMode: printer.colorMode || 'color',
             colors: resolvePrinterColors(printer),
+            clickUnit: printer.clickUnit,
             ...patch,
         });
     };
@@ -531,6 +538,27 @@ const VariablesEditor = () => {
                                     }
                                     placeholder="192.168.0.10"
                                 />
+                            </label>
+                            <label className={cls.label}>
+                                Клик считается в *
+                                <select
+                                    className={cls.input}
+                                    value={form.clickUnit || ''}
+                                    onChange={(e) =>
+                                        setForm((prev) => ({
+                                            ...prev,
+                                            clickUnit: parseClickUnit(
+                                                e.target.value
+                                            ),
+                                        }))
+                                    }
+                                    required
+                                >
+                                    <option value="">не указано</option>
+                                    <option value="a4">A4</option>
+                                    <option value="a3">A3</option>
+                                    <option value="meter">метры</option>
+                                </select>
                             </label>
                         </div>
 

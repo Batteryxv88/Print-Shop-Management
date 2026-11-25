@@ -775,6 +775,38 @@ const driftAllCache = new Map<string, Promise<PriceDriftPoint[]>>();
 
 const openLotsCache = new Map<string, StockLot[]>();
 
+/**
+ * Переносит партии и движения на другую карточку склада.
+ * Цена, дата и остаток партии не меняются — только stockId.
+ */
+export const retargetPartFifo = async (
+    fromStockId: string,
+    toStockId: string
+): Promise<void> => {
+    if (!fromStockId || !toStockId || fromStockId === toStockId) return;
+
+    for (const colName of [LOTS, MOVEMENTS]) {
+        const snap = await getDocs(
+            query(collection(db, colName), where('stockId', '==', fromStockId))
+        );
+        let batch = writeBatch(db);
+        let pending = 0;
+        for (const item of snap.docs) {
+            batch.update(item.ref, { stockId: toStockId });
+            pending += 1;
+            if (pending >= 400) {
+                await batch.commit();
+                batch = writeBatch(db);
+                pending = 0;
+            }
+        }
+        if (pending > 0) await batch.commit();
+    }
+
+    invalidateStockLotsCache(fromStockId);
+    invalidateStockLotsCache(toStockId);
+};
+
 /** Сброс кэша открытых партий и дрейфа цены (после прихода / списания / сторно) */
 export const invalidateStockLotsCache = (stockId?: string) => {
     if (stockId) {

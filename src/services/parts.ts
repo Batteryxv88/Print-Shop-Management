@@ -10,6 +10,8 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { ResourcePartRow } from '../shared/lib/printers/parsePartsExcel';
+import { collapseResourceRows } from '../shared/lib/printers/collapsePartNames';
+import { retargetPartFifo } from './stockAccounting';
 
 export interface Part {
     partN: string;
@@ -20,6 +22,8 @@ export interface Part {
     model?: string;
     /** Сколько штук стоит в аппарате (из Excel Qty), не склад */
     installedQty?: number;
+    /** Имена из ведомости для одного артикула. В журнал пишется выбранное. */
+    names?: string[];
     source?: 'body' | 'option' | 'manual';
     optionModel?: string;
 }
@@ -65,18 +69,14 @@ export const importResourceParts = async (
         part: d.data() as Part,
     }));
 
-    const matchExisting = (partN: string, partName: string) =>
-        existing.find((item) => {
-            const p = item.part;
-            // partN + имя: у разных цветов часто один партномер
-            if (p.partN?.toUpperCase() !== partN.toUpperCase()) return false;
-            if ((p.partName || '').trim() !== partName.trim()) return false;
-            if ((p.model || '') !== printerModel) return false;
-            if (source === 'option') {
-                return (p.optionModel || '') === (optionModel || '');
-            }
-            return !p.optionModel;
-        });
+    const sameArticle = (part: Part, partN: string) => {
+        if ((part.partN || '').toUpperCase() !== partN) return false;
+        if ((part.model || '') !== printerModel) return false;
+        if (source === 'option') {
+            return (part.optionModel || '') === (optionModel || '');
+        }
+        return !part.optionModel;
+    };
 
     let created = 0;
     let updated = 0;
@@ -90,54 +90,96 @@ export const importResourceParts = async (
         opsInBatch = 0;
     };
 
-    for (const row of rows) {
-        const found = matchExisting(row.partN, row.partName);
+    const queue = (op: () => void) => {
+        op();
+        opsInBatch += 1;
+    };
 
-        if (found) {
-            const ref = doc(db, 'Parts', found.id);
-            batch.update(ref, {
-                partName: row.partName,
-                section: row.section,
-                partLife: row.partLife,
-                installedQty: row.installedQty,
-                model: printerModel,
-                source,
-                optionModel: optionModel ? optionModel : deleteField(),
-            });
-            // обновим локальный кэш, чтобы дубли в Excel не создавали новые
-            found.part = {
-                ...found.part,
-                partName: row.partName,
-                section: row.section,
-                partLife: row.partLife,
-                installedQty: row.installedQty,
-                model: printerModel,
-                source,
-                ...(optionModel ? { optionModel } : { optionModel: undefined }),
-            };
-            updated += 1;
-        } else {
+    for (const group of collapseResourceRows(rows)) {
+        const matches = existing.filter((item) =>
+            sameArticle(item.part, group.partN)
+        );
+
+        if (matches.length === 0) {
             const ref = doc(collection(db, 'Parts'));
             const payload: Part = {
-                partN: row.partN,
-                partName: row.partName,
-                section: row.section,
-                partLife: row.partLife,
-                installedQty: row.installedQty,
+                partN: group.partN,
+                partName: group.partName,
+                names: group.names,
+                section: group.section,
+                partLife: group.partLife,
+                installedQty: group.installedQty,
                 quantity: 0,
                 model: printerModel,
                 source,
                 ...(optionModel ? { optionModel } : {}),
             };
-            batch.set(ref, payload);
+            queue(() => batch.set(ref, payload));
             existing.push({ id: ref.id, part: payload });
             created += 1;
+        } else {
+            const keeper = [...matches].sort(
+                (a, b) =>
+                    (Number(b.part.quantity) || 0) -
+                    (Number(a.part.quantity) || 0)
+            )[0];
+            const extras = matches.filter((item) => item.id !== keeper.id);
+            const extraQty = extras.reduce(
+                (sum, item) => sum + (Number(item.part.quantity) || 0),
+                0
+            );
+            const extraOrder = extras.reduce(
+                (sum, item) =>
+                    sum +
+                    (Number(
+                        (item.part as Part & { orderQty?: number }).orderQty
+                    ) || 0),
+                0
+            );
+            const keeperOrder =
+                Number(
+                    (keeper.part as Part & { orderQty?: number }).orderQty
+                ) || 0;
+
+            for (const extra of extras) {
+                await retargetPartFifo(extra.id, keeper.id);
+            }
+
+            queue(() =>
+                batch.update(doc(db, 'Parts', keeper.id), {
+                    partN: group.partN,
+                    partName: group.partName,
+                    names: group.names,
+                    section: group.section,
+                    partLife: group.partLife,
+                    installedQty: group.installedQty,
+                    quantity: (Number(keeper.part.quantity) || 0) + extraQty,
+                    ...(extraOrder > 0
+                        ? { orderQty: keeperOrder + extraOrder }
+                        : {}),
+                    model: printerModel,
+                    source,
+                    optionModel: optionModel ? optionModel : deleteField(),
+                })
+            );
+            for (const extra of extras) {
+                queue(() => batch.delete(doc(db, 'Parts', extra.id)));
+                const idx = existing.findIndex((item) => item.id === extra.id);
+                if (idx >= 0) existing.splice(idx, 1);
+            }
+            keeper.part = {
+                ...keeper.part,
+                partName: group.partName,
+                names: group.names,
+                section: group.section,
+                partLife: group.partLife,
+                installedQty: group.installedQty,
+                quantity: (Number(keeper.part.quantity) || 0) + extraQty,
+            };
+            updated += 1;
         }
 
-        opsInBatch += 1;
-        if (opsInBatch >= 400) {
-            await commitBatch();
-        }
+        if (opsInBatch >= 400) await commitBatch();
     }
 
     await commitBatch();

@@ -6,6 +6,7 @@ import {
     type CostCategory,
 } from '../../../shared/lib/stock/costCategory';
 import type { PrinterAnalyticsRow } from '../../../shared/lib/stock/buildPrinterAnalytics';
+import type { ClickCostRow } from '../../../shared/lib/stock/buildClickCosts';
 import {
     sortedTonerColors,
     totalTonerUnits,
@@ -128,12 +129,6 @@ const StatTile = ({
         </div>
     </div>
 );
-
-export type ClickCostRow = {
-    name: string;
-    clickCost: number | null;
-    pages: number;
-};
 
 type AnalyticsCostsProps = {
     printerRows: PrinterAnalyticsRow[];
@@ -298,15 +293,62 @@ const AnalyticsCosts = ({
                                             ? `${formatMoney(selectedRow.usedTotal)} ₽`
                                             : '—'}
                                     </StatTile>
+                                    {cc?.clickUnit === 'meter' ? (
+                                        <StatTile
+                                            label="₽ / м"
+                                            hint="Потрачено ₽ ÷ метры за период"
+                                        >
+                                            {cc.clickMeter != null
+                                                ? formatClick(cc.clickMeter)
+                                                : '—'}
+                                        </StatTile>
+                                    ) : cc?.clickUnit === 'a4' ||
+                                      cc?.clickUnit === 'a3' ? (
+                                        <>
+                                            <StatTile
+                                                label="₽ / A4"
+                                                hint={
+                                                    cc.clickUnit === 'a4'
+                                                        ? 'Потрачено ₽ ÷ клики A4'
+                                                        : 'A4 = половина клика A3'
+                                                }
+                                            >
+                                                {cc.clickA4 != null
+                                                    ? formatClick(cc.clickA4)
+                                                    : '—'}
+                                            </StatTile>
+                                            <StatTile
+                                                label="₽ / A3"
+                                                hint={
+                                                    cc.clickUnit === 'a3'
+                                                        ? 'Потрачено ₽ ÷ клики A3'
+                                                        : 'A3 = 2 клика A4'
+                                                }
+                                            >
+                                                {cc.clickA3 != null
+                                                    ? formatClick(cc.clickA3)
+                                                    : '—'}
+                                            </StatTile>
+                                        </>
+                                    ) : (
+                                        <StatTile
+                                            label="₽ / клик"
+                                            hint="Единица клика не указана"
+                                        >
+                                            —
+                                        </StatTile>
+                                    )}
                                     <StatTile
-                                        label="₽ / клик"
-                                        hint="Потрачено ₽ ÷ оттиски за период"
+                                        label={
+                                            cc?.clickUnit === 'a4'
+                                                ? 'Клики A4'
+                                                : cc?.clickUnit === 'a3'
+                                                  ? 'Клики A3'
+                                                  : cc?.clickUnit === 'meter'
+                                                    ? 'Метры'
+                                                    : 'Счётчик'
+                                        }
                                     >
-                                        {cc?.clickCost != null
-                                            ? formatClick(cc.clickCost)
-                                            : '—'}
-                                    </StatTile>
-                                    <StatTile label="Оттиски">
                                         {cc && cc.pages > 0
                                             ? cc.pages.toLocaleString('ru-RU')
                                             : '—'}
