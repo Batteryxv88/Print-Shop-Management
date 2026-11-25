@@ -10,10 +10,109 @@ import {
     usePrinters,
 } from '../../../app/providers/StoreProvider/Store/hooks';
 import { updateStock } from '../../../app/providers/StoreProvider/Store/PartSlice';
+import type {
+    AssemblyLine,
+    AssemblyRole,
+} from '../../../shared/lib/printers/collapsePartNames';
 import { matchesModel } from '../../../shared/lib/printers/printerUtils';
 import { sortSections } from '../../../shared/lib/printers/sectionOrder';
 import { useInfiniteList } from '../../../shared/lib/hooks/useInfiniteList';
 import InfiniteScrollSentinel from '../../../shared/ui/InfiniteScrollSentinel/InfiniteScrollSentinel';
+
+type StockLine = {
+    key: string;
+    stockId: string;
+    section: string;
+    name: string;
+    number: string;
+    qty: number;
+    partLife?: string | number;
+    installedQty?: number;
+    optionModel?: string;
+    orderQty?: number;
+    hideOrder: boolean;
+    assemblyCode?: string;
+    assemblyRole?: AssemblyRole;
+};
+
+/** Main одного узла стоят сверху, spoof сразу под ними, на месте main. */
+const groupAssemblyLines = (lines: StockLine[]): StockLine[] => {
+    const anchorSection = new Map<string, string>();
+    lines.forEach((line) => {
+        if (!line.assemblyCode || line.assemblyRole !== 'main') return;
+        if (!anchorSection.has(line.assemblyCode)) {
+            anchorSection.set(line.assemblyCode, line.section);
+        }
+    });
+    lines.forEach((line) => {
+        if (!line.assemblyCode || anchorSection.has(line.assemblyCode)) return;
+        anchorSection.set(line.assemblyCode, line.section);
+    });
+
+    const placed = lines.map((line) => {
+        if (!line.assemblyCode) return line;
+        const section = anchorSection.get(line.assemblyCode);
+        return section ? { ...line, section } : line;
+    });
+
+    const sections = sortSections(placed.map((line) => line.section));
+    const ordered: StockLine[] = [];
+    sections.forEach((section) => {
+        const inSection = placed.filter((line) => line.section === section);
+        const grouped = new Map<
+            string,
+            { anchor: number; mains: StockLine[]; spoofs: StockLine[] }
+        >();
+        inSection.forEach((line, index) => {
+            if (!line.assemblyCode) return;
+            let group = grouped.get(line.assemblyCode);
+            if (!group) {
+                group = { anchor: index, mains: [], spoofs: [] };
+                grouped.set(line.assemblyCode, group);
+            }
+            if (line.assemblyRole === 'main') {
+                group.mains.push(line);
+                if (group.mains.length === 1) group.anchor = index;
+            } else {
+                group.spoofs.push(line);
+            }
+        });
+        const emitted = new Set<string>();
+        inSection.forEach((line, index) => {
+            if (!line.assemblyCode) {
+                ordered.push(line);
+                return;
+            }
+            const group = grouped.get(line.assemblyCode);
+            if (!group || index !== group.anchor || emitted.has(line.assemblyCode)) {
+                return;
+            }
+            emitted.add(line.assemblyCode);
+            group.mains.forEach((item) => ordered.push(item));
+            group.spoofs.forEach((item) => ordered.push(item));
+        });
+    });
+    return ordered;
+};
+
+const stockBlocks = (lines: StockLine[]) => {
+    const blocks: { key: string; section: string; lines: StockLine[] }[] = [];
+    lines.forEach((line) => {
+        const section = line.section || 'Other';
+        const prev = blocks[blocks.length - 1];
+        if (
+            line.assemblyCode &&
+            prev &&
+            prev.lines[0]?.assemblyCode === line.assemblyCode &&
+            prev.section === section
+        ) {
+            prev.lines.push(line);
+            return;
+        }
+        blocks.push({ key: line.key, section, lines: [line] });
+    });
+    return blocks;
+};
 
 const Stock = () => {
     const dispatch = useAppDispatch();
@@ -24,61 +123,131 @@ const Stock = () => {
     const [clearingOrder, setClearingOrder] = useState(false);
     const [orderHeadPulse, setOrderHeadPulse] = useState(false);
     const [expandedPartId, setExpandedPartId] = useState<string | null>(null);
+    const [assemblyOpen, setAssemblyOpen] = useState<Record<string, boolean>>(
+        {}
+    );
 
-    const filteredParts = useMemo(() => {
-        const byModel = partsArray.filter((item) =>
-            matchesModel(item.part?.model, storageModel)
-        );
+    const modelParts = useMemo(
+        () =>
+            partsArray.filter((item) =>
+                matchesModel(item.part?.model, storageModel)
+            ),
+        [partsArray, storageModel]
+    );
+
+    const displayRows = useMemo(() => {
         const q = search.trim().toLowerCase();
-        if (!q) return byModel;
-        return byModel.filter((item) => {
-            const n = String(item.part?.partN || '').toLowerCase();
-            const name = String(item.part?.partName || '').toLowerCase();
-            return n.includes(q) || name.includes(q);
-        });
-    }, [partsArray, storageModel, search]);
-
-    const orderedParts = useMemo(() => {
-        const sections = sortSections(
-            filteredParts.map((item) => item.part?.section || 'Other')
-        );
-        const result: typeof filteredParts = [];
-        sections.forEach((section) => {
-            filteredParts.forEach((item) => {
-                if ((item.part.section || 'Other') === section) {
-                    result.push(item);
-                }
+        const lines: StockLine[] = [];
+        modelParts.forEach((item) => {
+            const part = item.part || {};
+            const qty = Number(part.quantity) || 0;
+            const parent: StockLine = {
+                key: item.id,
+                stockId: item.id,
+                section: part.section || 'Other',
+                name: String(part.partName || ''),
+                number: String(part.partN || ''),
+                qty,
+                partLife: part.partLife,
+                installedQty: part.installedQty,
+                optionModel: part.optionModel,
+                orderQty: part.orderQty,
+                hideOrder: false,
+                ...(part.assemblyCode
+                    ? {
+                          assemblyCode: part.assemblyCode,
+                          assemblyRole: part.assemblyRole,
+                      }
+                    : {}),
+            };
+            const shadows: StockLine[] = (
+                Array.isArray(part.assemblyLines) ? part.assemblyLines : []
+            ).map((line: AssemblyLine, index: number) => {
+                const need = Number(line.needQty) || 0;
+                return {
+                    key: `${item.id}:assembly:${index}`,
+                    stockId: item.id,
+                    section: line.section || parent.section,
+                    name: String(line.partName || ''),
+                    number: parent.number,
+                    qty,
+                    partLife: line.partLife,
+                    installedQty: need,
+                    hideOrder: true,
+                    assemblyCode: line.code,
+                    assemblyRole: line.role,
+                };
+            });
+            const hit = (line: StockLine) =>
+                !q ||
+                line.name.toLowerCase().includes(q) ||
+                line.number.toLowerCase().includes(q);
+            if (!q) {
+                lines.push(parent, ...shadows);
+                return;
+            }
+            if (hit(parent)) lines.push(parent);
+            shadows.forEach((line) => {
+                if (hit(line)) lines.push(line);
             });
         });
-        return result;
-    }, [filteredParts]);
+
+        return groupAssemblyLines(lines);
+    }, [modelParts, search]);
+
+    const searchOpensAssembly = useMemo(() => {
+        const q = search.trim().toLowerCase();
+        const codes = new Set<string>();
+        if (!q) return codes;
+        displayRows.forEach((line) => {
+            if (line.assemblyRole !== 'spoof' || !line.assemblyCode) return;
+            const name = line.name.toLowerCase();
+            const number = line.number.toLowerCase();
+            if (name.includes(q) || number.includes(q)) {
+                codes.add(line.assemblyCode);
+            }
+        });
+        return codes;
+    }, [displayRows, search]);
+
+    const isAssemblyOpen = (code: string) => {
+        if (searchOpensAssembly.has(code)) return true;
+        return Boolean(assemblyOpen[code]);
+    };
+
+    const setAssemblyMode = (code: string, open: boolean) => {
+        setAssemblyOpen((current) => ({ ...current, [code]: open }));
+    };
 
     const { visibleItems, sentinelRef, hasMore, total, visibleCount } =
-        useInfiniteList(orderedParts);
+        useInfiniteList(displayRows);
 
-    const totalQty = useMemo(
-        () =>
-            filteredParts.reduce(
-                (sum, item) => sum + (Number(item.part?.quantity) || 0),
-                0
-            ),
-        [filteredParts]
-    );
+    const totalQty = useMemo(() => {
+        const seen = new Set<string>();
+        return displayRows.reduce((sum, line) => {
+            if (seen.has(line.stockId)) return sum;
+            seen.add(line.stockId);
+            return sum + line.qty;
+        }, 0);
+    }, [displayRows]);
 
-    const lowStock = useMemo(
-        () =>
-            filteredParts.filter((item) => Number(item.part?.quantity) <= 0)
-                .length,
-        [filteredParts]
-    );
+    const lowStock = useMemo(() => {
+        const seen = new Set<string>();
+        return displayRows.filter((line) => {
+            if (line.qty > 0 || seen.has(line.stockId)) return false;
+            seen.add(line.stockId);
+            return true;
+        }).length;
+    }, [displayRows]);
 
-    const partsWithOrderQty = useMemo(
-        () =>
-            filteredParts.filter(
-                (item) => (Number(item.part?.orderQty) || 0) > 0
-            ),
-        [filteredParts]
-    );
+    const partsWithOrderQty = useMemo(() => {
+        const visibleIds = new Set(displayRows.map((line) => line.stockId));
+        return modelParts.filter(
+            (item) =>
+                visibleIds.has(item.id) &&
+                (Number(item.part?.orderQty) || 0) > 0
+        );
+    }, [displayRows, modelParts]);
 
     const handleClearOrderQty = useCallback(async () => {
         if (partsWithOrderQty.length === 0 || clearingOrder) return;
@@ -120,7 +289,7 @@ const Stock = () => {
                 <div className={cls.headerText}>
                     <div className={cls.stats}>
                         <span className={cls.stat}>
-                            <b>{filteredParts.length}</b> позиций
+                            <b>{displayRows.length}</b> позиций
                         </span>
                         <span className={cls.statDot} />
                         <span className={cls.stat}>
@@ -152,7 +321,7 @@ const Stock = () => {
                 </label>
             </header>
 
-            {orderedParts.length > 0 && (
+            {displayRows.length > 0 && (
                 <div className={cls.titleBox}>
                     <p className={cls.name}>Наименование</p>
                     <p className={cls.number}>Парт номер</p>
@@ -185,7 +354,7 @@ const Stock = () => {
                 </div>
             )}
 
-            {orderedParts.length === 0 ? (
+            {displayRows.length === 0 ? (
                 <div className={cls.emptyCard}>
                     <strong>
                         {search.trim()
@@ -202,16 +371,71 @@ const Stock = () => {
                 </div>
             ) : (
                 <>
-                    {visibleItems.map((item) => {
-                        const section = item.part.section || 'Other';
+                    {stockBlocks(visibleItems).map((block) => {
+                        const section = block.section;
                         const showHead = section !== lastSection;
                         lastSection = section;
-                        const sectionCount = filteredParts.filter(
-                            (p) => (p.part.section || 'Other') === section
+                        const sectionCount = displayRows.filter(
+                            (line) => line.section === section
                         ).length;
+                        const grouped = Boolean(block.lines[0]?.assemblyCode);
+                        const assemblyCode = block.lines[0]?.assemblyCode;
+                        const loose = block.lines.some(
+                            (line) => line.assemblyRole === 'spoof'
+                        );
+                        const opened = assemblyCode
+                            ? isAssemblyOpen(assemblyCode)
+                            : false;
+                        const host =
+                            block.lines.find(
+                                (line) => line.assemblyRole === 'main'
+                            ) || block.lines[0];
+                        const shown =
+                            grouped && loose && !opened
+                                ? block.lines.filter(
+                                      (line) => line.assemblyRole !== 'spoof'
+                                  )
+                                : block.lines;
+                        const visibleLines =
+                            shown.length > 0 ? shown : host ? [host] : [];
+                        const rows = visibleLines.map((item) => (
+                            <div
+                                key={item.key}
+                                className={
+                                    item.assemblyRole === 'spoof'
+                                        ? cls.assemblySpoof
+                                        : undefined
+                                }
+                            >
+                                <StockPartRow
+                                    id={item.key}
+                                    stockId={item.stockId}
+                                    name={item.name}
+                                    number={item.number}
+                                    qty={item.qty}
+                                    partLife={item.partLife}
+                                    installedQty={item.installedQty}
+                                    optionModel={item.optionModel}
+                                    orderQty={item.orderQty}
+                                    hideOrder={item.hideOrder}
+                                    assemblyOpen={opened}
+                                    onAssemblyOpen={
+                                        loose && item.key === host?.key
+                                            ? (open) =>
+                                                  setAssemblyMode(
+                                                      assemblyCode || '',
+                                                      open
+                                                  )
+                                            : undefined
+                                    }
+                                    expanded={expandedPartId === item.key}
+                                    onToggle={handleTogglePartRow}
+                                />
+                            </div>
+                        ));
 
                         return (
-                            <div key={item.id}>
+                            <div key={block.key}>
                                 {showHead ? (
                                     <div className={cls.sectionHead}>
                                         <h3 className={cls.title}>{section}</h3>
@@ -220,18 +444,11 @@ const Stock = () => {
                                         </span>
                                     </div>
                                 ) : null}
-                                <StockPartRow
-                                    id={item.id}
-                                    name={item.part.partName}
-                                    number={item.part.partN}
-                                    qty={item.part.quantity}
-                                    partLife={item.part.partLife}
-                                    installedQty={item.part.installedQty}
-                                    optionModel={item.part.optionModel}
-                                    orderQty={item.part.orderQty}
-                                    expanded={expandedPartId === item.id}
-                                    onToggle={handleTogglePartRow}
-                                />
+                                {grouped ? (
+                                    <div className={cls.assembly}>{rows}</div>
+                                ) : (
+                                    rows
+                                )}
                             </div>
                         );
                     })}

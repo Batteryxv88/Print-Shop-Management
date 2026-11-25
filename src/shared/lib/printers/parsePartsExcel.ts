@@ -7,6 +7,8 @@ export interface ResourcePartRow {
     partN: string;
     partLife: string;
     installedQty: number;
+    /** Ячейка Spoof, например «FB main» или «CHAR spoof». Пусто — обычная строка. */
+    spoof?: string;
 }
 
 const cleanCell = (value: unknown): string =>
@@ -27,6 +29,29 @@ const findColumnIndex = (
         if (idx !== -1) return idx;
     }
     return -1;
+};
+
+/**
+ * Текст объединённой ячейки лежит только в её верхней строке.
+ * Для остальных строк диапазона возвращаем это значение и не выходим за его границу.
+ */
+export const mergedColumnValue = (
+    rows: unknown[][],
+    merges: XLSX.Range[] | undefined,
+    rowIndex: number,
+    colIndex: number
+): string => {
+    if (colIndex < 0) return '';
+    const direct = cleanCell(rows[rowIndex]?.[colIndex]);
+    if (direct) return direct;
+    if (!merges) return '';
+    for (const merge of merges) {
+        const coversColumn = merge.s.c <= colIndex && merge.e.c >= colIndex;
+        const coversRow = merge.s.r <= rowIndex && merge.e.r >= rowIndex;
+        if (!coversColumn || !coversRow) continue;
+        return cleanCell(rows[merge.s.r]?.[colIndex]);
+    }
+    return '';
 };
 
 /**
@@ -85,6 +110,7 @@ export const parsePartsExcel = (buffer: ArrayBuffer): ResourcePartRow[] => {
         'парт',
         'артикул',
     ]);
+    const spoofIdx = findColumnIndex(headers, ['spoof']);
 
     if (nameIdx === -1 || partNIdx === -1) {
         throw new Error(
@@ -111,6 +137,12 @@ export const parsePartsExcel = (buffer: ArrayBuffer): ResourcePartRow[] => {
 
         const lifeRaw = lifeIdx >= 0 ? cleanCell(row[lifeIdx]) : '';
         const partLife = formatPartLifeDisplay(lifeRaw) || lifeRaw;
+        const spoof = mergedColumnValue(
+            rows,
+            sheet['!merges'],
+            i,
+            spoofIdx
+        );
 
         result.push({
             section: currentSection || 'Other',
@@ -118,6 +150,7 @@ export const parsePartsExcel = (buffer: ArrayBuffer): ResourcePartRow[] => {
             partN,
             partLife,
             installedQty,
+            ...(spoof ? { spoof } : {}),
         });
     }
 

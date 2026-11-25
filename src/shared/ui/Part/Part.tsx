@@ -14,6 +14,11 @@ export type PartProps = {
     installedQty?: number;
     optionModel?: string;
     orderQty?: number;
+    /** У строки нет своего «К заказу»: заказ идёт с общей карточки. */
+    hideOrder?: boolean;
+    /** Переключатель узла: в сборе или по частям. */
+    assemblyOpen?: boolean;
+    onAssemblyOpen?: (open: boolean) => void;
 };
 
 const Part = (props: PartProps) => {
@@ -26,6 +31,9 @@ const Part = (props: PartProps) => {
         installedQty,
         optionModel,
         orderQty = 0,
+        hideOrder = false,
+        assemblyOpen = false,
+        onAssemblyOpen,
     } = props;
     const dispatch = useAppDispatch();
     const [orderValue, setOrderValue] = useState(String(orderQty || 0));
@@ -71,6 +79,30 @@ const Part = (props: PartProps) => {
                     className={cls.name}
                     label="наименование"
                 />
+                {onAssemblyOpen && (
+                    <div className={cls.assemblySwitch}>
+                        <button
+                            type="button"
+                            className={classNames({
+                                [cls.assemblySwitchOn]: !assemblyOpen,
+                            })}
+                            aria-pressed={!assemblyOpen}
+                            onClick={() => onAssemblyOpen(false)}
+                        >
+                            в сборе
+                        </button>
+                        <button
+                            type="button"
+                            className={classNames({
+                                [cls.assemblySwitchOn]: assemblyOpen,
+                            })}
+                            aria-pressed={assemblyOpen}
+                            onClick={() => onAssemblyOpen(true)}
+                        >
+                            по частям
+                        </button>
+                    </div>
+                )}
                 {optionModel && (
                     <span className={cls.optionBadge}>{optionModel}</span>
                 )}
@@ -90,21 +122,27 @@ const Part = (props: PartProps) => {
             </p>
             <p className={cls.qty}>{qty}</p>
             <div className={cls.orderBox}>
-                <input
-                    type="number"
-                    min={0}
-                    step={1}
-                    value={orderValue}
-                    onChange={(e) => setOrderValue(e.target.value)}
-                    onFocus={handleFocus}
-                    onBlur={saveOrderQty}
-                    onKeyDown={handleKeyDown}
-                    className={classNames(cls.orderInput, {
-                        [cls.orderInputActive]:
-                            (parseInt(orderValue, 10) || 0) > 0,
-                    })}
-                    aria-label={`Кол-во к заказу: ${name}`}
-                />
+                {hideOrder ? (
+                    <span className={cls.orderShared} aria-hidden>
+                        —
+                    </span>
+                ) : (
+                    <input
+                        type="number"
+                        min={0}
+                        step={1}
+                        value={orderValue}
+                        onChange={(e) => setOrderValue(e.target.value)}
+                        onFocus={handleFocus}
+                        onBlur={saveOrderQty}
+                        onKeyDown={handleKeyDown}
+                        className={classNames(cls.orderInput, {
+                            [cls.orderInputActive]:
+                                (parseInt(orderValue, 10) || 0) > 0,
+                        })}
+                        aria-label={`Кол-во к заказу: ${name}`}
+                    />
+                )}
             </div>
         </div>
     );

@@ -158,6 +158,22 @@
     gap: 2px;
 }
 
+.assembly {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 6px 0;
+    padding: 4px 4px 4px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 2px solid #bb86fc;
+    border-radius: 8px;
+}
+
+.assemblySpoof {
+    margin-left: 14px;
+    border-left: 2px solid rgba(187, 134, 252, 0.35);
+}
+
 .name {
     width: 280px;
 }

@@ -18,6 +18,7 @@ import {
 } from '../../../shared/lib/printers/printerIdentity';
 import { writeOffFifo } from '../../../services/stockAccounting';
 import { inferPartCostCategory } from '../../../shared/lib/stock/costCategory';
+import type { AssemblyLine } from '../../../shared/lib/printers/collapsePartNames';
 import { parsePartLife } from '../../../shared/lib/printers/parsePartLife';
 import {
     formatLifeWithCommas,
@@ -107,6 +108,15 @@ type FormValues = {
     quantity: number;
 };
 
+type InstallChoice = {
+    key: string;
+    name: string;
+    kind: 'name' | 'assembly';
+    needQty?: number;
+    section?: string;
+    partLife?: string;
+};
+
 const AddReplacedPart = () => {
     const { userData } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -155,19 +165,45 @@ const AddReplacedPart = () => {
         [partOptions, selectedPartId]
     );
 
-    const installNames = useMemo(() => {
+    const installChoices = useMemo(() => {
         const part = partsArray.find((item) => item.id === selectedPartId);
         const stored = Array.isArray(part?.part?.names)
-            ? part.part.names.map((name: string) => String(name).trim()).filter(Boolean)
+            ? part.part.names
+                  .map((name: string) => String(name).trim())
+                  .filter(Boolean)
             : [];
-        if (stored.length > 0) return stored;
-        const single = String(part?.part?.partName || '').trim();
-        return single ? [single] : [];
+        const fallbackName = String(part?.part?.partName || '').trim();
+        const names: string[] =
+            stored.length > 0 ? stored : fallbackName ? [fallbackName] : [];
+        const choices: InstallChoice[] = names.map((name: string, index: number) => ({
+            key: `name:${index}:${name}`,
+            name,
+            kind: 'name',
+        }));
+        const lines: AssemblyLine[] = Array.isArray(part?.part?.assemblyLines)
+            ? part.part.assemblyLines
+            : [];
+        lines.forEach((line: AssemblyLine, index: number) => {
+            const name = String(line.partName || '').trim();
+            if (!name) return;
+            choices.push({
+                key: `assembly:${index}:${name}`,
+                name,
+                kind: 'assembly',
+                needQty: Number(line.needQty) || 0,
+                section: line.section,
+                partLife: line.partLife,
+            });
+        });
+        return choices;
     }, [partsArray, selectedPartId]);
 
-    const installKey = installNames.join('\n');
+    const selectedChoice =
+        installChoices.find((choice) => choice.key === installName) || null;
+
+    const installKey = installChoices.map((choice) => choice.key).join('\n');
     useEffect(() => {
-        setInstallName(installNames.length === 1 ? installNames[0] : '');
+        setInstallName(installChoices.length === 1 ? installChoices[0].key : '');
         // Имена группы зависят от выбранной карточки, не от каждого рендера.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedPartId, installKey]);
@@ -252,7 +288,7 @@ const AddReplacedPart = () => {
             setSubmitError('Количество — минимум 1');
             return;
         }
-        if (installNames.length > 1 && !installName) {
+        if (installChoices.length > 1 && !selectedChoice) {
             setSubmitError('Выберите, какую позицию меняете');
             return;
         }
@@ -279,17 +315,17 @@ const AddReplacedPart = () => {
         setSubmitting(true);
 
         const newName =
-            installNames.length > 1
-                ? installName
-                : installNames[0] || currentPart.part.partName;
+            selectedChoice?.name || currentPart.part.partName;
         // Секция со склада модели — не хардкод partsFilter
         const section =
-            String(currentPart.part.section || '').trim() ||
+            String(selectedChoice?.section || currentPart.part.section || '').trim() ||
             partsFilter(cleanedPartN);
         const percent = lifePercent(cleanedPartN, partsArray, actualLife);
         const costCategory = inferPartCostCategory(currentPart.part || {});
         // Заводской ресурс со склада (может быть «30K») — для %, экономии
-        const factoryLife = parsePartLife(currentPart.part.partLife);
+        const factoryLife = parsePartLife(
+            selectedChoice?.partLife || currentPart.part.partLife
+        );
         const date = formatNow();
         const manName = userData?.displayName || '';
 
@@ -392,7 +428,7 @@ const AddReplacedPart = () => {
                                 </span>
                             </div>
                         )}
-                        {installNames.length > 1 && (
+                        {installChoices.length > 1 && (
                             <label className={cls.label}>
                                 Что меняете
                                 <select
@@ -404,13 +440,30 @@ const AddReplacedPart = () => {
                                     required
                                 >
                                     <option value="">Выберите имя</option>
-                                    {installNames.map((name: string) => (
-                                        <option key={name} value={name}>
-                                            {name}
+                                    {installChoices.map((choice) => (
+                                        <option key={choice.key} value={choice.key}>
+                                            {choice.name}
                                         </option>
                                     ))}
                                 </select>
                             </label>
+                        )}
+                        {selectedChoice?.kind === 'assembly' && selectedPart && (
+                            <p
+                                className={
+                                    selectedPart.qty <
+                                    (selectedChoice.needQty || 0)
+                                        ? cls.shortHint
+                                        : cls.hint
+                                }
+                            >
+                                Для этой замены нужно {selectedChoice.needQty}{' '}
+                                шт., в общей куче {selectedPart.qty} шт.
+                                {selectedPart.qty <
+                                (selectedChoice.needQty || 0)
+                                    ? ' Не хватает.'
+                                    : ''}
+                            </p>
                         )}
                     </div>
 

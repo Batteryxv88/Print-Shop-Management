@@ -10,7 +10,11 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { ResourcePartRow } from '../shared/lib/printers/parsePartsExcel';
-import { collapseResourceRows } from '../shared/lib/printers/collapsePartNames';
+import {
+    AssemblyLine,
+    AssemblyRole,
+    collapseResourceRows,
+} from '../shared/lib/printers/collapsePartNames';
 import { retargetPartFifo } from './stockAccounting';
 
 export interface Part {
@@ -24,6 +28,11 @@ export interface Part {
     installedQty?: number;
     /** Имена из ведомости для одного артикула. В журнал пишется выбранное. */
     names?: string[];
+    /** Строки main/spoof с тем же артикулом. Остаток берётся из этой карточки. */
+    assemblyLines?: AssemblyLine[];
+    /** Узел, если артикул больше нигде без метки не встречается. */
+    assemblyCode?: string;
+    assemblyRole?: AssemblyRole;
     source?: 'body' | 'option' | 'manual';
     optionModel?: string;
 }
@@ -100,6 +109,15 @@ export const importResourceParts = async (
             sameArticle(item.part, group.partN)
         );
 
+        const assemblyLines = group.assemblyLines ?? [];
+        const assemblyPatch = {
+            assemblyLines: assemblyLines.length
+                ? assemblyLines
+                : deleteField(),
+            assemblyCode: group.assemblyCode || deleteField(),
+            assemblyRole: group.assemblyRole || deleteField(),
+        };
+
         if (matches.length === 0) {
             const ref = doc(collection(db, 'Parts'));
             const payload: Part = {
@@ -113,6 +131,13 @@ export const importResourceParts = async (
                 model: printerModel,
                 source,
                 ...(optionModel ? { optionModel } : {}),
+                ...(assemblyLines.length ? { assemblyLines } : {}),
+                ...(group.assemblyCode
+                    ? {
+                          assemblyCode: group.assemblyCode,
+                          assemblyRole: group.assemblyRole,
+                      }
+                    : {}),
             };
             queue(() => batch.set(ref, payload));
             existing.push({ id: ref.id, part: payload });
@@ -160,6 +185,7 @@ export const importResourceParts = async (
                     model: printerModel,
                     source,
                     optionModel: optionModel ? optionModel : deleteField(),
+                    ...assemblyPatch,
                 })
             );
             for (const extra of extras) {
@@ -175,6 +201,9 @@ export const importResourceParts = async (
                 partLife: group.partLife,
                 installedQty: group.installedQty,
                 quantity: (Number(keeper.part.quantity) || 0) + extraQty,
+                assemblyLines: assemblyLines.length ? assemblyLines : undefined,
+                assemblyCode: group.assemblyCode,
+                assemblyRole: group.assemblyRole,
             };
             updated += 1;
         }

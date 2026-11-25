@@ -1,5 +1,16 @@
 import type { ResourcePartRow } from './parsePartsExcel';
 
+export type AssemblyRole = 'main' | 'spoof';
+
+export type AssemblyLine = {
+    partName: string;
+    needQty: number;
+    partLife: string;
+    section: string;
+    code: string;
+    role: AssemblyRole;
+};
+
 export type CollapsedPartGroup = {
     partN: string;
     partName: string;
@@ -7,6 +18,26 @@ export type CollapsedPartGroup = {
     section: string;
     partLife: string;
     installedQty: number;
+    /** Помеченные строки того же артикула. На склад не складываются. */
+    assemblyLines?: AssemblyLine[];
+    /** Своя карточка узла, если артикул больше нигде без метки не встречается. */
+    assemblyCode?: string;
+    assemblyRole?: AssemblyRole;
+};
+
+const ASSEMBLY_MARK = /^(.+?)\s+(main|spoof)$/i;
+
+/** «FB main» и «CHAR spoof»: код узла произвольный, хвост только main или spoof. */
+export const parseAssemblyMark = (
+    raw: string
+): { code: string; role: AssemblyRole } | null => {
+    const match = raw.trim().match(ASSEMBLY_MARK);
+    if (!match) return null;
+    const code = match[1].trim();
+    if (!code) return null;
+    const role = match[2].toLowerCase();
+    if (role !== 'main' && role !== 'spoof') return null;
+    return { code, role };
 };
 
 const COLOR_SLASH = /\s*[/\\]\s*[A-Za-z0-9]{1,4}\s*$/;
@@ -49,39 +80,80 @@ const uniqueNames = (names: string[]): string[] => {
     return out;
 };
 
+const sumQty = (items: ResourcePartRow[]): number =>
+    items.reduce((sum, row) => sum + (Number(row.installedQty) || 0), 0);
+
+const firstLife = (items: ResourcePartRow[]): string =>
+    items.map((row) => row.partLife.trim()).find(Boolean) || '';
+
+const toAssemblyLine = (row: ResourcePartRow): AssemblyLine | null => {
+    const mark = parseAssemblyMark(row.spoof || '');
+    if (!mark) return null;
+    const partName = row.partName.trim();
+    if (!partName) return null;
+    return {
+        partName,
+        needQty: Number(row.installedQty) || 0,
+        partLife: row.partLife.trim(),
+        section: row.section || 'Other',
+        code: mark.code,
+        role: mark.role,
+    };
+};
+
 /** Строки ведомости с одним артикулом становятся одной складской группой. */
 export const collapseResourceRows = (
     rows: ResourcePartRow[]
 ): CollapsedPartGroup[] => {
     const order: string[] = [];
-    const groups = new Map<string, ResourcePartRow[]>();
+    const plain = new Map<string, ResourcePartRow[]>();
+    const marked = new Map<string, ResourcePartRow[]>();
 
     rows.forEach((row) => {
         const partN = row.partN.trim().toUpperCase();
         if (!partN) return;
-        if (!groups.has(partN)) {
-            groups.set(partN, []);
-            order.push(partN);
-        }
-        groups.get(partN)!.push(row);
+        const isMarked = Boolean(parseAssemblyMark(row.spoof || ''));
+        if (!plain.has(partN) && !marked.has(partN)) order.push(partN);
+        const bucket = isMarked ? marked : plain;
+        if (!bucket.has(partN)) bucket.set(partN, []);
+        bucket.get(partN)!.push(row);
     });
 
     return order.map((partN) => {
-        const items = groups.get(partN)!;
-        const names = uniqueNames(items.map((row) => row.partName));
-        const partLife =
-            items.map((row) => row.partLife.trim()).find(Boolean) || '';
-        const installedQty = items.reduce(
-            (sum, row) => sum + (Number(row.installedQty) || 0),
-            0
-        );
+        const plainRows = plain.get(partN) ?? [];
+        const markedRows = marked.get(partN) ?? [];
+        const assemblyLines = markedRows
+            .map(toAssemblyLine)
+            .filter((line): line is AssemblyLine => line !== null);
+
+        if (plainRows.length > 0) {
+            const names = uniqueNames(plainRows.map((row) => row.partName));
+            return {
+                partN,
+                partName: warehouseNameFor(names),
+                names,
+                section: plainRows[0].section || 'Other',
+                partLife: firstLife(plainRows),
+                installedQty: sumQty(plainRows),
+                ...(assemblyLines.length ? { assemblyLines } : {}),
+            };
+        }
+
+        const names = uniqueNames(markedRows.map((row) => row.partName));
+        const ownMark = assemblyLines[0];
         return {
             partN,
-            partName: warehouseNameFor(names),
+            partName: names[0] || '',
             names,
-            section: items[0].section || 'Other',
-            partLife,
-            installedQty,
+            section: markedRows[0]?.section || 'Other',
+            partLife: firstLife(markedRows),
+            installedQty: sumQty(markedRows),
+            ...(ownMark
+                ? {
+                      assemblyCode: ownMark.code,
+                      assemblyRole: ownMark.role,
+                  }
+                : {}),
         };
     });
 };

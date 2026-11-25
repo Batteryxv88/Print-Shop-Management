@@ -6,6 +6,8 @@ import StockLotsPanel from '../../../shared/ui/StockLotsPanel/StockLotsPanel';
 
 type StockPartRowProps = {
     id: string;
+    /** Карточка, чьи партии и остаток показываем. У строки main/spoof это общая куча. */
+    stockId?: string;
     name: string;
     number: string;
     qty: number;
@@ -13,6 +15,9 @@ type StockPartRowProps = {
     installedQty?: number;
     optionModel?: string;
     orderQty?: number;
+    hideOrder?: boolean;
+    assemblyOpen?: boolean;
+    onAssemblyOpen?: (open: boolean) => void;
     expanded: boolean;
     onToggle: (id: string) => void;
 };
@@ -65,13 +70,25 @@ const StockPartRow = (props: StockPartRowProps) => {
                     aria-hidden
                 />
                 <div className={cls.partWrap}>
-                    <Part {...props} />
+                    <Part
+                        id={props.stockId || id}
+                        name={props.name}
+                        number={props.number}
+                        qty={props.qty}
+                        partLife={props.partLife}
+                        installedQty={props.installedQty}
+                        optionModel={props.optionModel}
+                        orderQty={props.orderQty}
+                        hideOrder={props.hideOrder}
+                        assemblyOpen={props.assemblyOpen}
+                        onAssemblyOpen={props.onAssemblyOpen}
+                    />
                 </div>
             </div>
             <CollapseHeight open={expanded} className={cls.panelExpand}>
                 {expanded ? (
                     <StockLotsPanel
-                        stockId={props.id}
+                        stockId={props.stockId || id}
                         cardQty={props.qty}
                         partLabel={`${props.name}${props.number ? ` · ${props.number}` : ''}`}
                     />

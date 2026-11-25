@@ -30,6 +30,13 @@
     color: rgba(255, 255, 255, 0.45);
 }
 
+.shortHint {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.45;
+    color: #ff8a9a;
+}
+
 .selectedCard {
     display: flex;
     flex-direction: column;

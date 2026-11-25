@@ -93,6 +93,30 @@
     line-height: 1.2;
 }
 
+.assemblySwitch {
+    display: inline-flex;
+    margin-top: 2px;
+    border: 1px solid rgba(187, 134, 252, 0.35);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.assemblySwitch button {
+    border: 0;
+    margin: 0;
+    padding: 1px 7px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 10px;
+    line-height: 1.4;
+    cursor: pointer;
+}
+
+.assemblySwitch button.assemblySwitchOn {
+    background: rgba(187, 134, 252, 0.22);
+    color: rgba(187, 134, 252, 0.95);
+}
+
 .numberSlot {
     width: 110px;
     flex-shrink: 0;
@@ -132,6 +156,11 @@
     font-size: 12.5px;
     text-align: center;
     margin: 0;
+}
+
+.orderShared {
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 12px;
 }
 
 .orderBox {
