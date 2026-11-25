@@ -14,9 +14,9 @@ import { useInfiniteList } from '../../shared/lib/hooks/useInfiniteList';
 import InfiniteScrollSentinel from '../../shared/ui/InfiniteScrollSentinel/InfiniteScrollSentinel';
 import { getModelByPrinterId } from '../../shared/lib/printers/printerIdentity';
 
-const Calendar = () => {
+const Calendar = ({ legacyOnly = false }: { legacyOnly?: boolean }) => {
     const { usedPartsArray } = useUsedParts();
-    const { partsArray } = useParts();
+    const { partsArray } = useParts(!legacyOnly);
     const { printers } = usePrinters();
     const filterOption = useAppSelector(
         (state) => state.filteredParts.filter.section
@@ -34,12 +34,17 @@ const Calendar = () => {
             machineState,
             printers
         );
-        return filteredAndSortedData(
+        const sorted = filteredAndSortedData(
             filteredDataByMachine,
-            filterOption,
+            legacyOnly ? 'All' : filterOption,
             partsArray,
             machineModel
         );
+        if (!legacyOnly) return sorted;
+        return sorted.filter((item) => {
+            const ticketId = (item.part as { ticketId?: string }).ticketId;
+            return !String(ticketId || '').trim();
+        });
     }, [
         usedPartsArray,
         machineState,
@@ -47,6 +52,7 @@ const Calendar = () => {
         partsArray,
         machineModel,
         printers,
+        legacyOnly,
     ]);
 
     const { visibleItems, sentinelRef, hasMore, total, visibleCount } =

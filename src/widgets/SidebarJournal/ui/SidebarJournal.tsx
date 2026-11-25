@@ -4,6 +4,7 @@ import {
     useAppDispatch,
     useAppSelector,
 } from '../../../app/providers/StoreProvider/Store/hooks';
+import { askMaintenanceLeave } from '../../../shared/lib/maintenance/leave';
 import {
     changeJournalKind,
     type JournalKind,
@@ -38,8 +39,8 @@ const SidebarJournal = () => {
             },
             {
                 kind: 'part',
-                name: 'Заменить деталь',
-                hint: 'История замен деталей',
+                name: 'Техобслуживание',
+                hint: 'Заявки: инцидент, ТО, аудит',
             },
             {
                 kind: 'engineer',
@@ -100,9 +101,10 @@ const SidebarJournal = () => {
                             type="button"
                             data-testid={`journal-kind-${mode.kind}`}
                             className={`${cls.item} ${active ? cls.itemActive : ''}`}
-                            onClick={() =>
-                                dispatch(changeJournalKind(mode.kind))
-                            }
+                            onClick={() => {
+                                if (askMaintenanceLeave(mode.kind)) return;
+                                dispatch(changeJournalKind(mode.kind));
+                            }}
                         >
                             <span className={cls.itemText}>
                                 <span className={cls.itemName}>

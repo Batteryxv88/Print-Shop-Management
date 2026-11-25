@@ -1,0 +1,252 @@
+@import '../../../app/styles/breakpoints/breakpoints';
+
+.list {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 18px 24px;
+}
+
+.listFill {
+    flex: none;
+    min-height: 100%;
+    height: auto;
+    overflow: visible;
+    padding: 0;
+    gap: 0;
+}
+
+.toolbar,
+.filters,
+.filter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.filters {
+    margin-left: auto;
+}
+
+.filter {
+    span {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.38);
+    }
+
+    select {
+        height: 30px;
+        min-width: 140px;
+        padding: 0 8px;
+        border-radius: 6px;
+        border: 1px solid var(--border-strong);
+        background: var(--field);
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 12.5px;
+    }
+}
+
+.more,
+.archiveBtn {
+    border: none;
+    cursor: pointer;
+}
+
+.primary {
+    border: none;
+    cursor: pointer;
+    height: 30px;
+    padding: 0 14px;
+    border-radius: 6px;
+    background: #bb86fc;
+    color: rgba(0, 0, 0, 0.87);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: default;
+    }
+}
+
+.rows {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ticket {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.ticketBtn {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 128px 88px 140px minmax(0, 1fr) 16px;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 12px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.87);
+    text-align: left;
+    cursor: pointer;
+}
+
+.when,
+.type {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.summary {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+}
+
+.chevron {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.badge {
+    justify-self: start;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.new {
+    color: #d7c4ff;
+}
+
+.in_progress {
+    color: #9fd4ff;
+}
+
+.waiting_parts {
+    color: #ffd59a;
+}
+
+.done {
+    color: #b7e4c7;
+}
+
+.paused {
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.muted,
+.error {
+    margin: 0;
+    font-size: 13px;
+}
+
+.muted {
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.error {
+    color: #ff8a80;
+}
+
+.more,
+.archiveBtn {
+    align-self: flex-start;
+    background: none;
+    color: #bb86fc;
+    font-size: 13px;
+    padding: 4px 0;
+}
+
+.archive {
+    margin-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding-top: 8px;
+}
+
+@include down(sm) {
+    .list {
+        padding: 10px 10px 16px;
+    }
+
+    .listFill {
+        padding: 0;
+    }
+
+    .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filters {
+        margin-left: 0;
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter {
+        width: 100%;
+        justify-content: space-between;
+
+        select {
+            flex: 1;
+            min-width: 0;
+            height: var(--touch-target-min, 44px);
+            font-size: 16px;
+        }
+    }
+
+    .primary {
+        width: 100%;
+        min-height: var(--touch-target-min, 44px);
+        height: auto;
+    }
+
+    .ticketBtn {
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+            'when chevron'
+            'type badge'
+            'summary summary';
+    }
+
+    .when {
+        grid-area: when;
+    }
+
+    .chevron {
+        grid-area: chevron;
+        justify-self: end;
+    }
+
+    .type {
+        grid-area: type;
+    }
+
+    .badge {
+        grid-area: badge;
+        justify-self: end;
+    }
+
+    .summary {
+        grid-area: summary;
+        white-space: normal;
+    }
+}

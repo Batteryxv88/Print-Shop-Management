@@ -7,12 +7,15 @@ interface PrinterSelectTabsProps {
     onSelect: (printerId: string) => void;
     /** stack — сайдбар; row — горизонтальные вкладки */
     variant?: 'stack' | 'row';
+    /** Пока заявка открыта, чужие принтеры не переключаются */
+    locked?: boolean;
 }
 
 const PrinterSelectTabs = ({
     selected,
     onSelect,
     variant = 'stack',
+    locked = false,
 }: PrinterSelectTabsProps) => {
     const { printers } = usePrinters();
 
@@ -25,14 +28,23 @@ const PrinterSelectTabs = ({
             <div className={cls.row} role="tablist" aria-label="Принтеры">
                 {printers.map((printer) => {
                     const active = selected === printer.id;
+                    const blocked = locked && !active;
                     return (
                         <button
                             key={printer.id}
                             type="button"
                             role="tab"
                             aria-selected={active}
-                            onClick={() => onSelect(printer.id)}
-                            className={active ? cls.rowTabActive : cls.rowTab}
+                            aria-disabled={blocked}
+                            disabled={blocked}
+                            onClick={() => {
+                                if (!blocked) onSelect(printer.id);
+                            }}
+                            className={
+                                active
+                                    ? cls.rowTabActive
+                                    : `${cls.rowTab} ${blocked ? cls.rowTabLocked : ''}`
+                            }
                             title={
                                 printer.model
                                     ? `${printer.model}${printer.ip ? ` · ${printer.ip}` : ''}`
@@ -49,15 +61,22 @@ const PrinterSelectTabs = ({
 
     return (
         <div className={cls.machineWrapper}>
-            {printers.map((printer) => (
+            {printers.map((printer) => {
+                const active = selected === printer.id;
+                const blocked = locked && !active;
+                return (
                 <button
                     key={printer.id}
                     type="button"
-                    onClick={() => onSelect(printer.id)}
+                    aria-disabled={blocked}
+                    disabled={blocked}
+                    onClick={() => {
+                        if (!blocked) onSelect(printer.id);
+                    }}
                     className={
-                        selected === printer.id
+                        active
                             ? cls.activeButton
-                            : cls.button
+                            : `${cls.button} ${blocked ? cls.buttonLocked : ''}`
                     }
                     title={
                         printer.ip
@@ -67,7 +86,8 @@ const PrinterSelectTabs = ({
                 >
                     {printer.name}
                 </button>
-            ))}
+                );
+            })}
         </div>
     );
 };

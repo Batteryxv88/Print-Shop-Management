@@ -12,6 +12,9 @@ export interface UsedPart {
     percent: number;
     machine?: string;
     printerId?: string;
+    /** Заполнен у замен из заявки техобслуживания */
+    ticketId?: string;
+    entryId?: string;
 }
 
 export interface UsedPartData {

@@ -61,6 +61,20 @@
     font-weight: 500;
 }
 
+.crumbBtn {
+    border: none;
+    background: none;
+    padding: 0;
+    font: inherit;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+
+    &:hover {
+        color: var(--text);
+    }
+}
+
 .crumbCurrent {
     color: var(--text);
     font-weight: 600;
@@ -101,6 +115,8 @@
     flex: 1;
     min-height: 0;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
     overflow-x: auto;
     overflow-y: auto;
 }
@@ -184,4 +200,68 @@
             font-size: 16px;
         }
     }
+}
+
+.leaveOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.55);
+}
+
+.leaveDialog {
+    width: min(420px, 100%);
+    padding: 18px 18px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: #2a2a2a;
+}
+
+.leaveTitle {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 650;
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.leaveText {
+    margin: 8px 0 0;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.62);
+}
+
+.leaveActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.leaveStay,
+.leaveGo {
+    height: 34px;
+    padding: 0 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.leaveStay {
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.82);
+}
+
+.leaveGo {
+    border: none;
+    background: #bb86fc;
+    color: rgba(0, 0, 0, 0.87);
 }

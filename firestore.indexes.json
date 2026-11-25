@@ -1,0 +1,41 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "MaintenanceTickets",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "printerId", "order": "ASCENDING" },
+        { "fieldPath": "updatedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "MaintenanceTickets",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "printerId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "updatedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "MaintenanceTickets",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "printerId", "order": "ASCENDING" },
+        { "fieldPath": "type", "order": "ASCENDING" },
+        { "fieldPath": "updatedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "MaintenanceTickets",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "printerId", "order": "ASCENDING" },
+        { "fieldPath": "type", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "updatedAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

@@ -1,4 +1,5 @@
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import cls from './JournalPage.module.scss';
 import { changePage } from '../../../app/providers/StoreProvider/Store/ChangePageSlice';
 import {
     useAppDispatch,
@@ -9,28 +10,25 @@ import {
 import {
     changeMachine,
     changeTonerMachine,
+    changeJournalKind,
+    type JournalKind,
 } from '../../../app/providers/StoreProvider/Store/ChangeMachineSlice';
-import { changeFilter } from '../../../app/providers/StoreProvider/Store/FilterPartSlice';
 import PrinterSelectTabs from '../../../shared/ui/PrinterSelectTabs/PrinterSelectTabs';
 import AddToner from '../../../features/ui/AddToner/AddToner';
-import AddReplacedPart from '../../../features/ui/AddReplacedPart/AddReplacedPart';
 import AddEngineerService from '../../../features/ui/AddEngineerService/AddEngineerService';
 import AddMaterialUsage from '../../../features/ui/AddMaterialUsage/AddMaterialUsage';
 import { TonerReplace } from '../../../widgets/TonerReplace';
-import Calendar from '../../../widgets/Calendar/Calendar';
+import MaintenanceList from '../../../widgets/MaintenanceList';
 import MaterialUsageList from '../../../widgets/MaterialUsageList/ui/MaterialUsageList';
 import EngineerServiceList from '../../../widgets/EngineerServiceList/ui/EngineerServiceList';
 import AddScrap from '../../../features/ui/AddScrap/AddScrap';
 import ScrapList from '../../../widgets/ScrapList/ui/ScrapList';
 import CounterReadingForm from '../../../widgets/CounterReadingForm/ui/CounterReadingForm';
-import { matchesModel } from '../../../shared/lib/printers/printerUtils';
 import {
-    getModelByPrinterId,
     getPrinterDisplayNameById,
     resolveSelectedPrinterId,
 } from '../../../shared/lib/printers/printerIdentity';
-import { sortSections } from '../../../shared/lib/printers/sectionOrder';
-import cls from './JournalPage.module.scss';
+import { bindMaintenanceLeave, askMaintenanceLeave } from '../../../shared/lib/maintenance/leave';
 
 const JournalPage = () => {
     const dispatch = useAppDispatch();
@@ -38,12 +36,52 @@ const JournalPage = () => {
     const machine = useAppSelector((state) => state.machines.machine);
     const tonerMachine = useAppSelector((state) => state.machines.tonerMachine);
     const { printers } = usePrinters();
-    const needsPartsCatalog =
-        journalKind === 'part' || journalKind === 'scrap';
-    const { partsArray } = useParts(needsPartsCatalog);
-    const filterSection = useAppSelector(
-        (state) => state.filteredParts.filter.section
-    );
+    const closeMaintenanceRef = useRef<(() => void) | null>(null);
+    const closeChainRef = useRef<(() => void) | null>(null);
+    const formOpenRef = useRef(false);
+    const chainOpenRef = useRef(false);
+    const journalKindRef = useRef(journalKind);
+    const [maintenanceFormOpen, setMaintenanceFormOpen] = useState(false);
+    const [chainOpen, setChainOpen] = useState(false);
+    const [leaveOpen, setLeaveOpen] = useState(false);
+    const [leaveNext, setLeaveNext] = useState<JournalKind | null>(null);
+    formOpenRef.current = maintenanceFormOpen;
+    chainOpenRef.current = chainOpen;
+    journalKindRef.current = journalKind;
+    const bindMaintenanceClose = useCallback((close: () => void) => {
+        closeMaintenanceRef.current = close;
+    }, []);
+    const bindChainClose = useCallback((close: () => void) => {
+        closeChainRef.current = close;
+    }, []);
+    const confirmLeave = () => {
+        const next = leaveNext;
+        setLeaveOpen(false);
+        setLeaveNext(null);
+        closeMaintenanceRef.current?.();
+        if (next && next !== journalKind) dispatch(changeJournalKind(next));
+    };
+
+    useEffect(() => {
+        bindMaintenanceLeave((next) => {
+            if (formOpenRef.current) {
+                setLeaveNext(next ?? null);
+                setLeaveOpen(true);
+                return true;
+            }
+            if (chainOpenRef.current) {
+                closeChainRef.current?.();
+                const kind = journalKindRef.current;
+                if (next && next !== kind) dispatch(changeJournalKind(next));
+                return true;
+            }
+            return false;
+        });
+        return () => bindMaintenanceLeave(null);
+    }, [dispatch]);
+
+    const needsPartsCatalog = journalKind === 'scrap';
+    useParts(needsPartsCatalog);
 
     dispatch(changePage('journal'));
 
@@ -69,32 +107,13 @@ const JournalPage = () => {
         dispatch(changeTonerMachine(printerId));
     };
 
-    const machineModel = useMemo(
-        () => getModelByPrinterId(printers, machine),
-        [printers, machine]
-    );
-
-    const sections = useMemo(() => {
-        const fromMachine = partsArray
-            .filter((item) => matchesModel(item.part?.model, machineModel))
-            .map((item) => String(item.part?.section || '').trim())
-            .filter(Boolean);
-        return sortSections(fromMachine);
-    }, [partsArray, machineModel]);
-
-    useEffect(() => {
-        if (journalKind !== 'part') return;
-        if (filterSection === 'All') return;
-        if (!sections.includes(filterSection)) {
-            dispatch(changeFilter('All'));
-        }
-    }, [journalKind, filterSection, sections, dispatch]);
-
+    const maintenanceNav =
+        journalKind === 'part' && (maintenanceFormOpen || chainOpen);
     const kindLabel =
         journalKind === 'toner'
             ? 'Заменить тонер'
             : journalKind === 'part'
-              ? 'Заменить деталь'
+              ? 'Техобслуживание'
               : journalKind === 'engineer'
                 ? 'Инженер'
                 : journalKind === 'scrap'
@@ -114,9 +133,29 @@ const JournalPage = () => {
                             ⌂
                         </span>
                         <span className={cls.crumbSep}>›</span>
-                        <span className={cls.crumb}>Журнал учёта</span>
+                        {maintenanceNav ? (
+                            <button
+                                type="button"
+                                className={cls.crumbBtn}
+                                onClick={() => askMaintenanceLeave()}
+                            >
+                                Журнал учёта
+                            </button>
+                        ) : (
+                            <span className={cls.crumb}>Журнал учёта</span>
+                        )}
                         <span className={cls.crumbSep}>›</span>
-                        <span className={cls.crumb}>{kindLabel}</span>
+                        {maintenanceNav ? (
+                            <button
+                                type="button"
+                                className={cls.crumbBtn}
+                                onClick={() => askMaintenanceLeave()}
+                            >
+                                {kindLabel}
+                            </button>
+                        ) : (
+                            <span className={cls.crumb}>{kindLabel}</span>
+                        )}
                         {needsPrinter && selected ? (
                             <>
                                 <span className={cls.crumbSep}>›</span>
@@ -137,6 +176,9 @@ const JournalPage = () => {
                             <PrinterSelectTabs
                                 variant="row"
                                 selected={selected}
+                                locked={
+                                    journalKind === 'part' && maintenanceFormOpen
+                                }
                                 onSelect={onSelectPrinter}
                             />
                         </div>
@@ -145,38 +187,9 @@ const JournalPage = () => {
 
                 <div className={cls.content}>
                     {journalKind === 'counters' && <CounterReadingForm />}
-                    {journalKind !== 'counters' && (
+                    {journalKind !== 'counters' && journalKind !== 'part' && (
                         <div className={cls.toolbar}>
                             {journalKind === 'toner' && <AddToner />}
-                            {journalKind === 'part' && (
-                                <>
-                                    <AddReplacedPart />
-                                    <label className={cls.sectionFilter}>
-                                        <span>Секция</span>
-                                        <select
-                                            value={filterSection}
-                                            onChange={(e) =>
-                                                dispatch(
-                                                    changeFilter(e.target.value)
-                                                )
-                                            }
-                                            aria-label="Фильтр по секции"
-                                        >
-                                            <option value="All">
-                                                Все секции
-                                            </option>
-                                            {sections.map((section) => (
-                                                <option
-                                                    key={section}
-                                                    value={section}
-                                                >
-                                                    {section}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </label>
-                                </>
-                            )}
                             {journalKind === 'engineer' && (
                                 <AddEngineerService />
                             )}
@@ -191,7 +204,14 @@ const JournalPage = () => {
                     )}
 
                     {journalKind === 'toner' && <TonerReplace />}
-                    {journalKind === 'part' && <Calendar />}
+                    {journalKind === 'part' && (
+                        <MaintenanceList
+                            onFormOpenChange={setMaintenanceFormOpen}
+                            bindClose={bindMaintenanceClose}
+                            onChainOpenChange={setChainOpen}
+                            bindChainClose={bindChainClose}
+                        />
+                    )}
                     {journalKind === 'engineer' && <EngineerServiceList />}
                     {journalKind === 'scrap' && <ScrapList />}
                     {journalKind === 'paper' && (
@@ -202,6 +222,42 @@ const JournalPage = () => {
                     )}
                 </div>
             </div>
+            {leaveOpen && (
+                <div className={cls.leaveOverlay} role="presentation">
+                    <div
+                        className={cls.leaveDialog}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="leave-title"
+                    >
+                        <h2 id="leave-title" className={cls.leaveTitle}>
+                            Отменить заявку?
+                        </h2>
+                        <p className={cls.leaveText}>
+                            Несохранённые данные пропадут.
+                        </p>
+                        <div className={cls.leaveActions}>
+                            <button
+                                type="button"
+                                className={cls.leaveStay}
+                                onClick={() => {
+                                    setLeaveOpen(false);
+                                    setLeaveNext(null);
+                                }}
+                            >
+                                Остаться
+                            </button>
+                            <button
+                                type="button"
+                                className={cls.leaveGo}
+                                onClick={confirmLeave}
+                            >
+                                Отменить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
