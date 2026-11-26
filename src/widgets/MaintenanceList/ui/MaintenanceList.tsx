@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import cls from './MaintenanceList.module.scss';
-import Calendar from '../../Calendar/Calendar';
 import MaintenanceForm from '../../../features/ui/MaintenanceForm/MaintenanceForm';
 import MaintenanceChain from '../../MaintenanceChain';
 import { useAppSelector } from '../../../app/providers/StoreProvider/Store/hooks';
@@ -38,6 +37,7 @@ type FormState =
           ticketId: string;
           printerId: string;
           ticketType: MaintenanceType;
+          ticketStatus: MaintenanceStatus;
       }
     | null;
 
@@ -60,7 +60,6 @@ const MaintenanceList = ({
     const [error, setError] = useState('');
     const [form, setForm] = useState<FormState>(null);
     const [chain, setChain] = useState<MaintenanceTicket | null>(null);
-    const [archiveOpen, setArchiveOpen] = useState(false);
 
     useEffect(() => {
         onFormOpenChange?.(form !== null);
@@ -118,6 +117,9 @@ const MaintenanceList = ({
                     ticketType={
                         form.mode === 'append' ? form.ticketType : undefined
                     }
+                    ticketStatus={
+                        form.mode === 'append' ? form.ticketStatus : undefined
+                    }
                     onClose={() => setForm(null)}
                 />
             )}
@@ -131,6 +133,7 @@ const MaintenanceList = ({
                             ticketId: chain.id,
                             printerId: chain.printerId,
                             ticketType: chain.type,
+                            ticketStatus: chain.status,
                         })
                     }
                 />
@@ -231,17 +234,6 @@ const MaintenanceList = ({
                 </button>
             )}
 
-            <div className={cls.archive}>
-                <button
-                    type="button"
-                    className={cls.archiveBtn}
-                    aria-expanded={archiveOpen}
-                    onClick={() => setArchiveOpen((open) => !open)}
-                >
-                    {archiveOpen ? '▾' : '›'} Прежние замены
-                </button>
-                {archiveOpen && <Calendar legacyOnly />}
-            </div>
             </>
             )}
         </div>

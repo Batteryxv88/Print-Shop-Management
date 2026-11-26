@@ -56,6 +56,7 @@ type LineDraft = {
     name: string;
     quantity: string;
     life: string;
+    noLife: boolean;
 };
 
 type ShelfRow = {
@@ -72,6 +73,7 @@ type Props = {
     printerId: string;
     ticketId?: string;
     ticketType?: MaintenanceType;
+    ticketStatus?: MaintenanceStatus;
     onClose: () => void;
 };
 
@@ -82,6 +84,7 @@ const newLine = (): LineDraft => ({
     name: '',
     quantity: '1',
     life: '',
+    noLife: false,
 });
 
 const installRows = (item: StockRow): ShelfRow[] => {
@@ -139,6 +142,7 @@ const MaintenanceForm = ({
     printerId,
     ticketId,
     ticketType,
+    ticketStatus,
     onClose,
 }: Props) => {
     const { userData } = useAuth();
@@ -148,7 +152,7 @@ const MaintenanceForm = ({
     const machineName = getPrinterNameById(printers, printerId);
 
     const [type, setType] = useState<MaintenanceType>('incident');
-    const [status, setStatus] = useState<MaintenanceStatus>('new');
+    const [status] = useState<MaintenanceStatus>(ticketStatus ?? 'new');
     const [problem, setProblem] = useState('');
     const [workDone, setWorkDone] = useState('');
     const [notes, setNotes] = useState('');
@@ -157,6 +161,10 @@ const MaintenanceForm = ({
     const [needed, setNeeded] = useState<LineDraft[]>([]);
     const [stock, setStock] = useState<StockRow[]>([]);
     const [partsLoading, setPartsLoading] = useState(false);
+    const [statusOpen, setStatusOpen] = useState(false);
+    const [statusPick, setStatusPick] = useState<MaintenanceStatus>(
+        ticketStatus ?? 'new'
+    );
     const [submitting, setSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState('');
     const [toast, setToast] = useState<{
@@ -351,10 +359,6 @@ const MaintenanceForm = ({
         setSection(sections[0]);
     }, [sections, section]);
 
-    useEffect(() => {
-        if (status !== 'waiting_parts') setBasket('replaced');
-    }, [status]);
-
     const createCard = async () => {
         if (!addingCard) return;
         const partN = newCard.partN.trim().toUpperCase();
@@ -435,16 +439,17 @@ const MaintenanceForm = ({
     const filled = (rows: LineDraft[]) =>
         rows.filter((row) => row.stockId || row.query.trim());
 
-    const save = async () => {
+    const save = async (nextStatus: MaintenanceStatus) => {
+        setStatusOpen(false);
         setSubmitError('');
         const neededFilled = filled(needed);
         const textError = maintenanceDraftError({
             problem,
             workDone,
             notes,
-            status,
+            status: nextStatus,
             neededCount:
-                status === 'waiting_parts'
+                nextStatus === 'waiting_parts'
                     ? neededFilled.filter((row) => row.stockId).length
                     : 0,
         });
@@ -464,16 +469,22 @@ const MaintenanceForm = ({
                 setSubmitError('Количество замены — минимум 1');
                 return;
             }
-            if (!(parseLifeExact(line.life) > 0)) {
+            if (!line.noLife && !(parseLifeExact(line.life) > 0)) {
                 setSubmitError('Укажите пройденный ресурс заменённой детали');
                 return;
             }
+        }
+        if (neededFilled.length > 0 && nextStatus !== 'waiting_parts') {
+            setSubmitError(
+                'Заказ записывается только со статусом «Ожидает детали»'
+            );
+            return;
         }
         if (mode === 'append' && !ticketId) {
             setSubmitError('Не выбрана заявка');
             return;
         }
-        if (status === 'waiting_parts') {
+        if (nextStatus === 'waiting_parts') {
             for (const line of neededFilled) {
                 if (!line.stockId) {
                     setSubmitError('Выберите нужную деталь из списка склада');
@@ -524,7 +535,7 @@ const MaintenanceForm = ({
                 const have = running.has(card.id)
                     ? running.get(card.id)!
                     : Number(card.part.quantity) || 0;
-                const actualLife = parseLifeExact(line.life);
+                const actualLife = line.noLife ? 0 : parseLifeExact(line.life);
                 const label = chosenLabel(card, line);
                 const factoryLife = label.factoryLife;
                 const writeOff = await writeOffFifo({
@@ -583,7 +594,7 @@ const MaintenanceForm = ({
             }
 
             const neededParts: NeededPartLine[] =
-                status === 'waiting_parts'
+                nextStatus === 'waiting_parts'
                     ? neededFilled.map((line) => {
                           const card = stock.find((item) => item.id === line.stockId);
                           const label = card ? chosenLabel(card, line) : null;
@@ -600,7 +611,7 @@ const MaintenanceForm = ({
             if (!savedRef.current) {
                 const entry = {
                     man,
-                    status,
+                    status: nextStatus,
                     problem,
                     workDone,
                     notes,
@@ -782,19 +793,74 @@ const MaintenanceForm = ({
                     }
                 />
                 {kind === 'replaced' && (
-                    <input
-                        className={cls.cartLife}
-                        inputMode="numeric"
-                        aria-label="Ресурс"
-                        title="Пройденный ресурс"
-                        placeholder="Ресурс"
-                        value={line.life}
-                        onChange={(e) =>
-                            patchLine(kind, line.key, {
-                                life: formatLifeWithCommas(e.target.value),
-                            })
-                        }
-                    />
+                    <>
+                        <button
+                            type="button"
+                            className={
+                                line.noLife ? cls.noLifeOn : cls.noLifeBtn
+                            }
+                            aria-pressed={line.noLife}
+                            aria-label="Нересурсная деталь"
+                            title={
+                                line.noLife
+                                    ? 'Нересурсная: ресурс не нужен'
+                                    : 'Отметить как нересурсную'
+                            }
+                            onClick={() =>
+                                patchLine(kind, line.key, {
+                                    noLife: !line.noLife,
+                                })
+                            }
+                        >
+                            <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 16 16"
+                                aria-hidden="true"
+                            >
+                                <path
+                                    d="M3 11.5a5 5 0 1 1 10 0"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="1.4"
+                                    strokeLinecap="round"
+                                />
+                                <path
+                                    d="M8 11.2 10.4 7.2"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="1.4"
+                                    strokeLinecap="round"
+                                />
+                                {line.noLife && (
+                                    <path
+                                        d="M3.2 3.2 12.8 12.8"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="1.4"
+                                        strokeLinecap="round"
+                                    />
+                                )}
+                            </svg>
+                        </button>
+                        {!line.noLife && (
+                            <input
+                                className={cls.cartLife}
+                                inputMode="numeric"
+                                aria-label="Ресурс"
+                                title="Пройденный ресурс"
+                                placeholder="Ресурс"
+                                value={line.life}
+                                onChange={(e) =>
+                                    patchLine(kind, line.key, {
+                                        life: formatLifeWithCommas(
+                                            e.target.value
+                                        ),
+                                    })
+                                }
+                            />
+                        )}
+                    </>
                 )}
                 <button
                     type="button"
@@ -836,15 +902,22 @@ const MaintenanceForm = ({
                         )}
                     <span className={cls.statusGroup}>
                         <span className={cls.statusCaption}>Статус</span>
-                        {renderSwitch(
-                            'Статус',
-                            status,
-                            MAINTENANCE_STATUSES,
-                            (value) => setStatus(value as MaintenanceStatus),
-                            (value) =>
-                                maintenanceStatusLabel(value as MaintenanceStatus),
-                            (value) => statusTone[value as MaintenanceStatus]
-                        )}
+                        <div className={cls.switch} aria-label="Статус">
+                            {MAINTENANCE_STATUSES.map((item) => (
+                                <span
+                                    key={item}
+                                    className={[
+                                        status === item ? cls.switchOn : cls.switchBtn,
+                                        status === item ? statusTone[item] : '',
+                                        cls.statusMark,
+                                    ]
+                                        .filter(Boolean)
+                                        .join(' ')}
+                                >
+                                    {maintenanceStatusLabel(item)}
+                                </span>
+                            ))}
+                        </div>
                     </span>
                     <span className={cls.headMeta}>
                         <span className={cls.modeLabel}>
@@ -1059,38 +1132,36 @@ const MaintenanceForm = ({
                 </div>
 
                 <aside className={cls.basket}>
-                    {status === 'waiting_parts' && (
-                        <div
-                            className={cls.basketMode}
-                            role="radiogroup"
-                            aria-label="Куда класть деталь"
+                    <div
+                        className={cls.basketMode}
+                        role="radiogroup"
+                        aria-label="Куда класть деталь"
+                    >
+                        <button
+                            type="button"
+                            className={
+                                basket === 'replaced'
+                                    ? cls.basketWriteOn
+                                    : cls.basketModeBtn
+                            }
+                            aria-pressed={basket === 'replaced'}
+                            onClick={() => setBasket('replaced')}
                         >
-                            <button
-                                type="button"
-                                className={
-                                    basket === 'replaced'
-                                        ? cls.basketWriteOn
-                                        : cls.basketModeBtn
-                                }
-                                aria-pressed={basket === 'replaced'}
-                                onClick={() => setBasket('replaced')}
-                            >
-                                Списание
-                            </button>
-                            <button
-                                type="button"
-                                className={
-                                    basket === 'needed'
-                                        ? cls.basketOrderOn
-                                        : cls.basketModeBtn
-                                }
-                                aria-pressed={basket === 'needed'}
-                                onClick={() => setBasket('needed')}
-                            >
-                                Заказ
-                            </button>
-                        </div>
-                    )}
+                            Списание
+                        </button>
+                        <button
+                            type="button"
+                            className={
+                                basket === 'needed'
+                                    ? cls.basketOrderOn
+                                    : cls.basketModeBtn
+                            }
+                            aria-pressed={basket === 'needed'}
+                            onClick={() => setBasket('needed')}
+                        >
+                            Заказ
+                        </button>
+                    </div>
                     <h3 className={cls.sectionTitle}>
                         {basket === 'replaced' ? 'Списание' : 'Заказ'}
                     </h3>
@@ -1124,11 +1195,65 @@ const MaintenanceForm = ({
                     type="button"
                     className={cls.primary}
                     disabled={submitting}
-                    onClick={save}
+                    onClick={() => {
+                        setStatusPick(status);
+                        setStatusOpen(true);
+                    }}
                 >
                     {submitting ? '...' : 'Сохранить'}
                 </button>
             </footer>
+            {statusOpen && (
+                <div className={cls.statusOverlay} role="presentation">
+                    <div
+                        className={cls.statusDialog}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="status-ask-title"
+                    >
+                        <h2 id="status-ask-title" className={cls.statusAskTitle}>
+                            Какой статус записать?
+                        </h2>
+                        <div className={cls.statusAskList}>
+                            {MAINTENANCE_STATUSES.map((item) => (
+                                <button
+                                    key={item}
+                                    type="button"
+                                    className={[
+                                        statusPick === item
+                                            ? cls.switchOn
+                                            : cls.switchBtn,
+                                        statusPick === item ? statusTone[item] : '',
+                                        cls.statusAskBtn,
+                                    ]
+                                        .filter(Boolean)
+                                        .join(' ')}
+                                    onClick={() => setStatusPick(item)}
+                                >
+                                    {maintenanceStatusLabel(item)}
+                                </button>
+                            ))}
+                        </div>
+                        <div className={cls.statusAskActions}>
+                            <button
+                                type="button"
+                                className={cls.cancel}
+                                onClick={() => setStatusOpen(false)}
+                            >
+                                Отмена
+                            </button>
+                            <button
+                                type="button"
+                                className={cls.primary}
+                                disabled={submitting}
+                                onClick={() => save(statusPick)}
+                            >
+                                Сохранить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

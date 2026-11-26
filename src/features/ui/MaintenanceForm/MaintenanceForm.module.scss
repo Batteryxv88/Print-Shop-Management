@@ -134,6 +134,54 @@
     font-weight: 700;
 }
 
+.statusMark {
+    cursor: default;
+}
+
+.statusOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.55);
+}
+
+.statusDialog {
+    width: min(420px, 100%);
+    padding: 18px 18px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: #2a2a2a;
+}
+
+.statusAskTitle {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 650;
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.statusAskList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.statusAskBtn {
+    cursor: pointer;
+}
+
+.statusAskActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+}
+
 .statusGroup {
     display: inline-flex;
     align-items: center;
@@ -505,6 +553,31 @@
 .cartLife {
     width: 118px;
     flex: 0 0 118px;
+}
+
+.noLifeBtn,
+.noLifeOn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+    padding: 0;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.noLifeBtn {
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.noLifeOn {
+    border: none;
+    background: #ffb74d;
+    color: #2a1600;
 }
 
 .cartLine .linkBtn {

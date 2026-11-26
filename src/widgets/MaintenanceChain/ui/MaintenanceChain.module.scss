@@ -82,54 +82,40 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding: 16px;
+    padding: 16px 16px 24px;
 }
 
-.board {
-    position: relative;
-    display: grid;
-    direction: rtl;
-    grid-template-columns: repeat(auto-fit, minmax(#{'max(280px, 25%)'}, 1fr));
-    column-gap: 36px;
-    row-gap: 40px;
-    padding-left: 18px;
-}
-
-.links {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    overflow: visible;
-    pointer-events: none;
-    direction: ltr;
-}
-
-.link {
-    fill: none;
-    stroke: rgba(187, 134, 252, 0.85);
-    stroke-width: 1.5;
-    stroke-linejoin: round;
-    stroke-linecap: round;
-}
-
-.arrow {
-    fill: rgba(187, 134, 252, 0.95);
-}
-
-.tile {
-    position: relative;
-    z-index: 1;
-    direction: ltr;
+.timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    min-height: 112px;
+    gap: 10px;
+}
+
+.event {
+    position: relative;
+
+    &:hover {
+        z-index: 2;
+    }
+}
+
+.dot {
+    flex-shrink: 0;
+    align-self: center;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.card {
     padding: 10px 12px 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-top-width: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 10px;
-    background: var(--surface-2);
+    background: #232323;
     font-size: 13px;
     color: rgba(255, 255, 255, 0.84);
 
@@ -138,22 +124,23 @@
     }
 }
 
-.tileHead {
+.eventHead {
     display: flex;
-    align-items: flex-start;
+    flex-wrap: wrap;
+    align-items: baseline;
     justify-content: space-between;
-    gap: 8px;
+    gap: 6px 16px;
 }
 
-.meta {
+.eventMeta {
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    text-align: right;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 12px;
     min-width: 0;
 }
 
-.status {
+.statusName {
     font-size: 13px;
     font-weight: 700;
 }
@@ -174,38 +161,169 @@
     color: rgba(255, 255, 255, 0.45);
 }
 
-.counters {
+.bodyRow {
     display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
+    align-items: flex-start;
+    gap: 24px;
+    margin-top: 8px;
 }
 
-.counter {
+.textCol {
+    min-width: 0;
+    flex: 1 1 auto;
     display: flex;
     flex-direction: column;
-    min-width: 72px;
-    padding: 4px 8px;
-    border-radius: 6px;
-    background: rgba(255, 255, 255, 0.04);
-}
-
-.texts,
-.partRow {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
     gap: 8px;
 }
 
-.block {
+.field {
     min-width: 0;
-    padding: 6px 8px;
-    border-radius: 6px;
-    background: rgba(255, 255, 255, 0.04);
 }
 
-.blockWide,
-.partRow > :only-child {
-    grid-column: 1 / -1;
+.text {
+    line-height: 1.35;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.parts {
+    display: flex;
+    flex-direction: column;
+    flex: 0 1 auto;
+    gap: 8px;
+    min-width: 0;
+    max-width: 50%;
+}
+
+.partsAlone {
+    flex: 1 1 auto;
+    max-width: none;
+}
+
+.partsSplit {
+    display: grid;
+    flex: 1 1 50%;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px 16px;
+    max-width: 62%;
+}
+
+.partsWide {
+    flex: 1 1 46%;
+    max-width: 62%;
+}
+
+.partsAlone.partsWide {
+    max-width: none;
+}
+
+.partsAlone.partsSplit {
+    max-width: none;
+}
+
+.partList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.partListWide {
+    display: block;
+    columns: 2;
+    column-gap: 16px;
+
+    > li {
+        break-inside: avoid;
+        margin-bottom: 2px;
+    }
+}
+
+.partRow {
+    position: relative;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    min-width: 0;
+}
+
+.partName {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.partQty {
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+.orderGroup {
+    color: rgba(255, 255, 255, 0.48);
+
+    .k {
+        color: rgba(255, 183, 77, 0.62);
+    }
+
+    .partQty {
+        color: rgba(255, 255, 255, 0.38);
+    }
+}
+
+.counters {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 4px 14px;
+    margin-left: auto;
+}
+
+.counter {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.counterLabel {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.counterValue {
+    font-weight: 650;
+}
+
+.pop {
+    display: none;
+    position: absolute;
+    z-index: 6;
+    left: 0;
+    top: calc(100% + 6px);
+    width: max-content;
+    max-width: 420px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: #1e1e1e;
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 12px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+}
+
+.partRow:hover {
+    z-index: 3;
+}
+
+.partRow:hover .pop {
+    display: block;
 }
 
 .badge {
@@ -217,48 +335,48 @@
 }
 
 .badge.new,
-.tile.new .status {
+.event.new .statusName {
     color: #c69bff;
 }
 
-.tile.new {
-    border-top-color: #c69bff;
+.event.new .dot {
+    background: #c69bff;
 }
 
 .badge.in_progress,
-.tile.in_progress .status {
+.event.in_progress .statusName {
     color: #4fc3f7;
 }
 
-.tile.in_progress {
-    border-top-color: #4fc3f7;
+.event.in_progress .dot {
+    background: #4fc3f7;
 }
 
 .badge.waiting_parts,
-.tile.waiting_parts .status {
+.event.waiting_parts .statusName {
     color: #ffb74d;
 }
 
-.tile.waiting_parts {
-    border-top-color: #ffb74d;
+.event.waiting_parts .dot {
+    background: #ffb74d;
 }
 
 .badge.done,
-.tile.done .status {
+.event.done .statusName {
     color: #81c784;
 }
 
-.tile.done {
-    border-top-color: #81c784;
+.event.done .dot {
+    background: #81c784;
 }
 
 .badge.paused,
-.tile.paused .status {
+.event.paused .statusName {
     color: #bdbdbd;
 }
 
-.tile.paused {
-    border-top-color: #bdbdbd;
+.event.paused .dot {
+    background: #bdbdbd;
 }
 
 .muted,
@@ -302,5 +420,25 @@
     .add {
         min-height: var(--touch-target-min, 44px);
         height: auto;
+    }
+}
+
+@include down(md) {
+    .counters {
+        flex-basis: 100%;
+        justify-content: flex-start;
+        margin-left: 0;
+    }
+
+    .bodyRow {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .parts,
+    .partsSplit,
+    .partsWide {
+        max-width: none;
+        flex-basis: auto;
     }
 }

@@ -31,32 +31,115 @@ const formatWhen = (iso: string) => {
     });
 };
 
-type Segment = { d: string };
+const PART_ROWS = 4;
 
-const measureSegments = (board: HTMLElement): Segment[] => {
-    const tiles = Array.from(board.querySelectorAll<HTMLElement>('[data-tile]'));
-    const segments: Segment[] = [];
-    for (let i = 0; i < tiles.length - 1; i += 1) {
-        const from = tiles[i];
-        const to = tiles[i + 1];
-        const fromMid = from.offsetTop + from.offsetHeight / 2;
-        const sameRow = Math.abs(from.offsetTop - to.offsetTop) < 8;
-        if (sameRow) {
-            segments.push({
-                d: `M ${from.offsetLeft} ${fromMid} L ${to.offsetLeft + to.offsetWidth} ${to.offsetTop + to.offsetHeight / 2}`,
-            });
-            continue;
-        }
-        const laneY =
-            from.offsetTop +
-            from.offsetHeight +
-            (to.offsetTop - from.offsetTop - from.offsetHeight) / 2;
-        const endX = to.offsetLeft + to.offsetWidth / 2;
-        segments.push({
-            d: `M ${from.offsetLeft} ${fromMid} H 8 V ${laneY} H ${endX} V ${to.offsetTop}`,
-        });
-    }
-    return segments;
+type PartLine = { partName: string; partN: string; quantity: number };
+
+const partLabel = (part: PartLine) =>
+    part.partN ? `${part.partName} · ${part.partN}` : part.partName;
+
+const Field = ({ label, text }: { label: string; text: string }) => (
+    <div className={cls.field}>
+        <span className={cls.k}>{label}</span>
+        <p className={cls.text}>{text}</p>
+    </div>
+);
+
+const PartRow = ({ part }: { part: PartLine }) => {
+    const nameRef = useRef<HTMLSpanElement>(null);
+    const [cut, setCut] = useState(false);
+    const label = partLabel(part);
+
+    useLayoutEffect(() => {
+        const node = nameRef.current;
+        if (!node) return;
+        const measure = () => setCut(node.scrollWidth > node.clientWidth + 1);
+        measure();
+        const observer = new ResizeObserver(measure);
+        observer.observe(node);
+        return () => observer.disconnect();
+    }, [label]);
+
+    return (
+        <li className={cls.partRow}>
+            <span ref={nameRef} className={cls.partName}>
+                {label}
+            </span>
+            <span className={cls.partQty}>× {part.quantity}</span>
+            {cut && (
+                <div className={cls.pop} role="tooltip">
+                    {label} × {part.quantity}
+                </div>
+            )}
+        </li>
+    );
+};
+
+const PartGroup = ({
+    title,
+    parts,
+    quiet,
+    wide,
+}: {
+    title: string;
+    parts: PartLine[];
+    quiet?: boolean;
+    wide?: boolean;
+}) => (
+    <div className={quiet ? cls.orderGroup : undefined}>
+        <span className={cls.k}>{title}</span>
+        <ul className={wide ? `${cls.partList} ${cls.partListWide}` : cls.partList}>
+            {parts.map((part, index) => (
+                <PartRow key={`${part.partN}-${index}`} part={part} />
+            ))}
+        </ul>
+    </div>
+);
+
+const PartsBlock = ({
+    replaced,
+    needed,
+    alone,
+}: {
+    replaced: PartLine[];
+    needed: PartLine[];
+    alone: boolean;
+}) => {
+    const total = replaced.length + needed.length;
+    const split =
+        replaced.length > 0 && needed.length > 0 && total > PART_ROWS;
+    const oneGroup = !split;
+    const wideList =
+        (replaced.length > PART_ROWS && needed.length === 0) ||
+        (needed.length > PART_ROWS && replaced.length === 0);
+    return (
+        <div
+            className={[
+                cls.parts,
+                alone ? cls.partsAlone : '',
+                split ? cls.partsSplit : '',
+                wideList ? cls.partsWide : '',
+            ]
+                .filter(Boolean)
+                .join(' ')}
+        >
+            {replaced.length > 0 && (
+                <PartGroup
+                    title="Списание"
+                    parts={replaced}
+                    wide={oneGroup && replaced.length > PART_ROWS}
+                />
+            )}
+            {needed.length > 0 && (
+                <PartGroup
+                    title="Заказ"
+                    parts={needed}
+                    quiet
+                    wide={oneGroup && needed.length > PART_ROWS}
+                />
+            )}
+        </div>
+    );
 };
 
 const MaintenanceChain = ({
@@ -76,8 +159,6 @@ const MaintenanceChain = ({
     const [pageSize, setPageSize] = useState(PAGE);
     const [entries, setEntries] = useState<MaintenanceEntry[]>([]);
     const [error, setError] = useState('');
-    const [segments, setSegments] = useState<Segment[]>([]);
-    const boardRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         return subscribeMaintenanceEntries(
@@ -87,30 +168,6 @@ const MaintenanceChain = ({
             (err) => setError(err.message)
         );
     }, [ticket.id, pageSize]);
-
-    useLayoutEffect(() => {
-        const board = boardRef.current;
-        if (!board) return;
-        const measure = () => {
-            const next = measureSegments(board);
-            setSegments((current) => {
-                if (
-                    current.length === next.length &&
-                    current.every((item, index) => item.d === next[index]?.d)
-                ) {
-                    return current;
-                }
-                return next;
-            });
-        };
-        measure();
-        const observer = new ResizeObserver(measure);
-        observer.observe(board);
-        board
-            .querySelectorAll<HTMLElement>('[data-tile]')
-            .forEach((tile) => observer.observe(tile));
-        return () => observer.disconnect();
-    }, [entries]);
 
     return (
         <section className={cls.sheet} data-testid="maintenance-chain">
@@ -144,141 +201,98 @@ const MaintenanceChain = ({
                     <p className={cls.muted}>Записей пока нет</p>
                 )}
                 {entries.length > 0 && (
-                    <div className={cls.board} ref={boardRef}>
-                        <svg className={cls.links} aria-hidden>
-                            <defs>
-                                <marker
-                                    id="maintenance-chain-arrow"
-                                    markerWidth="8"
-                                    markerHeight="8"
-                                    refX="7"
-                                    refY="4"
-                                    orient="auto"
-                                >
-                                    <path d="M0,0 L8,4 L0,8 Z" className={cls.arrow} />
-                                </marker>
-                            </defs>
-                            {segments.map((segment) => (
-                                <path
-                                    key={segment.d}
-                                    d={segment.d}
-                                    className={cls.link}
-                                    markerEnd="url(#maintenance-chain-arrow)"
-                                />
-                            ))}
-                        </svg>
+                    <ol className={cls.timeline}>
                         {entries.map((entry) => {
                             const counters = fields.filter(
                                 (field) => getFieldValue(entry.counters, field.key) > 0
                             );
-                            const texts = [
-                                entry.problem.trim()
-                                    ? { label: 'Проблема', value: entry.problem.trim() }
-                                    : null,
-                                entry.workDone.trim()
-                                    ? { label: 'Выполнено', value: entry.workDone.trim() }
-                                    : null,
-                                entry.notes.trim()
-                                    ? { label: 'Замечания', value: entry.notes.trim() }
-                                    : null,
-                            ].filter(
-                                (item): item is { label: string; value: string } =>
-                                    item !== null
-                            );
+                            const problem = entry.problem.trim();
+                            const workDone = entry.workDone.trim();
+                            const notes = entry.notes.trim();
+                            const hasText = Boolean(problem || workDone || notes);
+                            const hasParts =
+                                entry.replacedParts.length > 0 ||
+                                entry.neededParts.length > 0;
                             return (
-                                <article
+                                <li
                                     key={entry.id}
-                                    className={`${cls.tile} ${cls[entry.status]}`}
-                                    data-tile
+                                    className={`${cls.event} ${cls[entry.status]}`}
                                 >
-                                    <header className={cls.tileHead}>
-                                        <span className={cls.status}>
-                                            {maintenanceStatusLabel(entry.status)}
-                                        </span>
-                                        <span className={cls.meta}>
-                                            <span className={cls.when}>
-                                                {formatWhen(entry.date)}
-                                            </span>
-                                            <span className={cls.man}>
-                                                {entry.man || '—'}
-                                            </span>
-                                        </span>
-                                    </header>
-                                    {counters.length > 0 && (
-                                        <div className={cls.counters}>
-                                            {counters.map((field) => (
-                                                <div key={field.key} className={cls.counter}>
-                                                    <span className={cls.k}>
-                                                        {field.label}
-                                                    </span>
-                                                    <span>
-                                                        {formatLifeWithCommas(
-                                                            getFieldValue(
-                                                                entry.counters,
-                                                                field.key
-                                                            )
-                                                        )}
-                                                    </span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                    {texts.length > 0 && (
-                                        <div className={cls.texts}>
-                                            {texts.map((item, index) => {
-                                                const alone =
-                                                    texts.length === 1 ||
-                                                    (texts.length % 2 === 1 &&
-                                                        index === texts.length - 1);
-                                                return (
-                                                    <div
-                                                        key={item.label}
-                                                        className={`${cls.block} ${alone ? cls.blockWide : ''}`}
-                                                    >
-                                                        <span className={cls.k}>
-                                                            {item.label}
+                                    <article className={cls.card}>
+                                        <header className={cls.eventHead}>
+                                            <div className={cls.eventMeta}>
+                                                <span className={cls.dot} aria-hidden />
+                                                <span className={cls.statusName}>
+                                                    {maintenanceStatusLabel(entry.status)}
+                                                </span>
+                                                <span className={cls.when}>
+                                                    {formatWhen(entry.date)}
+                                                </span>
+                                                <span className={cls.man}>
+                                                    {entry.man || '—'}
+                                                </span>
+                                            </div>
+                                            {counters.length > 0 && (
+                                                <div className={cls.counters}>
+                                                    {counters.map((field) => (
+                                                        <span
+                                                            key={field.key}
+                                                            className={cls.counter}
+                                                        >
+                                                            <span className={cls.counterLabel}>
+                                                                {field.label}
+                                                            </span>
+                                                            <span className={cls.counterValue}>
+                                                                {formatLifeWithCommas(
+                                                                    getFieldValue(
+                                                                        entry.counters,
+                                                                        field.key
+                                                                    )
+                                                                )}
+                                                            </span>
                                                         </span>
-                                                        <p>{item.value}</p>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </header>
+                                        {(hasText || hasParts) && (
+                                            <div className={cls.bodyRow}>
+                                                {hasText && (
+                                                    <div className={cls.textCol}>
+                                                        {workDone && (
+                                                            <Field
+                                                                label="Выполнено"
+                                                                text={workDone}
+                                                            />
+                                                        )}
+                                                        {problem && (
+                                                            <Field
+                                                                label="Проблема"
+                                                                text={problem}
+                                                            />
+                                                        )}
+                                                        {notes && (
+                                                            <Field
+                                                                label="Замечания"
+                                                                text={notes}
+                                                            />
+                                                        )}
                                                     </div>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                    {(entry.neededParts.length > 0 ||
-                                        entry.replacedParts.length > 0) && (
-                                        <div className={cls.partRow}>
-                                            {entry.neededParts.length > 0 && (
-                                                <div className={cls.block}>
-                                                    <span className={cls.k}>Заказ</span>
-                                                    {entry.neededParts.map((part, index) => (
-                                                        <p
-                                                            key={`${part.stockId}-${part.partN}-${index}`}
-                                                        >
-                                                            {part.partName} · {part.partN} ×{' '}
-                                                            {part.quantity}
-                                                        </p>
-                                                    ))}
-                                                </div>
-                                            )}
-                                            {entry.replacedParts.length > 0 && (
-                                                <div className={cls.block}>
-                                                    <span className={cls.k}>Списание</span>
-                                                    {entry.replacedParts.map((part, index) => (
-                                                        <p
-                                                            key={`${part.movementId}-${part.partN}-${index}`}
-                                                        >
-                                                            {part.partName} · {part.partN} ×{' '}
-                                                            {part.quantity}
-                                                        </p>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </article>
+                                                )}
+                                                {hasParts && (
+                                                    <PartsBlock
+                                                        replaced={entry.replacedParts}
+                                                        needed={entry.neededParts}
+                                                        alone={!hasText}
+                                                    />
+                                                )}
+                                            </div>
+                                        )}
+                                    </article>
+                                </li>
                             );
                         })}
-                    </div>
+                    </ol>
                 )}
                 {entries.length >= pageSize && (
                     <button
